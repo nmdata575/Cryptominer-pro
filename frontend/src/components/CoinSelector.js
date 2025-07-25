@@ -60,7 +60,7 @@ const CoinSelector = ({ coinPresets, selectedCoin, onCoinChange }) => {
           <div
             key={key}
             className={`coin-option ${selectedCoin === key ? 'selected' : ''}`}
-            onClick={() => onCoinChange(key)}
+            onClick={() => handleCoinChange(key)}
           >
             <div className={`coin-icon bg-gradient-to-br ${getCoinColor(coin.symbol)}`}>
               {getCoinIcon(coin.symbol)}
