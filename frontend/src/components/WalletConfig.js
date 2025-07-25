@@ -8,6 +8,43 @@ const WalletConfig = ({ config, onConfigChange, selectedCoin, coinPresets, isMin
 
   const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:8001';
 
+  // Load configuration from localStorage on component mount
+  useEffect(() => {
+    const savedConfig = localStorage.getItem('cryptominer_wallet_config');
+    if (savedConfig) {
+      try {
+        const parsedConfig = JSON.parse(savedConfig);
+        // Merge saved config with current config, prioritizing saved values
+        onConfigChange(prev => ({
+          ...prev,
+          ...parsedConfig
+        }));
+      } catch (error) {
+        console.error('Error loading saved wallet configuration:', error);
+      }
+    }
+  }, []);
+
+  // Save configuration to localStorage whenever it changes
+  useEffect(() => {
+    const configToSave = {
+      mode: config.mode,
+      wallet_address: config.wallet_address,
+      pool_username: config.pool_username,
+      pool_password: config.pool_password,
+      custom_pool_address: config.custom_pool_address,
+      custom_pool_port: config.custom_pool_port,
+      custom_rpc_host: config.custom_rpc_host,
+      custom_rpc_port: config.custom_rpc_port,
+      custom_rpc_username: config.custom_rpc_username,
+      custom_rpc_password: config.custom_rpc_password
+    };
+    
+    localStorage.setItem('cryptominer_wallet_config', JSON.stringify(configToSave));
+  }, [config.mode, config.wallet_address, config.pool_username, config.pool_password, 
+      config.custom_pool_address, config.custom_pool_port, config.custom_rpc_host, 
+      config.custom_rpc_port, config.custom_rpc_username, config.custom_rpc_password]);
+
   const handleConfigChange = (key, value) => {
     onConfigChange(prev => ({
       ...prev,
