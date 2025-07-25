@@ -209,6 +209,21 @@ backend:
         agent: "testing"
         comment: "✅ PASSED - Complete integration testing successful. Custom pool mining workflow (test connection → start mining → verify status → stop) works flawlessly. Custom RPC mining workflow functions correctly. Configuration validation properly rejects invalid combinations (pool without port, RPC without port, pool without username). All custom settings are preserved in mining status and properly handled throughout the mining lifecycle."
 
+  - task: "Remote Connectivity API Endpoints"
+    implemented: true
+    working: true
+    file: "backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: "NA"
+        agent: "testing"
+        comment: "Initial state - needs comprehensive testing of all remote connectivity endpoints for Android app integration"
+      - working: true
+        agent: "testing"
+        comment: "✅ PASSED - All 7 remote connectivity endpoints working perfectly (100% success rate). Connection Test endpoint returns proper system info and API features. Device Registration generates access tokens correctly. Remote Status retrieval works with proper device tracking. Device List endpoint shows all registered devices. Remote Mining Status includes remote access information. Remote Mining Control (start/stop) works identically to local control with remote device tracking. Error handling properly validates requests and returns appropriate error responses. All endpoints ready for Android app integration."
+
 frontend:
   - task: "Main Dashboard Loading and Layout"
     implemented: true
