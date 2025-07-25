@@ -71,6 +71,15 @@ function App() {
     thread_profile: 'standard'
   });
   
+  // Create stable callback functions
+  const handleCoinChange = useCallback((coin) => {
+    setSelectedCoin(coin);
+  }, []);
+  
+  const handleConfigChange = useCallback((configUpdate) => {
+    setMiningConfig(configUpdate);
+  }, []);
+  
   const [websocket, setWebsocket] = useState(null);
   const [connectionStatus, setConnectionStatus] = useState('connecting');
   const [errorMessage, setErrorMessage] = useState('');
