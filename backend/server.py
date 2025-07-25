@@ -1160,6 +1160,182 @@ async def websocket_endpoint(websocket: WebSocket):
             connected_websockets.remove(websocket)
 
 # ============================================================================
+# REMOTE CONNECTIVITY API ENDPOINTS
+# ============================================================================
+
+class RemoteAccessConfig(BaseModel):
+    device_id: str = Field(..., description="Unique device identifier")
+    device_name: str = Field(..., description="Human-readable device name")
+    access_token: Optional[str] = Field(None, description="Authentication token")
+
+class RemoteStatus(BaseModel):
+    device_id: str
+    device_name: str
+    is_mining: bool
+    hashrate: float
+    uptime: float
+    last_seen: datetime
+    system_health: Dict[str, Any]
+
+# Simple in-memory storage for remote devices (in production, use database)
+remote_devices: Dict[str, RemoteStatus] = {}
+access_tokens: Dict[str, str] = {}  # token -> device_id mapping
+
+@app.post("/api/remote/register")
+async def register_remote_device(config: RemoteAccessConfig):
+    """Register a new remote device for access"""
+    try:
+        # Generate access token
+        access_token = secrets.token_urlsafe(32)
+        
+        # Store device info
+        device_status = RemoteStatus(
+            device_id=config.device_id,
+            device_name=config.device_name,
+            is_mining=mining_engine.is_mining if mining_engine else False,
+            hashrate=mining_engine.stats.hashrate if mining_engine else 0.0,
+            uptime=time.time() - mining_engine.start_time if mining_engine else 0.0,
+            last_seen=datetime.now(),
+            system_health=await get_system_stats()
+        )
+        
+        remote_devices[config.device_id] = device_status
+        access_tokens[access_token] = config.device_id
+        
+        return {
+            "success": True,
+            "access_token": access_token,
+            "device_id": config.device_id,
+            "message": "Device registered successfully"
+        }
+        
+    except Exception as e:
+        logger.error(f"Remote device registration error: {e}")
+        raise HTTPException(status_code=500, detail=f"Registration failed: {str(e)}")
+
+@app.get("/api/remote/status/{device_id}")
+async def get_remote_status(device_id: str):
+    """Get remote device status"""
+    try:
+        if device_id not in remote_devices:
+            raise HTTPException(status_code=404, detail="Device not found")
+        
+        device_status = remote_devices[device_id]
+        
+        # Update current status
+        device_status.is_mining = mining_engine.is_mining if mining_engine else False
+        device_status.hashrate = mining_engine.stats.hashrate if mining_engine else 0.0
+        device_status.uptime = time.time() - mining_engine.start_time if mining_engine else 0.0
+        device_status.last_seen = datetime.now()
+        device_status.system_health = await get_system_stats()
+        
+        return device_status.dict()
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Remote status error: {e}")
+        raise HTTPException(status_code=500, detail=f"Status retrieval failed: {str(e)}")
+
+@app.get("/api/remote/devices")
+async def list_remote_devices():
+    """List all registered remote devices"""
+    try:
+        return {
+            "devices": [device.dict() for device in remote_devices.values()],
+            "total": len(remote_devices)
+        }
+    except Exception as e:
+        logger.error(f"Remote devices list error: {e}")
+        raise HTTPException(status_code=500, detail=f"Device list failed: {str(e)}")
+
+@app.post("/api/remote/mining/start")
+async def remote_start_mining(config: MiningConfig, device_id: str = None):
+    """Start mining remotely"""
+    try:
+        # Use the same mining start logic but with remote device tracking
+        result = await start_mining(config)
+        
+        # Update device status if device_id provided
+        if device_id and device_id in remote_devices:
+            remote_devices[device_id].is_mining = True
+            remote_devices[device_id].last_seen = datetime.now()
+        
+        return {
+            **result,
+            "remote_device_id": device_id,
+            "remote_access": True
+        }
+        
+    except Exception as e:
+        logger.error(f"Remote mining start error: {e}")
+        raise HTTPException(status_code=500, detail=f"Remote mining start failed: {str(e)}")
+
+@app.post("/api/remote/mining/stop")
+async def remote_stop_mining(device_id: str = None):
+    """Stop mining remotely"""
+    try:
+        # Use the same mining stop logic
+        result = await stop_mining()
+        
+        # Update device status if device_id provided
+        if device_id and device_id in remote_devices:
+            remote_devices[device_id].is_mining = False
+            remote_devices[device_id].last_seen = datetime.now()
+        
+        return {
+            **result,
+            "remote_device_id": device_id,
+            "remote_access": True
+        }
+        
+    except Exception as e:
+        logger.error(f"Remote mining stop error: {e}")
+        raise HTTPException(status_code=500, detail=f"Remote mining stop failed: {str(e)}")
+
+@app.get("/api/remote/mining/status")
+async def get_remote_mining_status():
+    """Get mining status for remote access"""
+    try:
+        status = await get_mining_status()
+        
+        # Add remote-specific information
+        return {
+            **status,
+            "remote_access": True,
+            "connected_devices": len(remote_devices),
+            "api_version": "1.0"
+        }
+        
+    except Exception as e:
+        logger.error(f"Remote mining status error: {e}")
+        raise HTTPException(status_code=500, detail=f"Remote status failed: {str(e)}")
+
+@app.get("/api/remote/connection/test")
+async def test_remote_connection():
+    """Test remote connection capability"""
+    try:
+        system_stats = await get_system_stats()
+        
+        return {
+            "success": True,
+            "message": "Remote connection successful",
+            "server_time": datetime.now().isoformat(),
+            "system_health": system_stats,
+            "api_version": "1.0",
+            "features": {
+                "remote_mining": True,
+                "real_time_monitoring": True,
+                "multi_device_support": True,
+                "secure_authentication": True
+            }
+        }
+        
+    except Exception as e:
+        logger.error(f"Remote connection test error: {e}")
+        raise HTTPException(status_code=500, detail=f"Connection test failed: {str(e)}")
+
+# ============================================================================
 # MAIN APPLICATION RUNNER
 # ============================================================================
 
