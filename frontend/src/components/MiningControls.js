@@ -13,6 +13,7 @@ const MiningControls = ({ config, onConfigChange, isMining, onStart, onStop }) =
     if (savedConfig) {
       try {
         const parsedConfig = JSON.parse(savedConfig);
+        console.log('Loading saved mining controls config:', parsedConfig);
         // Merge saved config with current config, prioritizing saved values
         onConfigChange(prev => ({
           ...prev,
@@ -22,20 +23,24 @@ const MiningControls = ({ config, onConfigChange, isMining, onStart, onStop }) =
         console.error('Error loading saved mining controls configuration:', error);
       }
     }
-  }, []);
+  }, [onConfigChange]);
 
   // Save mining controls configuration to localStorage whenever it changes
   useEffect(() => {
-    const configToSave = {
-      threads: config.threads,
-      intensity: config.intensity,
-      ai_enabled: config.ai_enabled,
-      auto_optimize: config.auto_optimize,
-      auto_thread_detection: config.auto_thread_detection,
-      thread_profile: config.thread_profile
-    };
-    
-    localStorage.setItem('cryptominer_controls_config', JSON.stringify(configToSave));
+    // Only save if we have meaningful data
+    if (config.threads || config.intensity || config.ai_enabled !== undefined) {
+      const configToSave = {
+        threads: config.threads,
+        intensity: config.intensity,
+        ai_enabled: config.ai_enabled,
+        auto_optimize: config.auto_optimize,
+        auto_thread_detection: config.auto_thread_detection,
+        thread_profile: config.thread_profile
+      };
+      
+      console.log('Saving mining controls config:', configToSave);
+      localStorage.setItem('cryptominer_controls_config', JSON.stringify(configToSave));
+    }
   }, [config.threads, config.intensity, config.ai_enabled, config.auto_optimize, 
       config.auto_thread_detection, config.thread_profile]);
 
