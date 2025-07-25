@@ -430,39 +430,48 @@ agent_communication:
 data_persistence:
   - task: "Wallet Address Persistence"
     implemented: true
-    working: true
+    working: false
     file: "frontend/src/components/WalletConfig.js"
-    stuck_count: 0
+    stuck_count: 1
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: "NA"
         agent: "main"
         comment: "Added localStorage persistence for wallet address and pool configuration"
+      - working: false
+        agent: "testing"
+        comment: "❌ FAILED - Wallet address persistence not working correctly. LocalStorage shows empty wallet_address field after page refresh. The persistence logic exists but data is being reset to empty values. Pool configuration (username, password, custom settings) also not persisting properly."
 
   - task: "Mining Controls Persistence"
     implemented: true
-    working: true
+    working: false
     file: "frontend/src/components/MiningControls.js"
-    stuck_count: 0
+    stuck_count: 1
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: "NA"
         agent: "main"
         comment: "Added localStorage persistence for mining controls settings"
+      - working: false
+        agent: "testing"
+        comment: "❌ FAILED - Mining controls persistence partially working. AI optimization settings (ai_enabled: true, auto_optimize: true) persist correctly, but intensity slider resets to default value (1.0) instead of saved value (0.8). Thread count and other settings persist correctly."
 
   - task: "Selected Coin Persistence"
     implemented: true
-    working: true
+    working: false
     file: "frontend/src/components/CoinSelector.js"
-    stuck_count: 0
+    stuck_count: 1
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: "NA"
         agent: "main"
         comment: "Added localStorage persistence for selected cryptocurrency"
+      - working: false
+        agent: "testing"
+        comment: "❌ FAILED - Selected coin persistence not working. LocalStorage shows 'litecoin' as selected coin even after selecting Dogecoin. The coin selection UI shows Dogecoin selected before refresh but reverts to Litecoin after refresh, indicating persistence logic is not properly saving/loading the selected coin."
 
 # REMOTE CONNECTIVITY TESTING STATUS
 remote_connectivity:
