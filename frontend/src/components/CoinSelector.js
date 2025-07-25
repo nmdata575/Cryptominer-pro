@@ -6,6 +6,7 @@ const CoinSelector = ({ coinPresets, selectedCoin, onCoinChange }) => {
   useEffect(() => {
     const savedCoin = localStorage.getItem('cryptominer_selected_coin');
     if (savedCoin && coinPresets && coinPresets[savedCoin]) {
+      console.log('Loading saved coin:', savedCoin);
       onCoinChange(savedCoin);
     }
   }, [coinPresets, onCoinChange]);
@@ -13,11 +14,13 @@ const CoinSelector = ({ coinPresets, selectedCoin, onCoinChange }) => {
   // Save selected coin to localStorage whenever it changes
   useEffect(() => {
     if (selectedCoin) {
+      console.log('Saving selected coin:', selectedCoin);
       localStorage.setItem('cryptominer_selected_coin', selectedCoin);
     }
   }, [selectedCoin]);
 
   const handleCoinChange = (coin) => {
+    console.log('Coin changed to:', coin);
     onCoinChange(coin);
   };
 
