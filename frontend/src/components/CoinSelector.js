@@ -1,6 +1,26 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 
 const CoinSelector = ({ coinPresets, selectedCoin, onCoinChange }) => {
+  
+  // Load selected coin from localStorage on component mount
+  useEffect(() => {
+    const savedCoin = localStorage.getItem('cryptominer_selected_coin');
+    if (savedCoin && coinPresets && coinPresets[savedCoin]) {
+      onCoinChange(savedCoin);
+    }
+  }, [coinPresets, onCoinChange]);
+
+  // Save selected coin to localStorage whenever it changes
+  useEffect(() => {
+    if (selectedCoin) {
+      localStorage.setItem('cryptominer_selected_coin', selectedCoin);
+    }
+  }, [selectedCoin]);
+
+  const handleCoinChange = (coin) => {
+    onCoinChange(coin);
+  };
+
   const getCoinIcon = (symbol) => {
     const icons = {
       'LTC': '₿',
