@@ -8,7 +8,7 @@ import json
 import time
 
 def test_mining():
-    backend_url = "https://72416a3e-b7a8-4313-a65e-1e93358dc495.preview.emergentagent.com"
+    backend_url = "https://113c4522-c6a3-4def-b0b5-d97ad7e0f3d8.preview.emergentagent.com"
     
     print("⛏️ Testing Mining Functionality")
     print("=" * 40)
