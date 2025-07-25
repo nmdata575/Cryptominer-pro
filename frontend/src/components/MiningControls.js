@@ -7,6 +7,38 @@ const MiningControls = ({ config, onConfigChange, isMining, onStart, onStop }) =
 
   const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:8001';
 
+  // Load mining controls configuration from localStorage on component mount
+  useEffect(() => {
+    const savedConfig = localStorage.getItem('cryptominer_controls_config');
+    if (savedConfig) {
+      try {
+        const parsedConfig = JSON.parse(savedConfig);
+        // Merge saved config with current config, prioritizing saved values
+        onConfigChange(prev => ({
+          ...prev,
+          ...parsedConfig
+        }));
+      } catch (error) {
+        console.error('Error loading saved mining controls configuration:', error);
+      }
+    }
+  }, []);
+
+  // Save mining controls configuration to localStorage whenever it changes
+  useEffect(() => {
+    const configToSave = {
+      threads: config.threads,
+      intensity: config.intensity,
+      ai_enabled: config.ai_enabled,
+      auto_optimize: config.auto_optimize,
+      auto_thread_detection: config.auto_thread_detection,
+      thread_profile: config.thread_profile
+    };
+    
+    localStorage.setItem('cryptominer_controls_config', JSON.stringify(configToSave));
+  }, [config.threads, config.intensity, config.ai_enabled, config.auto_optimize, 
+      config.auto_thread_detection, config.thread_profile]);
+
   useEffect(() => {
     fetchCpuInfo();
   }, []);
