@@ -14,6 +14,7 @@ const WalletConfig = ({ config, onConfigChange, selectedCoin, coinPresets, isMin
     if (savedConfig) {
       try {
         const parsedConfig = JSON.parse(savedConfig);
+        console.log('Loading saved wallet config:', parsedConfig);
         // Merge saved config with current config, prioritizing saved values
         onConfigChange(prev => ({
           ...prev,
@@ -23,24 +24,28 @@ const WalletConfig = ({ config, onConfigChange, selectedCoin, coinPresets, isMin
         console.error('Error loading saved wallet configuration:', error);
       }
     }
-  }, []);
+  }, [onConfigChange]);
 
   // Save configuration to localStorage whenever it changes
   useEffect(() => {
-    const configToSave = {
-      mode: config.mode,
-      wallet_address: config.wallet_address,
-      pool_username: config.pool_username,
-      pool_password: config.pool_password,
-      custom_pool_address: config.custom_pool_address,
-      custom_pool_port: config.custom_pool_port,
-      custom_rpc_host: config.custom_rpc_host,
-      custom_rpc_port: config.custom_rpc_port,
-      custom_rpc_username: config.custom_rpc_username,
-      custom_rpc_password: config.custom_rpc_password
-    };
-    
-    localStorage.setItem('cryptominer_wallet_config', JSON.stringify(configToSave));
+    // Only save if we have meaningful data
+    if (config.mode || config.wallet_address || config.pool_username) {
+      const configToSave = {
+        mode: config.mode,
+        wallet_address: config.wallet_address,
+        pool_username: config.pool_username,
+        pool_password: config.pool_password,
+        custom_pool_address: config.custom_pool_address,
+        custom_pool_port: config.custom_pool_port,
+        custom_rpc_host: config.custom_rpc_host,
+        custom_rpc_port: config.custom_rpc_port,
+        custom_rpc_username: config.custom_rpc_username,
+        custom_rpc_password: config.custom_rpc_password
+      };
+      
+      console.log('Saving wallet config:', configToSave);
+      localStorage.setItem('cryptominer_wallet_config', JSON.stringify(configToSave));
+    }
   }, [config.mode, config.wallet_address, config.pool_username, config.pool_password, 
       config.custom_pool_address, config.custom_pool_port, config.custom_rpc_host, 
       config.custom_rpc_port, config.custom_rpc_username, config.custom_rpc_password]);
