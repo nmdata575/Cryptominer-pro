@@ -378,12 +378,12 @@ function App() {
               <CoinSelector
                 coinPresets={coinPresets}
                 selectedCoin={selectedCoin}
-                onCoinChange={setSelectedCoin}
+                onCoinChange={handleCoinChange}
               />
               
               <WalletConfig
                 config={miningConfig}
-                onConfigChange={setMiningConfig}
+                onConfigChange={handleConfigChange}
                 selectedCoin={selectedCoin}
                 coinPresets={coinPresets}
                 isMining={miningStatus.is_mining}
@@ -391,7 +391,7 @@ function App() {
               
               <MiningControls
                 config={miningConfig}
-                onConfigChange={setMiningConfig}
+                onConfigChange={handleConfigChange}
                 isMining={miningStatus.is_mining}
                 onStart={startMining}
                 onStop={stopMining}
