@@ -438,7 +438,7 @@ data_persistence:
     implemented: true
     working: false
     file: "frontend/src/components/WalletConfig.js"
-    stuck_count: 1
+    stuck_count: 2
     priority: "high"
     needs_retesting: false
     status_history:
@@ -448,12 +448,15 @@ data_persistence:
       - working: false
         agent: "testing"
         comment: "❌ FAILED - Wallet address persistence not working correctly. LocalStorage shows empty wallet_address field after page refresh. The persistence logic exists but data is being reset to empty values. Pool configuration (username, password, custom settings) also not persisting properly."
+      - working: false
+        agent: "testing"
+        comment: "❌ CRITICAL ISSUE IDENTIFIED - Persistence system has a fundamental flaw. Console logs show: 'Loading saved wallet config: {wallet_address: LTC1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4}' but immediately followed by 'Saving wallet config: {wallet_address: }'. The loaded data is being overwritten by empty values immediately after loading. The useEffect dependency arrays and callback functions are causing the saved data to be cleared on every render cycle."
 
   - task: "Mining Controls Persistence"
     implemented: true
     working: false
     file: "frontend/src/components/MiningControls.js"
-    stuck_count: 1
+    stuck_count: 2
     priority: "high"
     needs_retesting: false
     status_history:
@@ -463,12 +466,15 @@ data_persistence:
       - working: false
         agent: "testing"
         comment: "❌ FAILED - Mining controls persistence partially working. AI optimization settings (ai_enabled: true, auto_optimize: true) persist correctly, but intensity slider resets to default value (1.0) instead of saved value (0.8). Thread count and other settings persist correctly."
+      - working: false
+        agent: "testing"
+        comment: "❌ CRITICAL ISSUE IDENTIFIED - Same fundamental flaw as wallet persistence. Console logs show: 'Loading saved mining controls config: {threads: 6, intensity: 0.8, ai_enabled: true, auto_optimize: true, auto_thread_detection: false}' but immediately followed by 'Saving mining controls config: {threads: 4, intensity: 1, ai_enabled: true, auto_optimize: true, auto_thread_detection: true}'. The loaded values are being overwritten by default values immediately after loading due to useEffect dependency issues."
 
   - task: "Selected Coin Persistence"
     implemented: true
     working: false
     file: "frontend/src/components/CoinSelector.js"
-    stuck_count: 1
+    stuck_count: 2
     priority: "high"
     needs_retesting: false
     status_history:
@@ -478,6 +484,9 @@ data_persistence:
       - working: false
         agent: "testing"
         comment: "❌ FAILED - Selected coin persistence not working. LocalStorage shows 'litecoin' as selected coin even after selecting Dogecoin. The coin selection UI shows Dogecoin selected before refresh but reverts to Litecoin after refresh, indicating persistence logic is not properly saving/loading the selected coin."
+      - working: false
+        agent: "testing"
+        comment: "❌ ROOT CAUSE IDENTIFIED - The coin persistence has the same issue. Console shows 'Loading saved coin: litecoin' but the coin selection is being overridden by default state initialization. The persistence logic loads the data but the component state management is not properly handling the loaded values, causing them to be overwritten by initial state values."
 
 # REMOTE CONNECTIVITY TESTING STATUS
 remote_connectivity:
