@@ -397,10 +397,16 @@ metadata:
   run_ui: false
 
 test_plan:
-  current_focus: []
+  current_focus:
+    - "Wallet Address Persistence"
+    - "Mining Controls Persistence"
+    - "Selected Coin Persistence"
   stuck_tasks:
     - "Mining Controls (Start/Stop)"
     - "Frontend-Backend Integration"
+    - "Wallet Address Persistence"
+    - "Mining Controls Persistence"
+    - "Selected Coin Persistence"
   test_all: false
   test_priority: "high_first"
 
