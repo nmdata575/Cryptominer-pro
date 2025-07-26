@@ -66,8 +66,11 @@ A professional-grade cryptocurrency mining application with real-time monitoring
 ### Quick Start (Recommended)
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/cryptominer-pro.git
-cd cryptominer-pro
+git clone https://github.com/nmdata575/ai-cm.git
+cd ai-cm
+
+# Switch to release branch
+git checkout release-2.03
 
 # Run the modern installation script
 chmod +x scripts/install-modern.sh
