@@ -1,11 +1,10 @@
 /**
- * Mining Engine - Node.js Implementation
- * Handles Scrypt mining operations
+ * Real Mining Engine - Node.js Implementation
+ * Handles actual Scrypt mining operations with pool communication
  */
 
 const crypto = require('crypto');
-const CryptoJS = require('crypto-js');
-const { Worker } = require('worker_threads');
+const scrypt = require('scrypt-js');
 const EventEmitter = require('events');
 const net = require('net');
 const axios = require('axios');
