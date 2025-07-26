@@ -239,6 +239,21 @@ backend:
         agent: "testing"
         comment: "✅ PASSED - Comprehensive Node.js backend testing completed with EXCELLENT results (91.7% success rate, 11/12 tests passed). All core API endpoints working perfectly including health check (Node.js v20.19.4), system stats, CPU info, coin presets, and mining status. Wallet validation achieved 100% success rate with all cryptocurrency formats. Mining functionality works flawlessly with complete start/stop cycle. AI insights fully functional. Remote connectivity achieved 100% success with all 5 endpoints ready for Android app integration. Error handling working properly. Only WebSocket connection failed due to expected production environment limitations. The Node.js backend conversion is highly successful and production-ready."
 
+  - task: "Express.js Rate Limiting Fix for Mining Operations"
+    implemented: true
+    working: true
+    file: "backend-nodejs/server.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: "NA"
+        agent: "testing"
+        comment: "Initial state - needs testing to verify 429 rate limiting error resolution for mining start endpoint"
+      - working: true
+        agent: "testing"
+        comment: "✅ PASSED - Rate limiting fix successfully verified with 100% success rate (9/9 tests passed). CRITICAL ISSUE RESOLVED: No 429 'Too Many Requests' errors detected in comprehensive testing including single requests, multiple rapid requests (5 consecutive), and different mining modes (solo/pool). Configuration confirmed: Rate limit increased from 100 to 1000 requests per 15 minutes, app.set('trust proxy', 1) enabled for Kubernetes environment, health check and system stats endpoints correctly excluded from rate limiting. Mining start endpoint (/api/mining/start) now fully operational with both solo mining (wallet: LTC1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4) and pool mining working without rate limiting issues. The Express.js rate limiting configuration changes have successfully resolved the user-reported 429 error."
+
 frontend:
   - task: "Main Dashboard Loading and Layout"
     implemented: true
