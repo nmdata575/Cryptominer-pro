@@ -285,19 +285,19 @@ const SystemMonitoring = ({ systemMetrics }) => {
               <div className="grid grid-cols-1 gap-3 text-sm">
                 <div className="flex justify-between">
                   <span className="text-gray-400">Total RAM:</span>
-                  <span className="text-white font-medium">{formatBytes(systemMetrics.memory.total)}</span>
+                  <span className="text-white font-medium">{formatBytes(systemMetrics.memory?.total || 0)}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-400">Used:</span>
-                  <span className="text-crypto-red font-medium">{formatBytes(systemMetrics.memory.used)}</span>
+                  <span className="text-crypto-red font-medium">{formatBytes(systemMetrics.memory?.used || 0)}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-400">Available:</span>
-                  <span className="text-crypto-green font-medium">{formatBytes(systemMetrics.memory.available)}</span>
+                  <span className="text-crypto-green font-medium">{formatBytes(systemMetrics.memory?.available || 0)}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-400">Free:</span>
-                  <span className="text-white font-medium">{formatBytes(systemMetrics.memory.total - systemMetrics.memory.used)}</span>
+                  <span className="text-white font-medium">{formatBytes((systemMetrics.memory?.total || 0) - (systemMetrics.memory?.used || 0))}</span>
                 </div>
               </div>
             )}
