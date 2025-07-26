@@ -277,7 +277,7 @@ function App() {
         websocket.close();
       }
     };
-  }, [connectWebSocket]);
+  }, [connectWebSocket, websocket]);
 
   // Periodic updates for non-WebSocket data
   useEffect(() => {
