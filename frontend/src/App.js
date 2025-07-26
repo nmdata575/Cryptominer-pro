@@ -270,16 +270,8 @@ function App() {
     fetchSystemStats();
     fetchAIInsights();
     
-    // Connect WebSocket
-    connectWebSocket();
-    
-    // Cleanup on unmount
-    return () => {
-      if (websocket) {
-        websocket.close();
-      }
-    };
-  }, [connectWebSocket, websocket]);
+    // Socket connection is handled separately
+  }, [fetchMiningStatus, fetchSystemStats, fetchAIInsights]);
 
   // Periodic updates for non-WebSocket data
   useEffect(() => {
