@@ -4,6 +4,20 @@
 
 A professional-grade cryptocurrency mining application with real-time monitoring, AI-driven optimization, and support for multiple Scrypt-based cryptocurrencies. **Now with enhanced CPU frequency detection and full Webpack 5 compatibility!**
 
+## 🎉 What's New in Version 2.1
+
+### ✅ **Critical Fixes Implemented:**
+- **🖥️ CPU Frequency Detection**: Fixed incorrect "2 MHz" readings → Now shows accurate **2.8 GHz** for ARM processors
+- **📦 Webpack 5 Compatibility**: Resolved all "Cannot find module 'crypto'" and Node.js polyfill errors
+- **🔧 CRACO Integration**: Seamless build system with automatic browser polyfills
+- **🚀 Enhanced Installation**: New `install-complete-v2.sh` script with bulletproof setup
+
+### 🛠️ **Technical Improvements:**
+- **ARM Processor Support**: Perfect compatibility with Neoverse-N1 and other ARM CPUs
+- **Container Optimization**: Enhanced detection for Docker/Kubernetes environments  
+- **Error-Free UI**: Zero console errors, professional mining dashboard experience
+- **Smart Frequency Display**: Intelligent GHz/MHz unit detection and formatting
+
 ![CryptoMiner Pro Dashboard](https://img.shields.io/badge/Status-Production%20Ready-brightgreen)
 ![Node.js](https://img.shields.io/badge/Node.js-v20.19.4-green)
 ![React](https://img.shields.io/badge/React-18.x-blue)
