@@ -31,7 +31,10 @@ class SystemMonitor {
           count: cpu.count,
           cores: cpu.cores,
           model: cpu.model,
-          speed: cpu.speed
+          speed: cpu.speed,
+          maxSpeed: cpu.maxSpeed,
+          architecture: cpu.architecture,
+          virtualization: cpu.virtualization
         },
         memory: {
           total: memory.total,
@@ -48,6 +51,7 @@ class SystemMonitor {
         },
         uptime: os.uptime(),
         platform: os.platform(),
+        node_version: process.version,
         hostname: os.hostname(),
         loadavg: os.loadavg()
       };
