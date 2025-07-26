@@ -181,11 +181,15 @@ FAST_REFRESH=true
 
 ## 📚 Documentation
 
-- **[Installation Guide](docs/INSTALLATION.md)**: Detailed setup instructions
-- **[API Documentation](docs/API.md)**: Complete API reference
-- **[Custom Coins Guide](docs/CUSTOM_COINS_GUIDE.md)**: Adding custom cryptocurrencies
-- **[Remote API Guide](docs/REMOTE_API_GUIDE.md)**: Mobile app integration
-- **[Troubleshooting](docs/TROUBLESHOOTING.md)**: Common issues and solutions
+- **[Installation Guide](INSTALLATION_GITHUB.md)**: Comprehensive setup instructions with troubleshooting
+- **[Version 2.1 Summary](VERSION_2.1_SUMMARY.md)**: Complete overview of latest fixes and improvements  
+- **[Complete Feature List](FEATURES_V2.1.md)**: Detailed breakdown of all capabilities
+- **[Version Changelog](CHANGELOG_V2.1.md)**: Technical details of v2.1 improvements
+- **[CPU Frequency Fix](CPU_FREQUENCY_FINAL_FIX.md)**: Documentation of ARM processor compatibility fixes
+- **[API Documentation](docs/API.md)**: Complete API reference (if available)
+- **[Custom Coins Guide](docs/CUSTOM_COINS_GUIDE.md)**: Adding custom cryptocurrencies (if available)
+- **[Remote API Guide](docs/REMOTE_API_GUIDE.md)**: Mobile app integration (if available)
+- **[Troubleshooting Guide](INSTALLATION_GITHUB.md#troubleshooting)**: Common issues and solutions
 
 ## 🚦 Usage
 
