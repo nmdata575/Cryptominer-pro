@@ -132,9 +132,15 @@ class MiningEngine extends EventEmitter {
       await this.stopWorkers();
 
       // Disconnect from pool
-      if (this.poolConnection) {
+      if (this.poolConnection && this.poolConnection.destroy) {
         this.poolConnection.destroy();
-        this.poolConnection = null;
+      }
+      this.poolConnection = null;
+      
+      // Clean up test mode
+      if (this.testModeInterval) {
+        clearInterval(this.testModeInterval);
+        this.testModeInterval = null;
       }
 
       // Stop monitoring
