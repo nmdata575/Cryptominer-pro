@@ -9,7 +9,9 @@ A professional-grade cryptocurrency mining application with real-time monitoring
 ![React](https://img.shields.io/badge/React-18.x-blue)
 ![MongoDB](https://img.shields.io/badge/MongoDB-7.x-green)
 ![GitHub](https://img.shields.io/badge/GitHub-nmdata575%2Fai--cm-blue)
-![Release](https://img.shields.io/badge/Release-v2.03-orange)
+![Release](https://img.shields.io/badge/Release-v2.1-orange)
+![CPU Fix](https://img.shields.io/badge/CPU%20Frequency-Fixed-success)
+![Webpack](https://img.shields.io/badge/Webpack%205-Compatible-success)
 
 ## 🚀 Features
 
