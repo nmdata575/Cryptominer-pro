@@ -1,6 +1,9 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
+import CustomCoinManager from './CustomCoinManager';
 
 const CoinSelector = ({ coinPresets, selectedCoin, onCoinChange }) => {
+  const [showCustomManager, setShowCustomManager] = useState(false);
+  const [customCoins, setCustomCoins] = useState([]);
   
   // Load selected coin from localStorage on component mount
   useEffect(() => {
@@ -19,9 +22,25 @@ const CoinSelector = ({ coinPresets, selectedCoin, onCoinChange }) => {
     }
   }, [selectedCoin]);
 
+  // Extract custom coins from coinPresets
+  useEffect(() => {
+    if (coinPresets) {
+      const customs = Object.entries(coinPresets)
+        .filter(([_, coin]) => coin.is_custom)
+        .map(([id, coin]) => ({ id, ...coin }));
+      setCustomCoins(customs);
+    }
+  }, [coinPresets]);
+
   const handleCoinChange = (coin) => {
     console.log('Coin changed to:', coin);
     onCoinChange(coin);
+  };
+
+  const handleCustomCoinAdded = () => {
+    // This will trigger a refresh of coin presets in the parent component
+    setShowCustomManager(false);
+    // You might want to call a parent function to refresh coin presets
   };
 
   const getCoinIcon = (symbol) => {
@@ -56,36 +75,86 @@ const CoinSelector = ({ coinPresets, selectedCoin, onCoinChange }) => {
 
   return (
     <div className="mining-card">
-      <h3 className="text-xl font-bold text-white mb-4">Select Cryptocurrency</h3>
-      
-      <div className="space-y-3">
-        {Object.entries(coinPresets).map(([key, coin]) => (
-          <div
-            key={key}
-            className={`coin-option ${selectedCoin === key ? 'selected' : ''}`}
-            onClick={() => handleCoinChange(key)}
-          >
-            <div className={`coin-icon bg-gradient-to-br ${getCoinColor(coin.symbol)}`}>
-              {getCoinIcon(coin.symbol)}
-            </div>
-            
-            <div className="flex-1">
-              <div className="flex items-center justify-between">
-                <div>
-                  <div className="font-semibold text-white">{coin.name}</div>
-                  <div className="text-sm text-gray-300">{coin.symbol}</div>
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-xl font-bold text-white">Select Cryptocurrency</h3>
+        <button
+          onClick={() => setShowCustomManager(true)}
+          className="px-3 py-1 bg-purple-500 text-white rounded text-sm hover:bg-purple-600 transition-colors"
+        >
+          Manage Custom Coins
+        </button>
+      </div>
+
+      {/* Built-in Coins */}
+      <div className="mb-6">
+        <h4 className="text-md font-medium text-gray-300 mb-3">Built-in Coins</h4>
+        <div className="space-y-3">
+          {Object.entries(coinPresets)
+            .filter(([_, coin]) => !coin.is_custom)
+            .map(([key, coin]) => (
+              <div
+                key={key}
+                className={`coin-option ${selectedCoin === key ? 'selected' : ''}`}
+                onClick={() => handleCoinChange(key)}
+              >
+                <div className={`coin-icon bg-gradient-to-br ${getCoinColor(coin.symbol)}`}>
+                  {getCoinIcon(coin.symbol)}
                 </div>
-                <div className="text-right">
-                  <div className="text-sm font-medium text-crypto-gold">
-                    {coin.block_reward} {coin.symbol}
+                
+                <div className="flex-1">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <div className="font-semibold text-white">{coin.name}</div>
+                      <div className="text-sm text-gray-300">{coin.symbol}</div>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-sm font-medium text-crypto-gold">
+                        {coin.block_reward} {coin.symbol}
+                      </div>
+                      <div className="text-xs text-gray-400">Block Reward</div>
+                    </div>
                   </div>
-                  <div className="text-xs text-gray-400">Block Reward</div>
                 </div>
               </div>
-            </div>
-          </div>
-        ))}
+            ))}
+        </div>
       </div>
+
+      {/* Custom Coins */}
+      {customCoins.length > 0 && (
+        <div className="mb-6">
+          <h4 className="text-md font-medium text-gray-300 mb-3">Custom Coins ({customCoins.length})</h4>
+          <div className="space-y-3">
+            {customCoins.map((coin) => (
+              <div
+                key={coin.id}
+                className={`coin-option ${selectedCoin === coin.id ? 'selected' : ''}`}
+                onClick={() => handleCoinChange(coin.id)}
+              >
+                <div className="coin-icon bg-gradient-to-br from-purple-500 to-pink-500">
+                  {coin.symbol}
+                </div>
+                
+                <div className="flex-1">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <div className="font-semibold text-white">{coin.name}</div>
+                      <div className="text-sm text-gray-300">{coin.symbol}</div>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-sm font-medium text-crypto-gold">
+                        {coin.block_reward} {coin.symbol}
+                      </div>
+                      <div className="text-xs text-gray-400">Block Reward</div>
+                      <div className="text-xs text-purple-400 font-medium">CUSTOM</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Coin Details */}
       {selectedCoin && coinPresets[selectedCoin] && (
@@ -133,10 +202,32 @@ const CoinSelector = ({ coinPresets, selectedCoin, onCoinChange }) => {
           <div className="text-blue-400 text-xs">
             <p className="font-medium mb-1">Mining Tip:</p>
             <p>Different coins have varying difficulty levels and profitability. 
+               Custom coins allow you to mine any Scrypt-based cryptocurrency.
                The AI system will help optimize your selection based on current market conditions.</p>
           </div>
         </div>
       </div>
+
+      {/* Custom Coin Manager Modal */}
+      {showCustomManager && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-6xl max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold">Custom Coin Manager</h3>
+              <button
+                onClick={() => setShowCustomManager(false)}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            
+            <CustomCoinManager onCoinAdded={handleCustomCoinAdded} />
+          </div>
+        </div>
+      )}
     </div>
   );
 };
