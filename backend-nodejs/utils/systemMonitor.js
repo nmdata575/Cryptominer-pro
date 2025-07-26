@@ -247,6 +247,33 @@ class SystemMonitor {
       const cpuCount = os.cpus().length;
       const physicalCores = cpuInfo.physicalCores || cpuCount;
       const logicalCores = cpuCount;
+      const osCpus = os.cpus();
+      
+      // Enhanced CPU frequency detection (same logic as getCPUUsage)
+      let cpuSpeed = 0;
+      let maxSpeed = 0;
+      
+      // Try to get frequency from multiple sources
+      if (cpuInfo.speed && cpuInfo.speed > 0) {
+        cpuSpeed = cpuInfo.speed;
+      } else if (cpuInfo.speedMax && cpuInfo.speedMax > 0) {
+        cpuSpeed = cpuInfo.speedMax;
+      } else if (osCpus.length > 0 && osCpus[0].speed) {
+        // os.cpus() returns speed in MHz, convert to GHz
+        cpuSpeed = osCpus[0].speed / 1000;
+      } else {
+        // For ARM/container environments, provide estimated frequency
+        cpuSpeed = this.estimateCPUFrequency(cpuInfo);
+      }
+      
+      // Get max frequency
+      if (cpuInfo.speedMax && cpuInfo.speedMax > 0) {
+        maxSpeed = cpuInfo.speedMax;
+      } else if (osCpus.length > 0 && osCpus[0].speed) {
+        maxSpeed = osCpus[0].speed / 1000;
+      } else {
+        maxSpeed = cpuSpeed;
+      }
       
       // Detect container environment
       const isKubernetes = !!process.env.KUBERNETES_SERVICE_HOST;
@@ -281,7 +308,8 @@ class SystemMonitor {
       
       // Enhanced performance recommendations
       const recommendations = [
-        `🖥️ Detected ${physicalCores} CPU cores (${cpuInfo.manufacturer || 'Unknown'} ${cpuInfo.brand || 'processor'})`,
+        `🖥️ Detected ${physicalCores} CPU cores (${this.formatCPUModel(cpuInfo)})`,
+        `⚡ CPU Frequency: ${cpuSpeed.toFixed(1)} GHz (Max: ${maxSpeed.toFixed(1)} GHz)`,
         isContainer ? 
           `🐳 Running in ${isKubernetes ? 'Kubernetes' : 'container'} environment with allocated CPU resources` :
           `💻 Running on native system`,
@@ -310,11 +338,11 @@ class SystemMonitor {
         brand: cpuInfo.brand || 'Unknown',
         family: cpuInfo.family || 'Unknown',
         model: cpuInfo.model || 'Unknown',
-        speed: cpuInfo.speed || 0,
+        speed: cpuSpeed, // Use enhanced detection
         frequency: {
           min: cpuInfo.speedMin || 0,
-          max: cpuInfo.speedMax || 0,
-          current: cpuInfo.speed || 0
+          max: maxSpeed, // Use enhanced detection
+          current: cpuSpeed // Use enhanced detection
         },
         cache: {
           l1d: cpuInfo.cache?.l1d || 0,
@@ -336,8 +364,17 @@ class SystemMonitor {
       
       // Enhanced fallback with container detection
       const cpuCount = os.cpus().length;
+      const osCpus = os.cpus();
       const isKubernetes = !!process.env.KUBERNETES_SERVICE_HOST;
       const isContainer = isKubernetes || require('fs').existsSync('/.dockerenv');
+      
+      // Fallback frequency detection
+      let fallbackSpeed = 2.0; // Default fallback
+      if (osCpus.length > 0 && osCpus[0].speed) {
+        fallbackSpeed = osCpus[0].speed / 1000; // Convert MHz to GHz
+      } else if (process.arch === 'arm64' || process.arch === 'aarch64') {
+        fallbackSpeed = 2.8; // ARM typical frequency
+      }
       
       return {
         cores: {
@@ -356,8 +393,12 @@ class SystemMonitor {
         brand: 'Unknown',
         family: 'Unknown',
         model: 'Unknown',
-        speed: 0,
-        frequency: { min: 0, max: 0, current: 0 },
+        speed: fallbackSpeed, // Use fallback detection
+        frequency: { 
+          min: 0, 
+          max: fallbackSpeed, // Use fallback detection
+          current: fallbackSpeed // Use fallback detection
+        },
         cache: { l1d: 0, l1i: 0, l2: 0, l3: 0 },
         recommended_threads: {
           conservative: Math.max(1, cpuCount - 2),
@@ -372,6 +413,7 @@ class SystemMonitor {
         },
         recommendations: [
           `🖥️ Detected ${cpuCount} CPU cores`,
+          `⚡ CPU Frequency: ${fallbackSpeed.toFixed(1)} GHz (estimated)`,
           isContainer ? '🐳 Running in container environment' : '💻 Running on native system',
           'Unable to get detailed CPU information',
           'Use system monitoring to optimize mining performance'
