@@ -112,6 +112,76 @@ app.get('/api/system/cpu-info', async (req, res) => {
   }
 });
 
+// System environment info endpoint
+app.get('/api/system/environment', async (req, res) => {
+  try {
+    const fs = require('fs');
+    const isKubernetes = !!process.env.KUBERNETES_SERVICE_HOST;
+    const isContainer = isKubernetes || fs.existsSync('/.dockerenv');
+    
+    // Get CPU information
+    const cpuInfo = await systemMonitor.getCPUInfo();
+    const cpuCount = require('os').cpus().length;
+    
+    // Read container limits if available
+    let cpuQuota = null;
+    let memoryLimit = null;
+    
+    try {
+      if (fs.existsSync('/sys/fs/cgroup/cpu.max')) {
+        cpuQuota = fs.readFileSync('/sys/fs/cgroup/cpu.max', 'utf8').trim();
+      }
+      if (fs.existsSync('/sys/fs/cgroup/memory.max')) {
+        const limit = fs.readFileSync('/sys/fs/cgroup/memory.max', 'utf8').trim();
+        memoryLimit = limit !== 'max' ? parseInt(limit) : null;
+      }
+    } catch (e) {
+      // Ignore errors reading cgroup files
+    }
+    
+    const environment = {
+      deployment_type: isKubernetes ? 'kubernetes' : isContainer ? 'container' : 'native',
+      container_info: {
+        is_containerized: isContainer,
+        kubernetes: isKubernetes,
+        docker: fs.existsSync('/.dockerenv'),
+      },
+      cpu_allocation: {
+        allocated_cores: cpuCount,
+        physical_cores_detected: cpuInfo.cores.physical,
+        logical_cores_detected: cpuInfo.cores.logical,
+        cpu_quota: cpuQuota,
+        optimal_mining_threads: cpuInfo.optimal_mining_config?.max_safe_threads || cpuCount - 1
+      },
+      memory_info: {
+        total_available: require('os').totalmem(),
+        container_limit: memoryLimit,
+        is_limited: !!memoryLimit
+      },
+      performance_context: {
+        environment_optimized: isContainer,
+        recommended_profile: cpuInfo.optimal_mining_config?.recommended_profile || 'standard',
+        max_safe_threads: cpuInfo.optimal_mining_config?.max_safe_threads || cpuCount - 1,
+        performance_notes: [
+          isContainer ? 
+            `Running in ${isKubernetes ? 'Kubernetes' : 'Docker'} container with ${cpuCount} CPU cores allocated` :
+            `Running on native system with ${cpuCount} CPU cores`,
+          `Optimal mining configuration: ${cpuInfo.optimal_mining_config?.max_safe_threads || cpuCount - 1} threads`,
+          cpuCount >= 8 ? 
+            'Excellent CPU resources available for mining operations' :
+            'Limited CPU resources - use conservative mining settings for system stability'
+        ]
+      },
+      mining_recommendations: cpuInfo.mining_profiles || {}
+    };
+    
+    res.json(environment);
+  } catch (error) {
+    console.error('Environment info error:', error);
+    res.status(500).json({ error: 'Failed to get environment info' });
+  }
+});
+
 // Coin presets endpoint
 app.get('/api/coins/presets', async (req, res) => {
   try {
