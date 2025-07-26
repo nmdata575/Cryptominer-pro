@@ -599,3 +599,11 @@ async function startServer() {
 
 // Start the server
 startServer();
+
+console.log(`
+🚀 CryptoMiner Pro Backend (Node.js) Started Successfully!
+📡 Server: http://${HOST}:${PORT}
+🔌 WebSocket: ws://${HOST}:${PORT}
+💾 Database: ${process.env.MONGO_URL || 'mongodb://localhost:27017/cryptominer'}
+🕐 Started: ${new Date().toISOString()}
+`);
