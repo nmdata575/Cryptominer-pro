@@ -33,9 +33,9 @@
     "lodash": "^4.17.21",
     "async": "^3.2.4",
     "big.js": "^6.2.1",
-    "ml-regression": "^2.0.1",
+    "ml-regression": "^1.0.0",
     "ml-matrix": "^6.10.4",
-    "danfojs-node": "^1.1.2"
+    "simple-statistics": "^7.8.2"
   },
   "devDependencies": {
     "nodemon": "^3.0.1",
