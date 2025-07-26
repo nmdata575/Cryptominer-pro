@@ -201,12 +201,25 @@ const SystemMonitoring = ({ systemMetrics }) => {
                     <>
                       <div>
                         <span className="text-gray-400">Max Frequency:</span>
-                        <span className="text-white font-medium ml-2">{Math.round(cpuInfo.frequency.max)} MHz</span>
+                        <span className="text-white font-medium ml-2">
+                          {cpuInfo.frequency.max >= 1 
+                            ? `${cpuInfo.frequency.max.toFixed(1)} GHz`
+                            : cpuInfo.frequency.max > 0 
+                              ? `${Math.round(cpuInfo.frequency.max * 1000)} MHz`
+                              : 'Unknown'
+                          }
+                        </span>
                       </div>
                       <div>
                         <span className="text-gray-400">Current:</span>
                         <span className="text-white font-medium ml-2">
-                          {cpuInfo.frequency.current ? Math.round(cpuInfo.frequency.current) + ' MHz' : 'Variable'}
+                          {cpuInfo.frequency.current 
+                            ? cpuInfo.frequency.current >= 1
+                              ? `${cpuInfo.frequency.current.toFixed(1)} GHz`
+                              : cpuInfo.frequency.current > 0
+                                ? `${Math.round(cpuInfo.frequency.current * 1000)} MHz`
+                                : 'Variable'
+                            : 'Variable'}
                         </span>
                       </div>
                     </>
