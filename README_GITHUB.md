@@ -1,8 +1,8 @@
 # CryptoMiner Pro
 
-**AI-Powered Cryptocurrency Mining Dashboard**
+**AI-Powered Cryptocurrency Mining Dashboard - Version 2.1**
 
-A professional-grade cryptocurrency mining application with real-time monitoring, AI-driven optimization, and support for multiple Scrypt-based cryptocurrencies.
+A professional-grade cryptocurrency mining application with real-time monitoring, AI-driven optimization, and support for multiple Scrypt-based cryptocurrencies. **Now with enhanced CPU frequency detection and full Webpack 5 compatibility!**
 
 ![CryptoMiner Pro Dashboard](https://img.shields.io/badge/Status-Production%20Ready-brightgreen)
 ![Node.js](https://img.shields.io/badge/Node.js-v20.19.4-green)
