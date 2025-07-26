@@ -17,7 +17,7 @@ import threading
 from datetime import datetime
 
 # Configuration
-BACKEND_URL = "https://bbefa2de-fefa-47ed-a347-6ce3fb26c4b1.preview.emergentagent.com/api"
+BACKEND_URL = "https://337dbf55-6395-4d2b-a739-f38dea0fde64.preview.emergentagent.com/api"
 WEBSOCKET_URL = "wss://84635953-2fa9-4a6c-a89b-23dbccf67eb9.preview.emergentagent.com"
 TIMEOUT = 10
 
