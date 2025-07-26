@@ -94,12 +94,24 @@ function App() {
         transports: ['websocket', 'polling'],
         timeout: 20000,
         reconnection: true,
-        reconnectionAttempts: 5,
-        reconnectionDelay: 3000
+        reconnectionAttempts: 3,
+        reconnectionDelay: 3000,
+        forceNew: true
       });
       
+      // Set a timeout for connection attempt
+      const connectionTimeout = setTimeout(() => {
+        if (connectionStatus === 'connecting') {
+          console.log('Socket.io connection timeout - falling back to HTTP polling');
+          setConnectionStatus('polling');
+          setErrorMessage('Real-time connection failed - using HTTP updates');
+          newSocket.disconnect();
+        }
+      }, 15000);
+      
       newSocket.on('connect', () => {
-        console.log('Socket.io connected');
+        console.log('Socket.io connected successfully');
+        clearTimeout(connectionTimeout);
         setConnectionStatus('connected');
         setErrorMessage('');
         setSocket(newSocket);
@@ -119,12 +131,14 @@ function App() {
       
       newSocket.on('disconnect', () => {
         console.log('Socket.io disconnected');
+        clearTimeout(connectionTimeout);
         setConnectionStatus('disconnected');
         setSocket(null);
       });
       
       newSocket.on('connect_error', (error) => {
         console.error('Socket.io connection error:', error);
+        clearTimeout(connectionTimeout);
         setConnectionStatus('error');
         setErrorMessage('Socket connection failed');
       });
@@ -134,7 +148,7 @@ function App() {
       setConnectionStatus('error');
       setErrorMessage('Failed to create socket connection');
     }
-  }, [socket]);
+  }, [socket, connectionStatus]);
 
   // Replace the useEffect that was using WebSocket
   useEffect(() => {
