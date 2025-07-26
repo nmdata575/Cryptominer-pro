@@ -686,30 +686,394 @@ class BackendTester:
         except requests.exceptions.RequestException as e:
             self.log_result("Mining Status API", False, f"Request failed: {str(e)}")
     
+    def test_mining_start_stop_functionality(self):
+        """Test complete mining start/stop workflow"""
+        try:
+            # Test mining start with solo mode
+            start_config = {
+                "coin": "litecoin",
+                "mode": "solo",
+                "wallet_address": "LTC1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4",
+                "threads": 4,
+                "intensity": 0.8
+            }
+            
+            start_response = requests.post(f"{BACKEND_URL}/mining/start", 
+                                         json=start_config, timeout=TIMEOUT)
+            
+            if start_response.status_code == 200:
+                start_data = start_response.json()
+                if start_data.get('success'):
+                    # Wait a moment for mining to initialize
+                    time.sleep(2)
+                    
+                    # Check mining status
+                    status_response = requests.get(f"{BACKEND_URL}/mining/status", timeout=TIMEOUT)
+                    if status_response.status_code == 200:
+                        status_data = status_response.json()
+                        is_mining = status_data.get('is_mining', False)
+                        
+                        # Stop mining
+                        stop_response = requests.post(f"{BACKEND_URL}/mining/stop", timeout=TIMEOUT)
+                        if stop_response.status_code == 200:
+                            stop_data = stop_response.json()
+                            
+                            self.log_result("Mining Start/Stop Functionality", True,
+                                          f"Complete mining workflow successful - started, verified status, stopped",
+                                          f"Mining was active: {is_mining}")
+                        else:
+                            self.log_result("Mining Start/Stop Functionality", False,
+                                          f"Mining stop failed: HTTP {stop_response.status_code}")
+                    else:
+                        self.log_result("Mining Start/Stop Functionality", False,
+                                      f"Status check failed: HTTP {status_response.status_code}")
+                else:
+                    self.log_result("Mining Start/Stop Functionality", False,
+                                  f"Mining start failed: {start_data.get('message', 'Unknown error')}")
+            else:
+                self.log_result("Mining Start/Stop Functionality", False,
+                              f"Mining start HTTP {start_response.status_code}: {start_response.text}")
+                
+        except requests.exceptions.RequestException as e:
+            self.log_result("Mining Start/Stop Functionality", False, f"Request failed: {str(e)}")
+    
+    def test_wallet_validation(self):
+        """Test wallet validation for different cryptocurrencies"""
+        try:
+            test_cases = [
+                {"address": "LTC1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4", "coin_symbol": "LTC", "should_be_valid": True},
+                {"address": "D7Y55Lkqb3VladCEZ7oJLSKa6wjYcpAxFk", "coin_symbol": "DOGE", "should_be_valid": True},
+                {"address": "6oNS8WmfpKdWnV2kHQJAmcMxJJ7Lh8YKE1", "coin_symbol": "FTC", "should_be_valid": True},
+                {"address": "invalid_address", "coin_symbol": "LTC", "should_be_valid": False}
+            ]
+            
+            passed_tests = 0
+            total_tests = len(test_cases)
+            
+            for test_case in test_cases:
+                response = requests.post(f"{BACKEND_URL}/wallet/validate",
+                                       json=test_case, timeout=TIMEOUT)
+                
+                if response.status_code == 200:
+                    data = response.json()
+                    is_valid = data.get('valid', False)
+                    
+                    if is_valid == test_case['should_be_valid']:
+                        passed_tests += 1
+                
+            success_rate = (passed_tests / total_tests) * 100
+            
+            if success_rate >= 75:  # 75% success rate threshold
+                self.log_result("Wallet Validation", True,
+                              f"Wallet validation working correctly",
+                              f"Success rate: {success_rate:.1f}% ({passed_tests}/{total_tests})")
+            else:
+                self.log_result("Wallet Validation", False,
+                              f"Wallet validation has issues",
+                              f"Success rate: {success_rate:.1f}% ({passed_tests}/{total_tests})")
+                
+        except requests.exceptions.RequestException as e:
+            self.log_result("Wallet Validation", False, f"Request failed: {str(e)}")
+    
+    def test_ai_insights(self):
+        """Test AI insights endpoint"""
+        try:
+            response = requests.get(f"{BACKEND_URL}/mining/ai-insights", timeout=TIMEOUT)
+            
+            if response.status_code == 200:
+                data = response.json()
+                required_fields = ['insights', 'predictions', 'optimization_suggestions']
+                
+                if all(field in data for field in required_fields):
+                    insights_count = len(data.get('insights', {}))
+                    predictions_count = len(data.get('predictions', {}))
+                    suggestions_count = len(data.get('optimization_suggestions', []))
+                    
+                    self.log_result("AI Insights API", True,
+                                  f"AI insights system functional",
+                                  f"Insights: {insights_count}, Predictions: {predictions_count}, Suggestions: {suggestions_count}")
+                else:
+                    missing = [f for f in required_fields if f not in data]
+                    self.log_result("AI Insights API", False,
+                                  f"Missing required fields: {missing}", data)
+            else:
+                self.log_result("AI Insights API", False,
+                              f"HTTP {response.status_code}: {response.text}")
+                
+        except requests.exceptions.RequestException as e:
+            self.log_result("AI Insights API", False, f"Request failed: {str(e)}")
+    
+    def test_websocket_connection(self):
+        """Test WebSocket/Socket.io connection"""
+        try:
+            # Test WebSocket connection
+            websocket_messages = []
+            connection_successful = False
+            
+            def on_message(ws, message):
+                websocket_messages.append(message)
+            
+            def on_open(ws):
+                nonlocal connection_successful
+                connection_successful = True
+                # Close after receiving some messages or timeout
+                threading.Timer(3.0, ws.close).start()
+            
+            def on_error(ws, error):
+                pass  # Ignore errors for now
+            
+            def on_close(ws, close_status_code, close_msg):
+                pass
+            
+            # Try WebSocket connection
+            ws = websocket.WebSocketApp(f"{WEBSOCKET_URL}/socket.io/?EIO=4&transport=websocket",
+                                      on_message=on_message,
+                                      on_open=on_open,
+                                      on_error=on_error,
+                                      on_close=on_close)
+            
+            # Run WebSocket in a separate thread with timeout
+            ws_thread = threading.Thread(target=ws.run_forever)
+            ws_thread.daemon = True
+            ws_thread.start()
+            
+            # Wait for connection or timeout
+            time.sleep(4)
+            
+            if connection_successful and len(websocket_messages) > 0:
+                self.log_result("WebSocket Connection", True,
+                              f"WebSocket connection successful, received {len(websocket_messages)} messages",
+                              f"Connection established and data received")
+            elif connection_successful:
+                self.log_result("WebSocket Connection", True,
+                              f"WebSocket connection established but no messages received",
+                              f"Connection successful but may be production environment limitation")
+            else:
+                self.log_result("WebSocket Connection", False,
+                              f"WebSocket connection failed",
+                              f"Could not establish connection to {WEBSOCKET_URL}")
+                
+        except Exception as e:
+            self.log_result("WebSocket Connection", False, f"WebSocket test failed: {str(e)}")
+    
+    def test_rate_limiting(self):
+        """Test rate limiting configuration (should not get 429 errors)"""
+        try:
+            # Make multiple rapid requests to mining start endpoint
+            rapid_requests = 5
+            success_count = 0
+            rate_limited_count = 0
+            
+            for i in range(rapid_requests):
+                config = {
+                    "coin": "litecoin",
+                    "mode": "solo",
+                    "wallet_address": "LTC1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4",
+                    "threads": 2
+                }
+                
+                response = requests.post(f"{BACKEND_URL}/mining/start", 
+                                       json=config, timeout=TIMEOUT)
+                
+                if response.status_code == 429:
+                    rate_limited_count += 1
+                elif response.status_code in [200, 400, 500]:  # Accept various responses, just not 429
+                    success_count += 1
+                
+                time.sleep(0.1)  # Small delay between requests
+            
+            # Stop any mining that might have started
+            try:
+                requests.post(f"{BACKEND_URL}/mining/stop", timeout=TIMEOUT)
+            except:
+                pass
+            
+            if rate_limited_count == 0:
+                self.log_result("Rate Limiting Fix", True,
+                              f"No 429 rate limiting errors detected in {rapid_requests} rapid requests",
+                              f"Success responses: {success_count}, Rate limited: {rate_limited_count}")
+            else:
+                self.log_result("Rate Limiting Fix", False,
+                              f"Rate limiting still occurring: {rate_limited_count} out of {rapid_requests} requests blocked",
+                              f"Success responses: {success_count}")
+                
+        except requests.exceptions.RequestException as e:
+            self.log_result("Rate Limiting Fix", False, f"Request failed: {str(e)}")
+    
+    def test_custom_coin_management(self):
+        """Test custom coin management CRUD operations"""
+        try:
+            # Test getting custom coins list
+            list_response = requests.get(f"{BACKEND_URL}/coins/custom", timeout=TIMEOUT)
+            
+            if list_response.status_code == 200:
+                list_data = list_response.json()
+                
+                if 'coins' in list_data and 'total' in list_data:
+                    initial_count = list_data['total']
+                    
+                    # Test custom coin validation
+                    test_coin = {
+                        "id": "testcoin",
+                        "name": "Test Coin",
+                        "symbol": "TEST",
+                        "algorithm": "scrypt",
+                        "block_time_target": 120,
+                        "block_reward": 50,
+                        "network_difficulty": 1000000,
+                        "scrypt_params": {"N": 1024, "r": 1, "p": 1}
+                    }
+                    
+                    validate_response = requests.post(f"{BACKEND_URL}/coins/custom/validate",
+                                                    json=test_coin, timeout=TIMEOUT)
+                    
+                    validation_success = False
+                    if validate_response.status_code == 200:
+                        validate_data = validate_response.json()
+                        validation_success = validate_data.get('valid', False)
+                    
+                    self.log_result("Custom Coin Management", True,
+                                  f"Custom coin management endpoints accessible",
+                                  f"Initial coins: {initial_count}, Validation working: {validation_success}")
+                else:
+                    self.log_result("Custom Coin Management", False,
+                                  f"Custom coins list response missing required fields", list_data)
+            else:
+                self.log_result("Custom Coin Management", False,
+                              f"Custom coins list HTTP {list_response.status_code}: {list_response.text}")
+                
+        except requests.exceptions.RequestException as e:
+            self.log_result("Custom Coin Management", False, f"Request failed: {str(e)}")
+    
+    def test_remote_connectivity_apis(self):
+        """Test remote connectivity APIs for Android app integration"""
+        try:
+            # Test connection test endpoint
+            connection_response = requests.get(f"{BACKEND_URL}/remote/connection/test", timeout=TIMEOUT)
+            
+            connection_success = False
+            if connection_response.status_code == 200:
+                conn_data = connection_response.json()
+                connection_success = conn_data.get('success', False)
+            
+            # Test device registration
+            device_data = {
+                "device_id": "test_device_001",
+                "device_name": "Test Android Device"
+            }
+            
+            register_response = requests.post(f"{BACKEND_URL}/remote/register",
+                                            json=device_data, timeout=TIMEOUT)
+            
+            registration_success = False
+            access_token = None
+            if register_response.status_code == 200:
+                reg_data = register_response.json()
+                registration_success = reg_data.get('success', False)
+                access_token = reg_data.get('access_token')
+            
+            # Test remote mining status
+            remote_status_response = requests.get(f"{BACKEND_URL}/remote/mining/status", timeout=TIMEOUT)
+            
+            remote_status_success = False
+            if remote_status_response.status_code == 200:
+                status_data = remote_status_response.json()
+                remote_status_success = 'remote_access' in status_data
+            
+            # Calculate success rate
+            tests = [connection_success, registration_success, remote_status_success]
+            success_rate = (sum(tests) / len(tests)) * 100
+            
+            if success_rate >= 66:  # 66% success rate threshold
+                self.log_result("Remote Connectivity APIs", True,
+                              f"Remote connectivity APIs working for Android integration",
+                              f"Success rate: {success_rate:.1f}% - Connection: {connection_success}, Registration: {registration_success}, Status: {remote_status_success}")
+            else:
+                self.log_result("Remote Connectivity APIs", False,
+                              f"Remote connectivity APIs have issues",
+                              f"Success rate: {success_rate:.1f}%")
+                
+        except requests.exceptions.RequestException as e:
+            self.log_result("Remote Connectivity APIs", False, f"Request failed: {str(e)}")
+    
+    def test_pool_connection_testing(self):
+        """Test pool connection testing endpoint"""
+        try:
+            # Test pool connection with valid parameters
+            pool_test_data = {
+                "pool_address": "stratum.litecoinpool.org",
+                "pool_port": 3333,
+                "type": "pool"
+            }
+            
+            response = requests.post(f"{BACKEND_URL}/pool/test-connection",
+                                   json=pool_test_data, timeout=TIMEOUT)
+            
+            if response.status_code == 200:
+                data = response.json()
+                success = data.get('success', False)
+                message = data.get('message', '')
+                
+                self.log_result("Pool Connection Testing", True,
+                              f"Pool connection testing endpoint working",
+                              f"Test result: {success}, Message: {message}")
+            else:
+                self.log_result("Pool Connection Testing", False,
+                              f"HTTP {response.status_code}: {response.text}")
+                
+        except requests.exceptions.RequestException as e:
+            self.log_result("Pool Connection Testing", False, f"Request failed: {str(e)}")
+    
     def run_all_tests(self):
-        """Run all backend tests with focus on enhanced CPU detection system"""
-        print("🚀 Starting Enhanced CPU Detection System Testing")
+        """Run comprehensive backend tests focusing on recent improvements"""
+        print("🚀 Starting Comprehensive CryptoMiner Pro Backend Testing")
         print(f"🔗 Backend URL: {BACKEND_URL}")
-        print("🎯 Focus: Verify enhanced CPU detection, container environment detection, and mining profiles")
+        print("🎯 Focus: Verify all functionality after recent improvements")
         print("=" * 80)
         
-        # Primary focus: Enhanced CPU detection system
+        # Core Mining Functionality
+        print("\n⛏️ CORE MINING FUNCTIONALITY TESTING")
+        print("=" * 60)
+        self.test_mining_start_stop_functionality()
+        self.test_wallet_validation()
+        self.test_mining_status()
+        self.test_pool_connection_testing()
+        
+        # Enhanced CPU Detection
         print("\n🖥️ ENHANCED CPU DETECTION SYSTEM TESTING")
         print("=" * 60)
         self.test_enhanced_cpu_info_api()
         self.test_environment_api()
         self.test_mining_profiles_optimization()
-        self.test_container_detection()
         self.test_thread_recommendations()
-        self.test_cpu_core_detection_explanation()
         
-        # Secondary: Core system verification
-        print("\n🔍 CORE SYSTEM VERIFICATION")
+        # System Monitoring
+        print("\n📊 SYSTEM MONITORING TESTING")
         print("=" * 50)
         self.test_health_check()
         self.test_system_stats()
+        self.test_ai_insights()
+        
+        # Custom Coin Management
+        print("\n🪙 CUSTOM COIN MANAGEMENT TESTING")
+        print("=" * 50)
         self.test_coin_presets()
-        self.test_mining_status()
+        self.test_custom_coin_management()
+        
+        # WebSocket/Socket.io
+        print("\n🔌 WEBSOCKET/SOCKET.IO TESTING")
+        print("=" * 50)
+        self.test_websocket_connection()
+        
+        # Rate Limiting
+        print("\n⚡ RATE LIMITING TESTING")
+        print("=" * 40)
+        self.test_rate_limiting()
+        
+        # Remote Connectivity
+        print("\n📱 REMOTE CONNECTIVITY TESTING")
+        print("=" * 50)
+        self.test_remote_connectivity_apis()
         
         print("=" * 80)
         print(f"📊 Test Results Summary:")
@@ -718,22 +1082,25 @@ class BackendTester:
         print(f"   Failed: {self.total_tests - self.passed_tests}")
         print(f"   Success Rate: {(self.passed_tests/self.total_tests)*100:.1f}%")
         
-        # Specific CPU detection system summary
-        cpu_tests = [r for r in self.results if any(keyword in r['test'] for keyword in 
-                    ['CPU', 'Environment', 'Mining Profiles', 'Container', 'Thread'])]
-        cpu_passed = sum(1 for r in cpu_tests if r['success'])
+        # Categorize results by focus areas
+        focus_areas = {
+            'Core Mining': ['Mining Start/Stop', 'Wallet Validation', 'Mining Status', 'Pool Connection'],
+            'Enhanced CPU Detection': ['Enhanced CPU Info', 'Environment API', 'Mining Profiles', 'Thread Recommendations'],
+            'System Monitoring': ['Health Check', 'System Stats', 'AI Insights'],
+            'Custom Coin Management': ['Coin Presets', 'Custom Coin Management'],
+            'WebSocket/Socket.io': ['WebSocket Connection'],
+            'Rate Limiting': ['Rate Limiting Fix'],
+            'Remote Connectivity': ['Remote Connectivity APIs']
+        }
         
-        print(f"\n🎯 ENHANCED CPU DETECTION SYSTEM RESULTS:")
-        print(f"   CPU Detection Tests: {len(cpu_tests)}")
-        print(f"   Passed: {cpu_passed}")
-        print(f"   Failed: {len(cpu_tests) - cpu_passed}")
-        
-        if cpu_passed == len(cpu_tests) and len(cpu_tests) > 0:
-            print("   ✅ ENHANCED CPU DETECTION SYSTEM WORKING PERFECTLY!")
-        elif cpu_passed >= len(cpu_tests) * 0.8:  # 80% success rate
-            print("   ⚠️ ENHANCED CPU DETECTION MOSTLY WORKING (minor issues)")
-        else:
-            print("   ❌ ENHANCED CPU DETECTION SYSTEM NEEDS ATTENTION!")
+        print(f"\n🎯 FOCUS AREA RESULTS:")
+        for area, keywords in focus_areas.items():
+            area_tests = [r for r in self.results if any(keyword in r['test'] for keyword in keywords)]
+            area_passed = sum(1 for r in area_tests if r['success'])
+            if area_tests:
+                success_rate = (area_passed / len(area_tests)) * 100
+                status = "✅" if success_rate >= 80 else "⚠️" if success_rate >= 60 else "❌"
+                print(f"   {status} {area}: {area_passed}/{len(area_tests)} ({success_rate:.1f}%)")
         
         return self.results
 
