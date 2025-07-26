@@ -392,7 +392,7 @@ frontend:
 
   - task: "Frontend-Backend Integration"
     implemented: true
-    working: false
+    working: true
     file: "frontend/src/App.js"
     stuck_count: 0
     priority: "high"
@@ -404,6 +404,9 @@ frontend:
       - working: false
         agent: "testing"
         comment: "❌ FAILED - Frontend-backend integration partially working. Frontend successfully loads coin presets, system stats, and connects to WebSocket. However, mining start API call fails with 500 error from backend. Frontend error handling works correctly, showing appropriate error messages. The issue is on the backend side for the mining start endpoint."
+      - working: true
+        agent: "main"
+        comment: "✅ FIXED - Resolved backend connectivity issues. Root cause was MongoDB not running and backend process dying due to port conflicts. Started MongoDB service and fixed backend startup. All API endpoints now working correctly. Frontend successfully fetches mining status, coin presets, and system stats. ESLint fixes applied to prevent infinite re-renders with useCallback for API functions."
 
   - task: "Enhanced WalletConfig Component with Custom Connection Fields"
     implemented: true
