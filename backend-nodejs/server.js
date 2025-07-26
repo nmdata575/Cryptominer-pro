@@ -106,38 +106,52 @@ app.get('/api/system/cpu-info', async (req, res) => {
 });
 
 // Coin presets endpoint
-app.get('/api/coins/presets', (req, res) => {
-  const presets = {
-    litecoin: {
-      name: 'Litecoin',
-      symbol: 'LTC',
-      algorithm: 'scrypt',
-      block_time_target: 150,
-      block_reward: 12.5,
-      network_difficulty: 12345678,
-      scrypt_params: { N: 1024, r: 1, p: 1 }
-    },
-    dogecoin: {
-      name: 'Dogecoin',
-      symbol: 'DOGE',
-      algorithm: 'scrypt',
-      block_time_target: 60,
-      block_reward: 10000,
-      network_difficulty: 9876543,
-      scrypt_params: { N: 1024, r: 1, p: 1 }
-    },
-    feathercoin: {
-      name: 'Feathercoin',
-      symbol: 'FTC',
-      algorithm: 'scrypt',
-      block_time_target: 60,
-      block_reward: 200,
-      network_difficulty: 5432109,
-      scrypt_params: { N: 1024, r: 1, p: 1 }
-    }
-  };
-  
-  res.json({ presets });
+app.get('/api/coins/presets', async (req, res) => {
+  try {
+    const presets = {
+      litecoin: {
+        name: 'Litecoin',
+        symbol: 'LTC',
+        algorithm: 'scrypt',
+        block_time_target: 150,
+        block_reward: 12.5,
+        network_difficulty: 12345678,
+        scrypt_params: { N: 1024, r: 1, p: 1 },
+        is_custom: false
+      },
+      dogecoin: {
+        name: 'Dogecoin',
+        symbol: 'DOGE',
+        algorithm: 'scrypt',
+        block_time_target: 60,
+        block_reward: 10000,
+        network_difficulty: 9876543,
+        scrypt_params: { N: 1024, r: 1, p: 1 },
+        is_custom: false
+      },
+      feathercoin: {
+        name: 'Feathercoin',
+        symbol: 'FTC',
+        algorithm: 'scrypt',
+        block_time_target: 60,
+        block_reward: 200,
+        network_difficulty: 5432109,
+        scrypt_params: { N: 1024, r: 1, p: 1 },
+        is_custom: false
+      }
+    };
+    
+    // Add custom coins
+    const customCoins = await CustomCoin.findActive();
+    customCoins.forEach(coin => {
+      presets[coin.id] = coin.toCoinPreset();
+    });
+    
+    res.json({ presets });
+  } catch (error) {
+    console.error('Coin presets error:', error);
+    res.status(500).json({ error: 'Failed to get coin presets' });
+  }
 });
 
 // Wallet validation endpoint
