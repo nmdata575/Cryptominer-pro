@@ -292,6 +292,14 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 🗺️ Roadmap
 
+### ✅ **Recently Completed (v2.1):**
+- [x] Enhanced CPU frequency detection for ARM processors
+- [x] Webpack 5 polyfill compatibility 
+- [x] CRACO build system integration
+- [x] Container environment optimization
+- [x] Error-free frontend experience
+
+### 🔮 **Coming Next (v2.2):**
 - [ ] GPU mining support (CUDA/OpenCL)
 - [ ] Additional cryptocurrency algorithms (SHA-256, Ethash)
 - [ ] Mobile application (Android/iOS)
