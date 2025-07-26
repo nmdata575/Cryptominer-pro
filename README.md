@@ -1,326 +1,257 @@
-# 🚀 CryptoMiner Pro - AI-Powered Cryptocurrency Mining System
+# CryptoMiner Pro - Advanced Cryptocurrency Mining System
 
-<div align="center">
+## 🚀 **Now with Custom Coin Support!**
 
-![CryptoMiner Pro](https://img.shields.io/badge/CryptoMiner-Pro-gold?style=for-the-badge&logo=bitcoin)
-![Python](https://img.shields.io/badge/Python-3.8+-blue?style=for-the-badge&logo=python)
-![React](https://img.shields.io/badge/React-18+-61DAFB?style=for-the-badge&logo=react)
-![FastAPI](https://img.shields.io/badge/FastAPI-Latest-009688?style=for-the-badge&logo=fastapi)
-![MongoDB](https://img.shields.io/badge/MongoDB-Latest-47A248?style=for-the-badge&logo=mongodb)
+CryptoMiner Pro is a powerful, AI-driven cryptocurrency mining system that supports **any Scrypt-based cryptocurrency**. The system has been completely converted to Node.js for better performance and easier installation.
 
-**Advanced Cryptocurrency Mining System with Complete Scrypt Implementation and AI Optimization**
+## ✨ **Key Features**
 
-[🎯 Features](#features) • [🚀 Quick Start](#quick-start) • [📖 Documentation](#documentation) • [🔧 API](#api-reference) • [🤝 Contributing](#contributing)
+### 🪙 **Mining Capabilities**
+- **Built-in Coins**: Litecoin (LTC), Dogecoin (DOGE), Feathercoin (FTC)
+- **Custom Coins**: Add any Scrypt-based cryptocurrency
+- **Solo & Pool Mining**: Flexible mining modes
+- **AI Optimization**: Intelligent mining optimization
+- **Real-time Monitoring**: Live hashrate, shares, and system metrics
 
-</div>
+### 🎛️ **Advanced Controls**
+- **Dynamic Threading**: Auto-detect optimal CPU cores
+- **Custom Pool/RPC**: Configure custom mining pools
+- **Wallet Integration**: Full wallet address validation
+- **Performance Profiles**: Light, Standard, Maximum mining modes
 
----
+### 📱 **Remote Connectivity**
+- **Android App Ready**: Full remote API for mobile control
+- **Multi-device Support**: Control from multiple devices
+- **Secure Authentication**: Token-based remote access
+- **Real-time Updates**: WebSocket connections for live data
 
-## 📋 Overview
+### 🔧 **Custom Coin Management**
+- **Add Any Scrypt Coin**: Support for custom cryptocurrencies
+- **Real-time Validation**: Instant parameter validation
+- **Import/Export**: Backup and share coin configurations
+- **Rich Metadata**: Store comprehensive coin information
 
-CryptoMiner Pro is a comprehensive, production-ready cryptocurrency mining system featuring:
+## 🛠️ **Installation**
 
-- **Complete Scrypt Algorithm Implementation** - Built from scratch with full parameter support
-- **AI-Powered Optimization** - Machine learning for hash pattern prediction and auto-optimization  
-- **Multi-Cryptocurrency Support** - Litecoin, Dogecoin, Feathercoin, and other scrypt-based coins
-- **Real-Time Web Dashboard** - Modern React interface with live monitoring
-- **Wallet Integration** - Complete wallet address validation and mining reward configuration
-- **Dual Mining Modes** - Solo and pool mining with seamless switching
-- **Advanced Performance Controls** - Manual and AI-driven optimization
+### **Quick Installation (Recommended)**
 
-## ✨ Features
-
-### 🔥 Core Mining Engine
-- **Complete Scrypt Implementation**: From-scratch implementation with Salsa20 core and full (N, r, p) parameter support
-- **Multi-Threaded Processing**: High-performance parallel mining with configurable thread counts
-- **Performance Controls**: Manual hash rate limits, intensity controls, and resource management
-- **Block & Share Validation**: Complete validation system for mining rewards
-
-### 🧠 AI Optimization System
-- **Hash Pattern Prediction**: ML-based efficiency optimization through pattern learning
-- **Network Difficulty Forecasting**: Predictive modeling for optimal mining timing
-- **Coin Switching Recommendations**: AI-driven profitability analysis and switching advice
-- **Auto-Optimization**: Dynamic parameter adjustment based on performance data
-- **Learning Algorithms**: RandomForest models that adapt to your mining environment
-
-### 💰 Wallet & Mining Configuration
-- **Multi-Coin Address Validation**: Professional-grade validation for Litecoin, Dogecoin, and Feathercoin
-- **Real-Time Validation**: Instant address validation with format detection
-- **Dual Mining Modes**: Solo mining (direct to wallet) and pool mining (shared rewards)
-- **Address Format Support**: Legacy, SegWit, and multisig addresses
-- **Security Features**: Built-in warnings and validation to prevent reward loss
-
-### 📊 Real-Time Dashboard
-- **Live Statistics**: Real-time hashrate, accepted/rejected shares, blocks found, efficiency metrics
-- **System Monitoring**: CPU usage, memory consumption, temperature, and resource tracking
-- **Interactive Controls**: Start/stop mining, configuration changes, performance adjustment
-- **WebSocket Updates**: Sub-second real-time data streaming
-- **Responsive Design**: Works on desktop, tablet, and mobile devices
-
-### 🎛️ Advanced Configuration
-- **Performance Tuning**: Granular control over threads (1-16), intensity (10-100%), resource usage
-- **Multi-Coin Support**: Easy switching between supported cryptocurrencies
-- **AI Features**: Enable/disable AI optimization and auto-tuning capabilities
-- **Mining Modes**: Solo mining or pool mining with seamless configuration
-
-## 🏗️ Architecture
-
-### Backend (FastAPI + Python)
-- **FastAPI Web Framework** for high-performance API
-- **Complete Scrypt Implementation** with cryptographic accuracy
-- **Multi-threaded Mining Engine** using ThreadPoolExecutor
-- **AI Prediction System** with scikit-learn RandomForest models
-- **MongoDB Integration** for persistent data storage
-- **WebSocket Server** for real-time communication
-
-### Frontend (React + Tailwind CSS)
-- **Modern React 18** with hooks and functional components
-- **Tailwind CSS** for responsive, crypto-themed design
-- **Real-time Charts** and performance visualizations
-- **Interactive Controls** with immediate feedback
-- **WebSocket Client** for live updates
-
-### Database & Infrastructure
-- **MongoDB** for mining statistics and AI training data
-- **Supervisor** for production service management
-- **Environment-based Configuration** for scalability
-- **Comprehensive Logging** and error handling
-
-## 🚀 Quick Start
-
-### Prerequisites
-- Python 3.8+ with pip
-- Node.js 16+ with npm
-- MongoDB
-- Git
-
-### 1. Clone & Setup
 ```bash
-git clone <repository-url>
-cd crypto-mining-system
-
-# Backend setup
-cd backend
-pip install -r requirements.txt
-
-# Frontend setup  
-cd ../frontend
-npm install
-
-# Start MongoDB
-sudo systemctl start mongodb
+# Download and run the container-optimized installer
+wget https://github.com/your-repo/cryptominer-pro/raw/main/install-container.sh
+chmod +x install-container.sh
+./install-container.sh
 ```
 
-### 2. Configure Environment
-Create backend/.env:
-```env
-MONGO_URL=mongodb://localhost:27017
-DATABASE_NAME=crypto_miner_db
-SECRET_KEY=your-secret-key
-```
+### **Manual Installation**
 
-Create frontend/.env:
-```env
-REACT_APP_BACKEND_URL=http://localhost:8001
-```
+If you prefer manual installation or encounter issues:
 
-### 3. Start Services
 ```bash
-# Start backend (in backend directory)
-python -m uvicorn server:app --host 0.0.0.0 --port 8001 --reload
+# 1. Navigate to the CryptoMiner Pro directory
+cd /path/to/cryptominer-pro
 
-# Start frontend (in frontend directory) 
-npm start
+# 2. Run the fix installation script
+./fix-installation.sh
+
+# 3. Start the application
+/opt/cryptominer-pro/start.sh
 ```
 
-### 4. Access Dashboard
-Open browser: `http://localhost:3000`
+### **Requirements**
+- **Node.js**: 18.x or higher
+- **MongoDB**: Running instance
+- **Linux**: Ubuntu 20.04+ recommended
+- **Memory**: 2GB+ RAM recommended
+- **CPU**: Multi-core processor for optimal mining
 
-**🎉 Ready to mine! Select a coin, configure your wallet, and start mining!**
+## 🚀 **Getting Started**
 
-## 📖 Documentation
-
-### 📚 Complete Guides
-- **[📋 Complete Setup Guide](SETUP_GUIDE.md)** - Detailed installation and configuration
-- **[🎮 User Manual](docs/USER_MANUAL.md)** - How to use all features
-- **[🔧 API Documentation](docs/API.md)** - Complete API reference
-- **[🧠 AI System Guide](docs/AI_SYSTEM.md)** - Understanding AI optimization
-- **[🔒 Security Guide](docs/SECURITY.md)** - Security best practices
-
-### 🎯 Quick References
-- **[⚡ Quick Start](docs/QUICK_START.md)** - Get mining in 5 minutes
-- **[🔧 Troubleshooting](docs/TROUBLESHOOTING.md)** - Common issues and solutions
-- **[📊 Performance Tuning](docs/PERFORMANCE.md)** - Optimization tips
-- **[🪙 Supported Coins](docs/COINS.md)** - Cryptocurrency information
-
-## 🔧 API Reference
-
-### Core Endpoints
-- `GET /api/health` - System health check
-- `GET /api/coins/presets` - Available cryptocurrency configurations
-- `POST /api/mining/start` - Start mining with configuration
-- `POST /api/mining/stop` - Stop mining operations
-- `GET /api/mining/status` - Current mining status and statistics
-
-### Wallet & Validation
-- `POST /api/wallet/validate` - Validate wallet addresses
-- `GET /api/system/stats` - System resource statistics
-
-### AI & Optimization
-- `GET /api/mining/ai-insights` - AI predictions and recommendations
-- `WS /api/ws` - Real-time WebSocket data stream
-
-### Example Usage
+### 1. **Start the Application**
 ```bash
-# Start mining Litecoin
-curl -X POST http://localhost:8001/api/mining/start \
+/opt/cryptominer-pro/start.sh
+```
+
+### 2. **Access the Dashboard**
+Open your browser to: `http://localhost:3000`
+
+### 3. **Add Custom Coins**
+- Click "Manage Custom Coins" in the coin selector
+- Fill in the cryptocurrency parameters
+- Start mining with your custom coin
+
+### 4. **Configure Mining**
+- Select your cryptocurrency
+- Enter wallet address
+- Configure mining parameters
+- Click "START MINING"
+
+## 📊 **Status & Management**
+
+### **Check System Status**
+```bash
+/opt/cryptominer-pro/status.sh
+```
+
+### **Stop the Application**
+```bash
+/opt/cryptominer-pro/stop.sh
+```
+
+### **View Logs**
+```bash
+# Backend logs
+tail -f /opt/cryptominer-pro/backend-nodejs/logs/app.log
+
+# System logs
+journalctl -u cryptominer-pro -f
+```
+
+## 🪙 **Adding Custom Coins**
+
+### **Web Interface**
+1. Click "Manage Custom Coins"
+2. Fill in the coin parameters:
+   - Name, Symbol, Algorithm
+   - Block time, Block reward
+   - Scrypt parameters (N, r, p)
+   - Address formats
+3. Click "Add Coin"
+
+### **API Example**
+```bash
+curl -X POST http://localhost:8001/api/coins/custom \
   -H "Content-Type: application/json" \
   -d '{
-    "coin": {"name": "Litecoin", "symbol": "LTC", ...},
-    "mode": "solo",
-    "wallet_address": "LhK1Nk...",
-    "threads": 4,
-    "intensity": 0.8
+    "id": "mycoin",
+    "name": "My Custom Coin",
+    "symbol": "MYC",
+    "algorithm": "scrypt",
+    "block_time_target": 150,
+    "block_reward": 50,
+    "scrypt_params": {"N": 1024, "r": 1, "p": 1}
   }'
-
-# Validate wallet address
-curl -X POST http://localhost:8001/api/wallet/validate \
-  -H "Content-Type: application/json" \
-  -d '{"address": "LhK1Nk...", "coin_symbol": "LTC"}'
 ```
 
-## 💡 Usage Examples
+## 📱 **Remote API for Android Apps**
 
-### Solo Mining Setup
-1. **Select Cryptocurrency**: Choose Litecoin, Dogecoin, or Feathercoin
-2. **Configure Wallet**: Enter your wallet address (validated automatically)
-3. **Set Performance**: Choose thread count and mining intensity
-4. **Enable AI**: Turn on AI optimization for automatic tuning
-5. **Start Mining**: Begin mining with rewards sent to your wallet
-
-### Pool Mining Setup
-1. **Choose Pool Mode**: Select pool mining configuration
-2. **Enter Credentials**: Pool username (wallet.worker) and password
-3. **Configure Performance**: Set optimal thread and intensity settings
-4. **Monitor Progress**: Track shared mining progress and pool rewards
-
-### AI Optimization
-1. **Enable AI Features**: Turn on AI optimization and auto-tuning
-2. **Let AI Learn**: Allow 30+ minutes for data collection and learning
-3. **Review Suggestions**: Check AI insights for optimization recommendations
-4. **Auto-Optimization**: Enable automatic parameter adjustment
-
-## 🎯 Supported Cryptocurrencies
-
-### Currently Supported
-| Coin | Symbol | Algorithm | Address Format | Block Reward |
-|------|--------|-----------|----------------|--------------|
-| **Litecoin** | LTC | Scrypt | L.../ltc1.../M... | 12.5 LTC |
-| **Dogecoin** | DOGE | Scrypt | D.../A.../9... | 10,000 DOGE |
-| **Feathercoin** | FTC | Scrypt | 6.../3... | 200 FTC |
-
-### Address Format Support
-- **Legacy Addresses**: Traditional format (1..., L..., D..., 6...)
-- **SegWit Addresses**: Modern format (bc1..., ltc1...)
-- **Multisig Addresses**: Multi-signature wallets (3..., M...)
-
-## 📊 Performance Benchmarks
-
-### Hash Rate Performance
-- **4-Core CPU**: ~10-50 KH/s (depending on CPU and settings)
-- **8-Core CPU**: ~20-100 KH/s (with optimal configuration)
-- **16-Core CPU**: ~50-200 KH/s (high-end systems)
-
-### System Requirements
-- **Minimum**: 4GB RAM, 4-core CPU, 2GB storage
-- **Recommended**: 16GB RAM, 8-core CPU, 10GB storage
-- **Optimal**: 32GB RAM, 16-core CPU, SSD storage
-
-### Efficiency Metrics
-- **Target Efficiency**: >90% accepted shares
-- **CPU Usage**: Configurable 10-100% intensity
-- **Memory Usage**: ~100-500MB (depending on AI features)
-
-## 🔒 Security Features
-
-### Wallet Security
-- ✅ Address validation and format checking
-- ✅ No private key storage or transmission
-- ✅ Built-in security warnings and guidance
-- ✅ Separate mining wallet recommendations
-
-### System Security
-- ✅ Input validation and sanitization
-- ✅ Error handling and safe failure modes
-- ✅ Secure WebSocket connections
-- ✅ Environment-based configuration
-
-### Mining Security
-- ✅ Validation before mining starts
-- ✅ Safe mining parameter limits
-- ✅ Resource monitoring and protection
-- ✅ Graceful shutdown handling
-
-## 🤝 Contributing
-
-We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details.
-
-### Development Setup
+### **Register Device**
 ```bash
-# Clone repository
-git clone <repository-url>
-cd crypto-mining-system
-
-# Install development dependencies
-pip install -r requirements-dev.txt
-npm install --dev
-
-# Run tests
-python -m pytest
-npm test
-
-# Start development servers
-python -m uvicorn server:app --reload
-npm run dev
+curl -X POST http://localhost:8001/api/remote/register \
+  -H "Content-Type: application/json" \
+  -d '{"device_id": "android123", "device_name": "My Phone"}'
 ```
 
-### Areas for Contribution
-- 🪙 Additional cryptocurrency support
-- 🧠 Enhanced AI algorithms
-- 🎨 UI/UX improvements
-- 📚 Documentation and tutorials
-- 🔧 Performance optimizations
-- 🧪 Testing and quality assurance
+### **Start Mining Remotely**
+```bash
+curl -X POST http://localhost:8001/api/remote/mining/start \
+  -H "Content-Type: application/json" \
+  -d '{"coin": "litecoin", "mode": "pool", "threads": 4}'
+```
 
-## 📄 License
+## 🔧 **Configuration Files**
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+### **Backend Configuration**
+```bash
+# Edit backend settings
+nano /opt/cryptominer-pro/backend-nodejs/.env
+```
 
-## ⚠️ Disclaimer
+### **Frontend Configuration**
+```bash
+# Edit frontend settings
+nano /opt/cryptominer-pro/frontend/.env
+```
 
-**Important**: This software is for educational and experimental purposes. Cryptocurrency mining involves risks including:
-- Financial losses from market volatility
-- Hardware wear and electricity costs  
-- Regulatory considerations in your jurisdiction
-- Technical risks and system stability
+## 📚 **Documentation**
 
-Always research thoroughly and understand the risks before mining cryptocurrency. The developers are not responsible for any financial losses or damages.
+- **Custom Coins Guide**: `/opt/cryptominer-pro/CUSTOM_COINS_GUIDE.md`
+- **Remote API Guide**: `/opt/cryptominer-pro/REMOTE_API_GUIDE.md`
+- **Manual Installation**: `/opt/cryptominer-pro/MANUAL_INSTALL.md`
+- **System Structure**: `/opt/cryptominer-pro/STREAMLINED_STRUCTURE.md`
 
-## 🌟 Acknowledgments
+## 🔍 **Troubleshooting**
 
-- **Scrypt Algorithm**: Based on Colin Percival's original specification
-- **Cryptocurrency Communities**: Litecoin, Dogecoin, and Feathercoin communities
-- **Open Source Libraries**: FastAPI, React, MongoDB, and all dependencies
-- **AI/ML Research**: scikit-learn and machine learning communities
+### **Installation Issues**
+```bash
+# If installation fails, run the fix script
+cd /path/to/cryptominer-pro
+./fix-installation.sh
+```
+
+### **Service Issues**
+```bash
+# Check status
+/opt/cryptominer-pro/status.sh
+
+# Restart services
+/opt/cryptominer-pro/stop.sh
+/opt/cryptominer-pro/start.sh
+```
+
+### **API Issues**
+```bash
+# Test backend API
+curl http://localhost:8001/api/health
+
+# Check custom coins
+curl http://localhost:8001/api/coins/custom
+```
+
+## 🛡️ **Security**
+
+- **Wallet Security**: Never share private keys
+- **Network Security**: Use firewall for production
+- **API Security**: Secure remote access tokens
+- **Pool Security**: Use reputable mining pools
+
+## 🌟 **Features Highlights**
+
+- **✅ Zero Python Dependencies**: Pure Node.js implementation
+- **✅ Custom Coin Support**: Add any Scrypt-based cryptocurrency
+- **✅ AI-Powered Optimization**: Intelligent mining optimization
+- **✅ Real-time Monitoring**: Live system and mining metrics
+- **✅ Remote Control**: Full Android app API support
+- **✅ Easy Installation**: Simple one-script installation
+- **✅ Professional UI**: Modern, responsive dashboard
+- **✅ Multi-coin Support**: Built-in + unlimited custom coins
+
+## 🎯 **Performance**
+
+- **Fast Installation**: No compilation issues
+- **Efficient Mining**: Optimized Scrypt implementation
+- **Real-time Updates**: WebSocket-based live data
+- **Resource Management**: Intelligent CPU and memory usage
+- **Scalable Architecture**: Designed for production use
+
+## 🔄 **Updates**
+
+```bash
+# Update Node.js dependencies
+cd /opt/cryptominer-pro/backend-nodejs && npm update
+cd /opt/cryptominer-pro/frontend && npm update
+
+# Restart services
+/opt/cryptominer-pro/stop.sh
+/opt/cryptominer-pro/start.sh
+```
+
+## 🤝 **Contributing**
+
+We welcome contributions! Please read our contribution guidelines and submit pull requests for any improvements.
+
+## 📄 **License**
+
+This project is licensed under the MIT License. See the LICENSE file for details.
+
+## 🎉 **Support**
+
+For support, please:
+1. Check the documentation in `/opt/cryptominer-pro/`
+2. Run the status check: `/opt/cryptominer-pro/status.sh`
+3. Review the troubleshooting section above
 
 ---
 
-<div align="center">
+**Happy Mining!** 🚀💰
 
-**⭐ Star this repository if you find it useful!**
-
-**🚀 Ready to start mining with AI optimization? [Get Started Now](SETUP_GUIDE.md)**
-
-Made with ❤️ for the cryptocurrency community
-
-</div>
+*CryptoMiner Pro - The most versatile Scrypt mining system with custom coin support*
