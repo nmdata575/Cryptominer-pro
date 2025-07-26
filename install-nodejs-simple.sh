@@ -31,10 +31,25 @@ print_step() {
     echo -e "${BLUE}[STEP]${NC} $1"
 }
 
-# Check if running as root
+# Check if running as root and handle appropriately
 if [[ $EUID -eq 0 ]]; then
-   print_error "This script should not be run as root. Please run as a regular user."
-   exit 1
+   print_warning "Running as root - creating user 'cryptominer' for application..."
+   
+   # Create user if doesn't exist
+   if ! id "cryptominer" &>/dev/null; then
+       useradd -m -s /bin/bash cryptominer
+       usermod -aG sudo cryptominer
+       print_status "Created user 'cryptominer'"
+   fi
+   
+   # Copy script to user directory and run as user
+   cp "$0" /home/cryptominer/
+   chown cryptominer:cryptominer /home/cryptominer/install-nodejs-simple.sh
+   chmod +x /home/cryptominer/install-nodejs-simple.sh
+   
+   print_status "Switching to user 'cryptominer' to continue installation..."
+   su - cryptominer -c "/home/cryptominer/install-nodejs-simple.sh"
+   exit 0
 fi
 
 # Update system packages
