@@ -11,10 +11,7 @@ const MiningPerformance = ({ miningStatus, selectedCoin, coinPresets }) => {
     return `${hashRate.toFixed(2)} H/s`;
   };
 
-  const calculateEfficiency = () => {
-    if (!stats.hashrate || !stats.power_consumption) return 0;
-    return (stats.hashrate / stats.power_consumption).toFixed(2);
-  };
+
 
   const getPerformanceGrade = () => {
     if (!miningStatus.is_mining) return { grade: 'N/A', color: 'text-gray-400' };
