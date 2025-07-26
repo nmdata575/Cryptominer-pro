@@ -3,25 +3,21 @@ import axios from 'axios';
 
 const SystemMonitoring = ({ systemMetrics }) => {
   const [cpuInfo, setCpuInfo] = useState(null);
-  const [loadingCpuInfo, setLoadingCpuInfo] = useState(true);
 
   const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:8001';
 
-  useEffect(() => {
-    fetchCpuInfo();
-  }, []);
-
-  const fetchCpuInfo = async () => {
+  const fetchCpuInfo = useCallback(async () => {
     try {
-      setLoadingCpuInfo(true);
       const response = await axios.get(`${BACKEND_URL}/api/system/cpu-info`);
       setCpuInfo(response.data);
     } catch (error) {
       console.error('Failed to fetch CPU info:', error);
-    } finally {
-      setLoadingCpuInfo(false);
     }
-  };
+  }, [BACKEND_URL]);
+
+  useEffect(() => {
+    fetchCpuInfo();
+  }, [fetchCpuInfo]);
 
   const formatBytes = (bytes) => {
     if (!bytes) return '0 B';
