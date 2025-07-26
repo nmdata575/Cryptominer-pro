@@ -1,18 +1,24 @@
 #!/usr/bin/env python3
 """
-CryptoMiner Pro - Backend API Testing Suite
-Testing Enhanced CPU Detection System
-Focus: Verify enhanced CPU detection, container environment detection, and mining profiles
+CryptoMiner Pro - Comprehensive Backend API Testing Suite
+Testing all backend functionality after recent improvements:
+- Fixed WebSocket proxy errors (converted to Socket.io)
+- Enhanced CPU detection with container environment awareness
+- Fixed rate limiting issues
+- Resolved ESLint warnings
 """
 
 import requests
 import json
 import time
 import sys
+import websocket
+import threading
 from datetime import datetime
 
 # Configuration
 BACKEND_URL = "https://84635953-2fa9-4a6c-a89b-23dbccf67eb9.preview.emergentagent.com/api"
+WEBSOCKET_URL = "wss://84635953-2fa9-4a6c-a89b-23dbccf67eb9.preview.emergentagent.com"
 TIMEOUT = 10
 
 class BackendTester:
