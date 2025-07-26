@@ -91,7 +91,53 @@ rm -rf node_modules package-lock.json
 print_info "Clearing npm cache..."
 npm cache clean --force
 
-print_info "Installing dependencies with fixed versions..."
+print_info "Installing webpack polyfill dependencies..."
+npm install --save-dev @craco/craco crypto-browserify stream-browserify https-browserify stream-http util assert url browserify-zlib buffer process
+
+print_info "Creating CRACO configuration for webpack polyfills..."
+cat > craco.config.js << 'EOF'
+const webpack = require('webpack');
+
+module.exports = {
+  webpack: {
+    configure: (webpackConfig) => {
+      // Add polyfills for Node.js core modules
+      webpackConfig.resolve.fallback = {
+        ...webpackConfig.resolve.fallback,
+        "crypto": require.resolve("crypto-browserify"),
+        "stream": require.resolve("stream-browserify"),
+        "http": require.resolve("stream-http"),
+        "https": require.resolve("https-browserify"),
+        "zlib": require.resolve("browserify-zlib"),
+        "url": require.resolve("url/"),
+        "util": require.resolve("util/"),
+        "assert": require.resolve("assert/"),
+        "buffer": require.resolve("buffer/"),
+        "process": require.resolve("process/browser.js")
+      };
+
+      // Add plugins to provide global variables
+      webpackConfig.plugins = [
+        ...webpackConfig.plugins,
+        new webpack.ProvidePlugin({
+          process: 'process/browser.js',
+          Buffer: ['buffer', 'Buffer'],
+        }),
+      ];
+
+      return webpackConfig;
+    },
+  },
+};
+EOF
+
+print_info "Updating package.json to use CRACO instead of react-scripts..."
+# Update scripts section to use CRACO
+sed -i 's/"start": "react-scripts start"/"start": "craco start"/' package.json
+sed -i 's/"build": "react-scripts build"/"build": "craco build"/' package.json  
+sed -i 's/"test": "react-scripts test"/"test": "craco test"/' package.json
+
+print_info "Installing dependencies with updated configuration..."
 npm install --legacy-peer-deps
 
 print_info "Building frontend..."
