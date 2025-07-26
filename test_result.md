@@ -426,6 +426,8 @@ test_plan:
   test_priority: "high_first"
 
 agent_communication:
+  - agent: "main"
+    message: "ESLINT WARNINGS FIXED: Fixed remaining ESLint warnings in MiningPerformance.js (removed unused calculateEfficiency function) and SystemMonitoring.js (removed unused loadingCpuInfo variable, wrapped fetchCpuInfo in useCallback, updated useEffect dependencies). All reported ESLint warnings have been resolved."
   - agent: "testing"
     message: "Starting comprehensive backend API testing for CryptoMiner Pro. Will test all endpoints, mining functionality, wallet validation, AI insights, WebSocket connections, and database connectivity."
   - agent: "testing"
