@@ -216,11 +216,11 @@ curl http://localhost:8001/api/mining/status
 
 ## 🤝 Contributing
 
-1. Fork the repository
+1. Fork the repository from [https://github.com/nmdata575/ai-cm](https://github.com/nmdata575/ai-cm)
 2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
 3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
 4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
+5. Open a Pull Request to the `release-2.03` branch
 
 ## 📝 License
 
