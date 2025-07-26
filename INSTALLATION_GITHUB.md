@@ -155,11 +155,25 @@ sudo tail -f /var/log/supervisor/frontend.out.log
 
 ### **Common Issues:**
 
-1. **"cp: cannot stat '/app/backend-nodejs'"**
+1. **"Cannot find module 'crypto'" / Webpack Polyfill Errors**
+   - **Error**: `Module not found: Error: Can't resolve 'crypto'` or similar for http, https, stream, util
+   - **Solution**: Use the updated installation script:
+     ```bash
+     chmod +x install-complete-v2.sh
+     ./install-complete-v2.sh
+     ```
+   - **Manual Fix**: Install webpack polyfills:
+     ```bash
+     cd frontend
+     npm install --save-dev @craco/craco crypto-browserify stream-browserify https-browserify stream-http util assert url browserify-zlib buffer process
+     # Create craco.config.js with webpack polyfills (see fix-webpack-build.sh)
+     ```
+
+2. **"cp: cannot stat '/app/backend-nodejs'"**
    - **Solution**: Use the `install-github.sh` script instead of `install-modern.sh`
    - **Cause**: Original script was hardcoded for specific paths
 
-2. **HTML Webpack Plugin Error / Module not found**
+3. **HTML Webpack Plugin Error / Module not found**
    - **Error**: `Can't resolve '/opt/cryptominer-pro/frontend/node_modules/html-webpack-plugin/lib/loader.js'`
    - **Solution**: Run the webpack fix script:
      ```bash
@@ -168,23 +182,24 @@ sudo tail -f /var/log/supervisor/frontend.out.log
      ```
    - **Alternative**: Use exact package versions from working configuration
 
-3. **MongoDB Connection Issues**
+4. **MongoDB Connection Issues**
    - **Solution**: Start MongoDB manually: `sudo mongod --dbpath /data/db --logpath /var/log/mongodb.log --fork`
    - **Check**: `mongosh --eval "db.adminCommand('ping')"`
 
-4. **Frontend Build Errors**
+5. **Frontend Build Errors / CRACO Issues**
    - **Solution**: Ensure Node.js version is 18+: `node --version`
    - **Fix**: Clear npm cache: `npm cache clean --force`
    - **Reset**: Delete node_modules and reinstall: `rm -rf node_modules package-lock.json && npm install`
+   - **CRACO Fix**: Make sure craco.config.js exists and package.json uses CRACO scripts
 
-5. **Port Already in Use**
+6. **Port Already in Use**
    - **Solution**: Kill existing processes:
      ```bash
      sudo lsof -ti:8001 | xargs kill -9
      sudo lsof -ti:3000 | xargs kill -9
      ```
 
-6. **Permission Issues**
+7. **Permission Issues**
    - **Solution**: Ensure proper ownership:
      ```bash
      sudo chown -R $(whoami):$(whoami) /opt/cryptominer-pro
