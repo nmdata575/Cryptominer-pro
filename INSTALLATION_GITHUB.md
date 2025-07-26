@@ -159,22 +159,32 @@ sudo tail -f /var/log/supervisor/frontend.out.log
    - **Solution**: Use the `install-github.sh` script instead of `install-modern.sh`
    - **Cause**: Original script was hardcoded for specific paths
 
-2. **MongoDB Connection Issues**
+2. **HTML Webpack Plugin Error / Module not found**
+   - **Error**: `Can't resolve '/opt/cryptominer-pro/frontend/node_modules/html-webpack-plugin/lib/loader.js'`
+   - **Solution**: Run the webpack fix script:
+     ```bash
+     chmod +x fix-webpack-build.sh
+     ./fix-webpack-build.sh
+     ```
+   - **Alternative**: Use exact package versions from working configuration
+
+3. **MongoDB Connection Issues**
    - **Solution**: Start MongoDB manually: `sudo mongod --dbpath /data/db --logpath /var/log/mongodb.log --fork`
    - **Check**: `mongosh --eval "db.adminCommand('ping')"`
 
-3. **Frontend Build Errors**
+4. **Frontend Build Errors**
    - **Solution**: Ensure Node.js version is 18+: `node --version`
    - **Fix**: Clear npm cache: `npm cache clean --force`
+   - **Reset**: Delete node_modules and reinstall: `rm -rf node_modules package-lock.json && npm install`
 
-4. **Port Already in Use**
+5. **Port Already in Use**
    - **Solution**: Kill existing processes:
      ```bash
      sudo lsof -ti:8001 | xargs kill -9
      sudo lsof -ti:3000 | xargs kill -9
      ```
 
-5. **Permission Issues**
+6. **Permission Issues**
    - **Solution**: Ensure proper ownership:
      ```bash
      sudo chown -R $(whoami):$(whoami) /opt/cryptominer-pro
