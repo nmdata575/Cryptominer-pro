@@ -107,7 +107,7 @@ const SystemMonitoring = ({ systemMetrics }) => {
             {systemMetrics?.memory?.percent?.toFixed(1) || '0.0'}%
           </div>
           <div className="text-xs text-gray-400">
-            {systemMetrics ? `${formatBytes(systemMetrics.memory.used)} / ${formatBytes(systemMetrics.memory.total)}` : 'Loading...'}
+            {systemMetrics?.memory ? `${formatBytes(systemMetrics.memory?.used || 0)} / ${formatBytes(systemMetrics.memory?.total || 0)}` : 'Loading...'}
           </div>
         </div>
 
