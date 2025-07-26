@@ -40,6 +40,7 @@ let remoteDevices = new Map();
 let accessTokens = new Map();
 
 // Middleware
+app.set('trust proxy', 1); // Trust first proxy (required for Kubernetes/Docker environments)
 app.use(helmet());
 app.use(compression());
 app.use(morgan('combined'));
@@ -47,10 +48,16 @@ app.use(cors());
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
-// Rate limiting
+// Rate limiting - configured for Kubernetes environment
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100 // limit each IP to 100 requests per windowMs
+  max: 1000, // Increased limit for mining operations
+  standardHeaders: true,
+  legacyHeaders: false,
+  // Skip internal health checks and monitoring requests
+  skip: (req) => {
+    return req.path === '/api/health' || req.path === '/api/system/stats';
+  }
 });
 app.use(limiter);
 
