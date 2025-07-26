@@ -632,13 +632,17 @@ class MiningEngine extends EventEmitter {
    * Get mining status
    */
   getStatus() {
+    const isPoolConnected = this.poolConnection ? 
+      (this.poolConnection.readyState === 'open' || this.poolConnection === true) : false;
+      
     return {
       is_mining: this.mining,
       stats: { ...this.stats },
       config: this.config,
-      pool_connected: this.poolConnection ? this.poolConnection.readyState === 'open' : false,
+      pool_connected: isPoolConnected,
       current_job: this.currentJob ? this.currentJob.job_id : null,
-      difficulty: this.difficulty
+      difficulty: this.difficulty,
+      test_mode: !this.poolConnection || !this.poolConnection.write
     };
   }
 
