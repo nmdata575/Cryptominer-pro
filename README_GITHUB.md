@@ -74,9 +74,9 @@ cd ai-cm
 # Switch to release branch
 git checkout release-2.03
 
-# Run the modern installation script
-chmod +x scripts/install-modern.sh
-./scripts/install-modern.sh
+# Run the complete installation script (v2.1 with webpack fixes)
+chmod +x install-complete-v2.sh
+./install-complete-v2.sh
 
 # Start the application
 sudo supervisorctl start all
