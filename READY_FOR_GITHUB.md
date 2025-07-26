@@ -131,10 +131,10 @@ scripts/
 5. **✅ Production Configuration** - Environment templates and deployment guides
 
 ### Next Steps:
-1. **Create GitHub Repository** - Initialize new repo with proper settings
-2. **Upload Essential Files** - Copy all files from the essential list
-3. **Create Initial Commit** - Commit with descriptive message
-4. **Set Repository Settings** - Configure topics, description, website
-5. **Create Release** - Tag v1.0.0 for initial release
+1. **Upload to GitHub Repository** - https://github.com/nmdata575/ai-cm
+2. **Switch to Release Branch** - Upload files to release-2.03 branch
+3. **Create Initial Commit** - Commit with "Release v2.0.3: Production-ready AI-powered mining dashboard"
+4. **Set Repository Settings** - Configure topics: cryptocurrency, mining, ai, nodejs, react
+5. **Create Release Tag** - Tag v2.0.3 for this stable release
 
-**🎉 Your CryptoMiner Pro application is ready to go live on GitHub!**
+**🎉 Your CryptoMiner Pro application is ready for https://github.com/nmdata575/ai-cm!**
