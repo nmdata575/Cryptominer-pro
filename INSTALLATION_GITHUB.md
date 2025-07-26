@@ -162,7 +162,14 @@ sudo tail -f /var/log/supervisor/frontend.out.log
 
 ### **Common Issues:**
 
-1. **"Cannot find module 'crypto'" / Webpack Polyfill Errors**
+1. **"CPU Frequency showing 2 MHz instead of GHz"**
+   - **Status**: ✅ **FIXED in v2.1**
+   - **Solution**: Use the latest installer: `./install-complete-v2.sh`
+   - **Technical**: Enhanced backend CPU detection + smart frontend formatting
+   - **Result**: Now correctly shows "Max Frequency: 2.8 GHz"
+
+2. **"Cannot find module 'crypto'" / Webpack Polyfill Errors**
+   - **Status**: ✅ **FIXED in v2.1**  
    - **Error**: `Module not found: Error: Can't resolve 'crypto'` or similar for http, https, stream, util
    - **Solution**: Use the updated installation script:
      ```bash
@@ -176,18 +183,19 @@ sudo tail -f /var/log/supervisor/frontend.out.log
      # Create craco.config.js with webpack polyfills (see fix-webpack-build.sh)
      ```
 
-2. **"cp: cannot stat '/app/backend-nodejs'"**
-   - **Solution**: Use the `install-github.sh` script instead of `install-modern.sh`
-   - **Cause**: Original script was hardcoded for specific paths
+3. **"cp: cannot stat '/app/backend-nodejs'"**
+   - **Solution**: Use the `install-complete-v2.sh` script instead of older installers
+   - **Cause**: Older scripts were hardcoded for specific paths
 
-3. **HTML Webpack Plugin Error / Module not found**
+4. **HTML Webpack Plugin Error / Module not found**
+   - **Status**: ✅ **FIXED in v2.1**
    - **Error**: `Can't resolve '/opt/cryptominer-pro/frontend/node_modules/html-webpack-plugin/lib/loader.js'`
-   - **Solution**: Run the webpack fix script:
-     ```bash
-     chmod +x fix-webpack-build.sh
-     ./fix-webpack-build.sh
-     ```
-   - **Alternative**: Use exact package versions from working configuration
+   - **Solution**: Automatically resolved by CRACO configuration in v2.1
+
+5. **"3 MHz" or incorrect frequency readings**
+   - **Status**: ✅ **FIXED in v2.1**
+   - **Solution**: Frontend now uses smart GHz/MHz unit detection
+   - **Result**: Displays proper "2.8 GHz" for ARM processors
 
 4. **MongoDB Connection Issues**
    - **Solution**: Start MongoDB manually: `sudo mongod --dbpath /data/db --logpath /var/log/mongodb.log --fork`
