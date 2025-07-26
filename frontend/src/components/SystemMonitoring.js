@@ -78,7 +78,16 @@ const SystemMonitoring = ({ systemMetrics }) => {
             {systemMetrics?.cpu?.usage_percent?.toFixed(1) || '0.0'}%
           </div>
           <div className="text-xs text-gray-400">
-            {cpuInfo ? `${cpuInfo.cores.physical} cores` : 'Loading...'}
+            {cpuInfo ? (
+              <>
+                {cpuInfo.cores.physical} cores
+                {cpuInfo.environment?.container && (
+                  <span className="ml-2 px-2 py-0.5 bg-blue-500/20 text-blue-300 rounded text-xs">
+                    {cpuInfo.environment.type}
+                  </span>
+                )}
+              </>
+            ) : 'Loading...'}
           </div>
         </div>
 
