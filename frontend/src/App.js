@@ -287,7 +287,7 @@ function App() {
     fetchAIInsights();
     
     // Socket connection is handled separately
-  }, [fetchMiningStatus, fetchSystemStats, fetchAIInsights]);
+  }, [fetchCoinPresets, fetchMiningStatus, fetchSystemStats, fetchAIInsights]);
 
   // Periodic updates for non-Socket.io data and fallback polling
   useEffect(() => {
