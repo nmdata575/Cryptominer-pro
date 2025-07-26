@@ -769,44 +769,53 @@ class BackendTester:
                           f"Success rate: {success_rate:.1f}% ({passed_validations}/{total_validations})")
     
     def run_all_tests(self):
-        """Run all backend tests with focus on rate limiting fix"""
-        print("🚀 Starting Mining Start Rate Limiting Fix Testing")
+        """Run all backend tests with focus on enhanced CPU detection system"""
+        print("🚀 Starting Enhanced CPU Detection System Testing")
         print(f"🔗 Backend URL: {BACKEND_URL}")
-        print("🎯 Focus: Verify 429 rate limiting error has been resolved")
+        print("🎯 Focus: Verify enhanced CPU detection, container environment detection, and mining profiles")
+        print("=" * 80)
+        
+        # Primary focus: Enhanced CPU detection system
+        print("\n🖥️ ENHANCED CPU DETECTION SYSTEM TESTING")
         print("=" * 60)
+        self.test_enhanced_cpu_info_api()
+        self.test_environment_api()
+        self.test_mining_profiles_optimization()
+        self.test_container_detection()
+        self.test_thread_recommendations()
+        self.test_cpu_core_detection_explanation()
         
-        # Primary focus: Mining start rate limiting fix
-        self.test_mining_start_rate_limiting_fix()
-        
-        # Secondary: Verify rate limit configuration
-        self.test_rate_limit_configuration_verification()
-        
-        # Quick verification of core endpoints
-        print("\n🔍 QUICK CORE ENDPOINT VERIFICATION")
+        # Secondary: Core system verification
+        print("\n🔍 CORE SYSTEM VERIFICATION")
         print("=" * 50)
         self.test_health_check()
+        self.test_system_stats()
+        self.test_coin_presets()
         self.test_mining_status()
         
-        print("=" * 60)
+        print("=" * 80)
         print(f"📊 Test Results Summary:")
         print(f"   Total Tests: {self.total_tests}")
         print(f"   Passed: {self.passed_tests}")
         print(f"   Failed: {self.total_tests - self.passed_tests}")
         print(f"   Success Rate: {(self.passed_tests/self.total_tests)*100:.1f}%")
         
-        # Specific rate limiting fix summary
-        rate_limit_tests = [r for r in self.results if 'Rate Limiting' in r['test'] or 'Mining Start' in r['test']]
-        rate_limit_passed = sum(1 for r in rate_limit_tests if r['success'])
+        # Specific CPU detection system summary
+        cpu_tests = [r for r in self.results if any(keyword in r['test'] for keyword in 
+                    ['CPU', 'Environment', 'Mining Profiles', 'Container', 'Thread'])]
+        cpu_passed = sum(1 for r in cpu_tests if r['success'])
         
-        print(f"\n🎯 RATE LIMITING FIX RESULTS:")
-        print(f"   Rate Limiting Tests: {len(rate_limit_tests)}")
-        print(f"   Passed: {rate_limit_passed}")
-        print(f"   Failed: {len(rate_limit_tests) - rate_limit_passed}")
+        print(f"\n🎯 ENHANCED CPU DETECTION SYSTEM RESULTS:")
+        print(f"   CPU Detection Tests: {len(cpu_tests)}")
+        print(f"   Passed: {cpu_passed}")
+        print(f"   Failed: {len(cpu_tests) - cpu_passed}")
         
-        if rate_limit_passed == len(rate_limit_tests) and len(rate_limit_tests) > 0:
-            print("   ✅ RATE LIMITING FIX SUCCESSFUL!")
+        if cpu_passed == len(cpu_tests) and len(cpu_tests) > 0:
+            print("   ✅ ENHANCED CPU DETECTION SYSTEM WORKING PERFECTLY!")
+        elif cpu_passed >= len(cpu_tests) * 0.8:  # 80% success rate
+            print("   ⚠️ ENHANCED CPU DETECTION MOSTLY WORKING (minor issues)")
         else:
-            print("   ❌ RATE LIMITING ISSUES STILL PRESENT!")
+            print("   ❌ ENHANCED CPU DETECTION SYSTEM NEEDS ATTENTION!")
         
         return self.results
 
