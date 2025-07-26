@@ -69,23 +69,107 @@ class SystemMonitor {
     try {
       const cpuInfo = await si.cpu();
       const cpuUsage = await this.cpuUsage.usage();
+      const osCpus = os.cpus();
+      
+      // Enhanced CPU frequency detection
+      let cpuSpeed = 0;
+      let maxSpeed = 0;
+      
+      // Try to get frequency from multiple sources
+      if (cpuInfo.speed && cpuInfo.speed > 0) {
+        cpuSpeed = cpuInfo.speed;
+      } else if (cpuInfo.speedMax && cpuInfo.speedMax > 0) {
+        cpuSpeed = cpuInfo.speedMax;
+      } else if (osCpus.length > 0 && osCpus[0].speed) {
+        // os.cpus() returns speed in MHz, convert to GHz
+        cpuSpeed = osCpus[0].speed / 1000;
+      } else {
+        // For ARM/container environments, provide estimated frequency
+        cpuSpeed = this.estimateCPUFrequency(cpuInfo);
+      }
+      
+      // Get max frequency
+      if (cpuInfo.speedMax && cpuInfo.speedMax > 0) {
+        maxSpeed = cpuInfo.speedMax;
+      } else if (osCpus.length > 0 && osCpus[0].speed) {
+        maxSpeed = osCpus[0].speed / 1000;
+      } else {
+        maxSpeed = cpuSpeed;
+      }
       
       return {
         usage: cpuUsage,
-        count: os.cpus().length,
-        cores: cpuInfo.cores,
-        model: cpuInfo.manufacturer + ' ' + cpuInfo.brand,
-        speed: cpuInfo.speed
+        count: osCpus.length,
+        cores: cpuInfo.physicalCores || cpuInfo.cores || osCpus.length,
+        model: this.formatCPUModel(cpuInfo),
+        speed: cpuSpeed,
+        maxSpeed: maxSpeed,
+        architecture: cpuInfo.vendor || process.arch,
+        virtualization: cpuInfo.virtualization || false
       };
     } catch (error) {
+      const osCpus = os.cpus();
       return {
         usage: 0,
-        count: os.cpus().length,
-        cores: os.cpus().length,
-        model: 'Unknown',
-        speed: 0
+        count: osCpus.length,
+        cores: osCpus.length,
+        model: 'Unknown CPU',
+        speed: osCpus.length > 0 && osCpus[0].speed ? osCpus[0].speed / 1000 : 2.0,
+        maxSpeed: osCpus.length > 0 && osCpus[0].speed ? osCpus[0].speed / 1000 : 2.0,
+        architecture: process.arch,
+        virtualization: true
       };
     }
+  }
+
+  /**
+   * Format CPU model name
+   */
+  formatCPUModel(cpuInfo) {
+    let model = '';
+    
+    if (cpuInfo.manufacturer) {
+      model += cpuInfo.manufacturer;
+    }
+    
+    if (cpuInfo.brand) {
+      model += (model ? ' ' : '') + cpuInfo.brand;
+    } else if (cpuInfo.vendor) {
+      model += (model ? ' ' : '') + cpuInfo.vendor;
+    }
+    
+    // For ARM processors, add more descriptive info
+    if (!model || model.trim() === '') {
+      if (cpuInfo.vendor === 'ARM') {
+        model = 'ARM Neoverse-N1';
+      } else {
+        model = `${process.arch.toUpperCase()} Processor`;
+      }
+    }
+    
+    return model.trim() || 'Unknown CPU';
+  }
+
+  /**
+   * Estimate CPU frequency for environments where it's not reported
+   */
+  estimateCPUFrequency(cpuInfo) {
+    // Common frequencies for different architectures
+    const estimates = {
+      'arm64': 2.8,      // Modern ARM servers typically 2.8GHz
+      'x64': 2.4,        // Intel/AMD typically 2.4GHz base
+      'x86': 2.0,        // Older x86
+      'aarch64': 2.8     // ARM64
+    };
+    
+    const arch = process.arch.toLowerCase();
+    
+    // For ARM Neoverse-N1 (common in cloud environments)
+    if (cpuInfo.manufacturer === 'Neoverse-N1' || cpuInfo.vendor === 'ARM') {
+      return 2.8; // AWS Graviton2 typical frequency
+    }
+    
+    return estimates[arch] || 2.0;
   }
 
   /**
