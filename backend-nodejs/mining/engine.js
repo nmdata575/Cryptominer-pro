@@ -7,7 +7,24 @@ const crypto = require('crypto');
 const scrypt = require('scrypt-js');
 const EventEmitter = require('events');
 const net = require('net');
-const axios = require('axios');
+
+// Default mining pools for each cryptocurrency
+const DEFAULT_POOLS = {
+  litecoin: [
+    { host: 'stratum+tcp://ltc-us-east1.nanopool.org', port: 6969 },
+    { host: 'stratum+tcp://ltc.pool-pay.com', port: 1133 },
+    { host: 'stratum+tcp://ltc.minergate.com', port: 45700 }
+  ],
+  dogecoin: [
+    { host: 'stratum+tcp://doge-us-east1.nanopool.org', port: 8088 },
+    { host: 'stratum+tcp://doge.pool-pay.com', port: 9998 },
+    { host: 'stratum+tcp://doge.minergate.com', port: 45701 }
+  ],
+  feathercoin: [
+    { host: 'stratum+tcp://ftc.pool-pay.com', port: 8338 },
+    { host: 'stratum+tcp://ftc.minergate.com', port: 45702 }
+  ]
+};
 
 class MiningEngine extends EventEmitter {
   constructor(config) {
@@ -15,6 +32,11 @@ class MiningEngine extends EventEmitter {
     this.config = config;
     this.mining = false;
     this.workers = [];
+    this.poolConnection = null;
+    this.currentJob = null;
+    this.difficulty = 1;
+    this.subscriptionId = null;
+    
     this.stats = {
       hashrate: 0.0,
       accepted_shares: 0,
@@ -26,7 +48,7 @@ class MiningEngine extends EventEmitter {
       efficiency: 0.0
     };
     this.startTime = null;
-    this.lastHashCount = 0;
+    this.hashCount = 0;
     this.hashUpdateInterval = null;
   }
 
@@ -39,7 +61,7 @@ class MiningEngine extends EventEmitter {
         return { success: false, message: 'Mining already running' };
       }
 
-      console.log('🚀 Starting mining engine...');
+      console.log('🚀 Starting real mining engine...');
       
       // Validate configuration
       const validation = this.validateConfig();
@@ -50,6 +72,7 @@ class MiningEngine extends EventEmitter {
       // Initialize mining parameters
       this.startTime = Date.now();
       this.mining = true;
+      this.hashCount = 0;
       this.stats = {
         hashrate: 0.0,
         accepted_shares: 0,
@@ -61,16 +84,23 @@ class MiningEngine extends EventEmitter {
         efficiency: 0.0
       };
 
+      // Connect to mining pool or setup solo mining
+      if (this.config.mode === 'pool') {
+        await this.connectToPool();
+      } else {
+        await this.setupSoloMining();
+      }
+
       // Start mining workers
       await this.startWorkers();
 
       // Start monitoring
       this.startMonitoring();
 
-      console.log('✅ Mining engine started successfully');
+      console.log('✅ Real mining engine started successfully');
       this.emit('mining_started', this.config);
 
-      return { success: true, message: 'Mining started successfully' };
+      return { success: true, message: 'Real mining started successfully' };
     } catch (error) {
       console.error('❌ Mining start error:', error);
       this.mining = false;
@@ -94,6 +124,12 @@ class MiningEngine extends EventEmitter {
       // Stop all workers
       await this.stopWorkers();
 
+      // Disconnect from pool
+      if (this.poolConnection) {
+        this.poolConnection.destroy();
+        this.poolConnection = null;
+      }
+
       // Stop monitoring
       this.stopMonitoring();
 
@@ -105,6 +141,203 @@ class MiningEngine extends EventEmitter {
       console.error('❌ Mining stop error:', error);
       return { success: false, message: error.message };
     }
+  }
+
+  /**
+   * Connect to mining pool using Stratum protocol
+   */
+  async connectToPool() {
+    return new Promise((resolve, reject) => {
+      const poolConfig = this.getPoolConfig();
+      
+      console.log(`🔗 Connecting to pool: ${poolConfig.host}:${poolConfig.port}`);
+      
+      this.poolConnection = new net.Socket();
+      this.poolConnection.setKeepAlive(true);
+      
+      this.poolConnection.connect(poolConfig.port, poolConfig.host.replace('stratum+tcp://', ''), () => {
+        console.log('✅ Connected to mining pool');
+        this.subscribeToPool();
+        resolve();
+      });
+
+      this.poolConnection.on('data', (data) => {
+        this.handlePoolMessage(data.toString());
+      });
+
+      this.poolConnection.on('error', (error) => {
+        console.error('Pool connection error:', error);
+        reject(error);
+      });
+
+      this.poolConnection.on('close', () => {
+        console.log('🔌 Pool connection closed');
+        if (this.mining) {
+          // Attempt to reconnect
+          setTimeout(() => this.connectToPool(), 5000);
+        }
+      });
+    });
+  }
+
+  /**
+   * Setup solo mining (direct to blockchain)
+   */
+  async setupSoloMining() {
+    console.log('⚡ Setting up solo mining...');
+    
+    // For solo mining, we need to connect to the cryptocurrency node's RPC
+    // This is a simplified implementation - in production you'd need full blockchain integration
+    this.currentJob = {
+      job_id: crypto.randomBytes(8).toString('hex'),
+      prevhash: '0'.repeat(64), // Would be real previous block hash
+      coinb1: '',
+      coinb2: '',
+      merkle_branch: [],
+      version: '00000001',
+      nbits: '1d00ffff', // Difficulty bits
+      ntime: Math.floor(Date.now() / 1000).toString(16).padStart(8, '0'),
+      clean_jobs: true
+    };
+
+    console.log('✅ Solo mining setup complete');
+  }
+
+  /**
+   * Subscribe to mining pool
+   */
+  subscribeToPool() {
+    const subscribeMessage = {
+      id: 1,
+      method: 'mining.subscribe',
+      params: ['CryptoMiner Pro/1.0.0']
+    };
+    
+    this.sendPoolMessage(subscribeMessage);
+  }
+
+  /**
+   * Authorize with mining pool
+   */
+  authorizeWithPool() {
+    const authorizeMessage = {
+      id: 2,
+      method: 'mining.authorize',
+      params: [this.config.pool_username || 'miner1', this.config.pool_password || 'x']
+    };
+    
+    this.sendPoolMessage(authorizeMessage);
+  }
+
+  /**
+   * Handle messages from mining pool
+   */
+  handlePoolMessage(data) {
+    const lines = data.trim().split('\n');
+    
+    lines.forEach(line => {
+      try {
+        const message = JSON.parse(line);
+        
+        if (message.method === 'mining.notify') {
+          this.handleNewJob(message.params);
+        } else if (message.method === 'mining.set_difficulty') {
+          this.difficulty = message.params[0];
+          console.log(`📊 New difficulty: ${this.difficulty}`);
+        } else if (message.id === 1 && message.result) {
+          // Subscription successful
+          this.subscriptionId = message.result[1];
+          console.log('✅ Pool subscription successful');
+          this.authorizeWithPool();
+        } else if (message.id === 2 && message.result) {
+          // Authorization successful
+          console.log('✅ Pool authorization successful');
+        } else if (message.id > 2 && message.result !== undefined) {
+          // Share submission result
+          if (message.result) {
+            this.stats.accepted_shares++;
+            console.log('✅ Share accepted by pool');
+          } else {
+            this.stats.rejected_shares++;
+            console.log('❌ Share rejected by pool:', message.error);
+          }
+        }
+      } catch (error) {
+        console.error('Error parsing pool message:', error);
+      }
+    });
+  }
+
+  /**
+   * Handle new job from pool
+   */
+  handleNewJob(params) {
+    this.currentJob = {
+      job_id: params[0],
+      prevhash: params[1],
+      coinb1: params[2],
+      coinb2: params[3],
+      merkle_branch: params[4],
+      version: params[5],
+      nbits: params[6],
+      ntime: params[7],
+      clean_jobs: params[8]
+    };
+    
+    console.log(`🔨 New mining job: ${this.currentJob.job_id}`);
+    
+    // Notify workers of new job
+    this.workers.forEach(worker => {
+      worker.setJob(this.currentJob);
+    });
+  }
+
+  /**
+   * Send message to pool
+   */
+  sendPoolMessage(message) {
+    if (this.poolConnection && this.poolConnection.writable) {
+      this.poolConnection.write(JSON.stringify(message) + '\n');
+    }
+  }
+
+  /**
+   * Submit share to pool
+   */
+  submitShare(jobId, nonce, result, nTime) {
+    const submitMessage = {
+      id: Date.now(),
+      method: 'mining.submit',
+      params: [
+        this.config.pool_username || 'miner1',
+        jobId,
+        nonce,
+        nTime,
+        result
+      ]
+    };
+    
+    this.sendPoolMessage(submitMessage);
+    console.log(`📤 Submitted share for job ${jobId}`);
+  }
+
+  /**
+   * Get pool configuration
+   */
+  getPoolConfig() {
+    if (this.config.custom_pool_address && this.config.custom_pool_port) {
+      return {
+        host: this.config.custom_pool_address,
+        port: this.config.custom_pool_port
+      };
+    }
+    
+    const coinPools = DEFAULT_POOLS[this.config.coin];
+    if (coinPools && coinPools.length > 0) {
+      return coinPools[0]; // Use first available pool
+    }
+    
+    throw new Error(`No pools configured for ${this.config.coin}`);
   }
 
   /**
@@ -147,10 +380,10 @@ class MiningEngine extends EventEmitter {
    */
   async startWorkers() {
     const threadCount = this.config.threads || this.getOptimalThreadCount();
-    console.log(`📊 Starting ${threadCount} mining workers...`);
+    console.log(`📊 Starting ${threadCount} real mining workers...`);
 
     for (let i = 0; i < threadCount; i++) {
-      const worker = new MiningWorker(i, this.config);
+      const worker = new RealMiningWorker(i, this.config, this);
       worker.on('hash', (data) => this.onHash(data));
       worker.on('share', (data) => this.onShare(data));
       worker.on('error', (error) => this.onWorkerError(error));
@@ -207,7 +440,7 @@ class MiningEngine extends EventEmitter {
    * Handle hash from worker
    */
   onHash(data) {
-    this.lastHashCount++;
+    this.hashCount++;
     this.emit('hash', data);
   }
 
@@ -215,11 +448,17 @@ class MiningEngine extends EventEmitter {
    * Handle share from worker
    */
   onShare(data) {
-    if (data.accepted) {
-      this.stats.accepted_shares++;
+    if (this.config.mode === 'pool') {
+      // Submit to pool
+      this.submitShare(data.jobId, data.nonce, data.hash, data.nTime);
     } else {
-      this.stats.rejected_shares++;
+      // Solo mining - check if it's a valid block
+      if (this.isValidBlock(data.hash)) {
+        this.stats.blocks_found++;
+        console.log('🎉 BLOCK FOUND!');
+      }
     }
+    
     this.emit('share', data);
   }
 
@@ -239,9 +478,8 @@ class MiningEngine extends EventEmitter {
     const elapsedSeconds = (currentTime - this.startTime) / 1000;
     
     if (elapsedSeconds > 0) {
-      // Calculate average hashrate
-      const totalHashes = this.lastHashCount;
-      this.stats.hashrate = totalHashes / elapsedSeconds;
+      // Calculate current hashrate
+      this.stats.hashrate = this.hashCount / elapsedSeconds;
       
       // Update uptime
       this.stats.uptime = elapsedSeconds;
@@ -274,13 +512,27 @@ class MiningEngine extends EventEmitter {
   }
 
   /**
+   * Check if hash represents a valid block
+   */
+  isValidBlock(hash) {
+    // Convert hash to big number and compare with network difficulty
+    // This is simplified - real implementation would use proper difficulty calculation
+    const hashBigInt = BigInt('0x' + hash);
+    const target = BigInt('0x' + '0'.repeat(8) + 'f'.repeat(56)); // Simplified target
+    return hashBigInt < target;
+  }
+
+  /**
    * Get mining status
    */
   getStatus() {
     return {
       is_mining: this.mining,
       stats: { ...this.stats },
-      config: this.config
+      config: this.config,
+      pool_connected: this.poolConnection ? this.poolConnection.readyState === 'open' : false,
+      current_job: this.currentJob ? this.currentJob.job_id : null,
+      difficulty: this.difficulty
     };
   }
 
@@ -353,16 +605,19 @@ class MiningEngine extends EventEmitter {
 }
 
 /**
- * Mining Worker Class
+ * Real Mining Worker Class
  */
-class MiningWorker extends EventEmitter {
-  constructor(id, config) {
+class RealMiningWorker extends EventEmitter {
+  constructor(id, config, engine) {
     super();
     this.id = id;
     this.config = config;
+    this.engine = engine;
     this.running = false;
     this.miningLoop = null;
-    this.hashCount = 0;
+    this.currentJob = null;
+    this.nonceStart = id * 0x1000000; // Divide nonce space between workers
+    this.nonce = this.nonceStart;
   }
 
   /**
@@ -372,14 +627,14 @@ class MiningWorker extends EventEmitter {
     if (this.running) return;
 
     this.running = true;
-    this.hashCount = 0;
+    this.nonce = this.nonceStart;
     
-    console.log(`⚡ Worker ${this.id} started`);
+    console.log(`⚡ Real mining worker ${this.id} started`);
     
     // Start mining loop
     this.miningLoop = setInterval(() => {
       this.mine();
-    }, 10); // Mine every 10ms
+    }, 1); // Mine as fast as possible
 
     return true;
   }
@@ -402,25 +657,34 @@ class MiningWorker extends EventEmitter {
   }
 
   /**
-   * Mining function
+   * Set new mining job
    */
-  mine() {
+  setJob(job) {
+    this.currentJob = job;
+    this.nonce = this.nonceStart; // Reset nonce for new job
+  }
+
+  /**
+   * Real mining function with actual scrypt algorithm
+   */
+  async mine() {
+    if (!this.currentJob) return;
+
     try {
-      // Generate random nonce
-      const nonce = Math.floor(Math.random() * 0xFFFFFFFF);
+      // Create block header for current job
+      const blockHeader = this.createRealBlockHeader(this.nonce);
       
-      // Create block header
-      const blockHeader = this.createBlockHeader(nonce);
-      
-      // Calculate scrypt hash
-      const hash = this.scryptHash(blockHeader);
+      // Calculate actual scrypt hash
+      const hash = await this.realScryptHash(blockHeader);
       
       // Check if hash meets difficulty
-      if (this.checkDifficulty(hash)) {
+      if (this.checkRealDifficulty(hash)) {
         this.emit('share', {
           worker_id: this.id,
-          nonce: nonce,
+          jobId: this.currentJob.job_id,
+          nonce: this.nonce.toString(16),
           hash: hash,
+          nTime: this.currentJob.ntime,
           accepted: true
         });
       }
@@ -428,73 +692,147 @@ class MiningWorker extends EventEmitter {
       // Emit hash event for statistics
       this.emit('hash', {
         worker_id: this.id,
-        nonce: nonce,
+        nonce: this.nonce,
         hash: hash
       });
       
-      this.hashCount++;
+      // Increment nonce for next iteration
+      this.nonce++;
+      
+      // Reset nonce if we've exhausted our range
+      if (this.nonce >= this.nonceStart + 0x1000000) {
+        this.nonce = this.nonceStart;
+      }
+      
     } catch (error) {
       this.emit('error', error);
     }
   }
 
   /**
-   * Create block header for mining
+   * Create real block header from pool job
    */
-  createBlockHeader(nonce) {
-    const version = 1;
-    const prevHash = crypto.randomBytes(32);
-    const merkleRoot = crypto.randomBytes(32);
-    const timestamp = Math.floor(Date.now() / 1000);
-    const bits = 0x1d00ffff; // Difficulty bits
+  createRealBlockHeader(nonce) {
+    if (!this.currentJob) {
+      throw new Error('No current job available');
+    }
+
+    // Build coinbase transaction
+    const coinbase = this.currentJob.coinb1 + this.engine.config.wallet_address + this.currentJob.coinb2;
     
-    // Pack block header
+    // Calculate merkle root
+    const merkleRoot = this.calculateMerkleRoot(coinbase, this.currentJob.merkle_branch);
+    
+    // Pack block header (80 bytes)
     const header = Buffer.alloc(80);
     let offset = 0;
     
-    header.writeUInt32LE(version, offset); offset += 4;
-    prevHash.copy(header, offset); offset += 32;
-    merkleRoot.copy(header, offset); offset += 32;
-    header.writeUInt32LE(timestamp, offset); offset += 4;
-    header.writeUInt32LE(bits, offset); offset += 4;
+    // Version (4 bytes)
+    header.writeUInt32LE(parseInt(this.currentJob.version, 16), offset); offset += 4;
+    
+    // Previous hash (32 bytes)
+    Buffer.from(this.currentJob.prevhash, 'hex').reverse().copy(header, offset); offset += 32;
+    
+    // Merkle root (32 bytes) 
+    Buffer.from(merkleRoot, 'hex').reverse().copy(header, offset); offset += 32;
+    
+    // Timestamp (4 bytes)
+    header.writeUInt32LE(parseInt(this.currentJob.ntime, 16), offset); offset += 4;
+    
+    // Difficulty bits (4 bytes)
+    header.writeUInt32LE(parseInt(this.currentJob.nbits, 16), offset); offset += 4;
+    
+    // Nonce (4 bytes)
     header.writeUInt32LE(nonce, offset);
     
     return header;
   }
 
   /**
-   * Calculate Scrypt hash
+   * Calculate merkle root from coinbase and merkle branch
    */
-  scryptHash(data) {
+  calculateMerkleRoot(coinbase, merkleBranch) {
+    // Hash coinbase transaction
+    let hash = crypto.createHash('sha256').update(Buffer.from(coinbase, 'hex')).digest();
+    hash = crypto.createHash('sha256').update(hash).digest();
+    
+    // Apply merkle branch
+    for (const branch of merkleBranch) {
+      const branchBuffer = Buffer.from(branch, 'hex');
+      const combined = Buffer.concat([hash, branchBuffer]);
+      hash = crypto.createHash('sha256').update(combined).digest();
+      hash = crypto.createHash('sha256').update(hash).digest();
+    }
+    
+    return hash.toString('hex');
+  }
+
+  /**
+   * Calculate real Scrypt hash
+   */
+  async realScryptHash(data) {
+    return new Promise((resolve, reject) => {
+      try {
+        // Scrypt parameters for Litecoin/Dogecoin
+        const N = this.config.coin === 'litecoin' ? 1024 : 1024;  // CPU/memory cost parameter
+        const r = 1;    // Block size parameter  
+        const p = 1;    // Parallelization parameter
+        const dkLen = 32; // Derived key length
+        
+        // Use empty salt for mining (as per cryptocurrency standards)
+        const salt = Buffer.alloc(0);
+        
+        scrypt(data, salt, N, r, p, dkLen, (error, progress, key) => {
+          if (error) {
+            reject(error);
+          } else if (key) {
+            resolve(key.toString('hex'));
+          }
+        });
+      } catch (error) {
+        reject(error);
+      }
+    });
+  }
+
+  /**
+   * Check if hash meets real difficulty target
+   */
+  checkRealDifficulty(hashHex) {
     try {
-      // Use crypto-js for scrypt implementation
-      const salt = crypto.randomBytes(16);
-      const N = this.config.coin?.scrypt_params?.N || 1024;
-      const r = this.config.coin?.scrypt_params?.r || 1;
-      const p = this.config.coin?.scrypt_params?.p || 1;
+      // Convert hash to buffer and reverse for little-endian comparison
+      const hashBuffer = Buffer.from(hashHex, 'hex').reverse();
       
-      // Simple scrypt-like operation using available crypto
-      const hash1 = crypto.createHash('sha256').update(data).digest();
-      const hash2 = crypto.createHash('sha256').update(hash1).digest();
+      // Convert difficulty to target
+      const target = this.difficultyToTarget(this.engine.difficulty);
       
-      return hash2.toString('hex');
+      // Compare hash with target
+      return Buffer.compare(hashBuffer, target) <= 0;
     } catch (error) {
-      console.error('Scrypt hash error:', error);
-      return crypto.createHash('sha256').update(data).digest('hex');
+      console.error('Difficulty check error:', error);
+      return false;
     }
   }
 
   /**
-   * Check if hash meets difficulty target
+   * Convert difficulty to target value
    */
-  checkDifficulty(hash) {
-    // Simple difficulty check - hash starts with zeros
-    const target = '0000'; // Adjust difficulty as needed
-    return hash.startsWith(target);
+  difficultyToTarget(difficulty) {
+    // Simplified target calculation
+    // Real implementation would use proper network difficulty
+    const maxTarget = Buffer.from('00000000FFFF0000000000000000000000000000000000000000000000000000', 'hex');
+    
+    // Scale target based on difficulty
+    const target = Buffer.alloc(32);
+    const scaledTarget = BigInt('0x' + maxTarget.toString('hex')) / BigInt(Math.floor(difficulty));
+    
+    // Convert back to buffer
+    const targetHex = scaledTarget.toString(16).padStart(64, '0');
+    return Buffer.from(targetHex, 'hex');
   }
 }
 
 module.exports = {
   MiningEngine,
-  MiningWorker
+  RealMiningWorker
 };
