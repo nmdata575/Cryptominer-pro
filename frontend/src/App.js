@@ -287,18 +287,27 @@ function App() {
     // Socket connection is handled separately
   }, [fetchMiningStatus, fetchSystemStats, fetchAIInsights]);
 
-  // Periodic updates for non-WebSocket data
+  // Periodic updates for non-Socket.io data and fallback polling
   useEffect(() => {
-    const interval = setInterval(() => {
-      if (connectionStatus !== 'connected') {
+    let interval;
+    
+    if (connectionStatus === 'connected') {
+      // Less frequent polling when Socket.io is connected
+      interval = setInterval(() => {
+        fetchAIInsights(); // AI insights still use HTTP
+      }, 10000);
+    } else {
+      // More frequent polling when Socket.io is not connected
+      const pollFrequency = connectionStatus === 'polling' ? 3000 : 5000;
+      interval = setInterval(() => {
         fetchMiningStatus();
         fetchSystemStats();
-      }
-      fetchAIInsights();
-    }, 5000);
+        fetchAIInsights();
+      }, pollFrequency);
+    }
 
     return () => clearInterval(interval);
-  }, [connectionStatus]);
+  }, [connectionStatus, fetchMiningStatus, fetchSystemStats, fetchAIInsights]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-crypto-dark via-crypto-blue to-crypto-accent">
