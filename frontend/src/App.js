@@ -161,18 +161,19 @@ function App() {
     };
   }, [connectSocket, socket]);
 
-  // API functions
-  const fetchMiningStatus = async () => {
+  // API functions wrapped in useCallback to prevent infinite re-renders
+  const fetchMiningStatus = useCallback(async () => {
     try {
       const response = await axios.get(`${BACKEND_URL}/api/mining/status`);
       setMiningStatus(response.data);
+      setErrorMessage(''); // Clear error on success
     } catch (error) {
       console.error('Failed to fetch mining status:', error);
       setErrorMessage('Failed to fetch mining status');
     }
-  };
+  }, []);
 
-  const fetchAIInsights = async () => {
+  const fetchAIInsights = useCallback(async () => {
     try {
       const response = await axios.get(`${BACKEND_URL}/api/mining/ai-insights`);
       if (!response.data.error) {
@@ -181,19 +182,20 @@ function App() {
     } catch (error) {
       console.error('Failed to fetch AI insights:', error);
     }
-  };
+  }, []);
 
-  const fetchCoinPresets = async () => {
+  const fetchCoinPresets = useCallback(async () => {
     try {
       const response = await axios.get(`${BACKEND_URL}/api/coins/presets`);
       setCoinPresets(response.data.presets);
+      setErrorMessage(''); // Clear error on success
     } catch (error) {
       console.error('Failed to fetch coin presets:', error);
       setErrorMessage('Failed to fetch coin presets');
     }
-  };
+  }, []);
 
-  const fetchSystemStats = async () => {
+  const fetchSystemStats = useCallback(async () => {
     try {
       const response = await axios.get(`${BACKEND_URL}/api/system/stats`);
       if (!response.data.error) {
@@ -202,7 +204,7 @@ function App() {
     } catch (error) {
       console.error('Failed to fetch system stats:', error);
     }
-  };
+  }, []);
 
   const startMining = async () => {
     try {
