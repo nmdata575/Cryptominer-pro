@@ -183,6 +183,20 @@ const SystemMonitoring = ({ systemMetrics }) => {
                     <span className="text-gray-400">Logical Cores:</span>
                     <span className="text-white font-medium ml-2">{cpuInfo.cores.logical}</span>
                   </div>
+                  {cpuInfo.environment?.container && (
+                    <>
+                      <div>
+                        <span className="text-gray-400">Environment:</span>
+                        <span className="text-blue-300 font-medium ml-2 capitalize">
+                          {cpuInfo.environment.type}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-gray-400">Allocated:</span>
+                        <span className="text-green-300 font-medium ml-2">{cpuInfo.cores.allocated} cores</span>
+                      </div>
+                    </>
+                  )}
                   {cpuInfo.frequency?.max && (
                     <>
                       <div>
@@ -198,6 +212,30 @@ const SystemMonitoring = ({ systemMetrics }) => {
                     </>
                   )}
                 </div>
+
+                {/* Mining Optimization Section */}
+                {cpuInfo.optimal_mining_config && (
+                  <div className="mt-4 p-3 bg-blue-500/10 rounded-lg border border-blue-500/20">
+                    <div className="text-sm font-medium text-blue-300 mb-2">⚡ Mining Optimization</div>
+                    <div className="grid grid-cols-2 gap-2 text-xs">
+                      <div>
+                        <span className="text-gray-400">Recommended Threads:</span>
+                        <span className="text-blue-300 font-medium ml-2">
+                          {cpuInfo.optimal_mining_config.max_safe_threads}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-gray-400">Profile:</span>
+                        <span className="text-green-300 font-medium ml-2 capitalize">
+                          {cpuInfo.optimal_mining_config.recommended_profile}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="text-xs text-gray-400 mt-2">
+                      Optimized for {cpuInfo.environment?.container ? 'containerized' : 'native'} environment
+                    </div>
+                  </div>
+                )}
 
                 {/* Per-Core Usage */}
                 {cpuInfo.load?.per_core && (
