@@ -98,32 +98,398 @@ class BackendTester:
         except requests.exceptions.RequestException as e:
             self.log_result("System Stats API", False, f"Request failed: {str(e)}")
     
-    def test_cpu_info(self):
-        """Test CPU info endpoint (/api/system/cpu-info) - Important after SystemMonitoring.js changes"""
+    def test_enhanced_cpu_info_api(self):
+        """Test enhanced CPU info endpoint (/api/system/cpu-info) - Key focus of review"""
         try:
             response = requests.get(f"{BACKEND_URL}/system/cpu-info", timeout=TIMEOUT)
             
             if response.status_code == 200:
                 data = response.json()
-                expected_fields = ['cores', 'model', 'speed']
                 
-                if any(field in data for field in expected_fields):
-                    cores = data.get('cores', 'unknown')
-                    model = data.get('model', 'unknown')
-                    speed = data.get('speed', 'unknown')
-                    
-                    self.log_result("CPU Info API", True, 
-                                  f"Returns CPU information successfully", 
-                                  f"Cores: {cores}, Model: {model}, Speed: {speed}")
+                # Check for enhanced CPU detection fields
+                required_fields = ['cores', 'environment', 'mining_profiles', 'optimal_mining_config']
+                missing_fields = [field for field in required_fields if field not in data]
+                
+                if missing_fields:
+                    self.log_result("Enhanced CPU Info API", False, 
+                                  f"Missing enhanced fields: {missing_fields}", data)
+                    return
+                
+                # Verify container environment detection
+                environment = data.get('environment', {})
+                container_detected = environment.get('container', False)
+                kubernetes_detected = environment.get('kubernetes', False)
+                env_type = environment.get('type', 'unknown')
+                
+                # Verify cores information
+                cores = data.get('cores', {})
+                physical_cores = cores.get('physical', 0)
+                logical_cores = cores.get('logical', 0)
+                allocated_cores = cores.get('allocated', 0)
+                
+                # Verify mining profiles (should have 4 profiles)
+                mining_profiles = data.get('mining_profiles', {})
+                expected_profiles = ['light', 'standard', 'maximum', 'absolute_max']
+                found_profiles = [profile for profile in expected_profiles if profile in mining_profiles]
+                
+                # Verify optimal mining config
+                optimal_config = data.get('optimal_mining_config', {})
+                max_safe_threads = optimal_config.get('max_safe_threads', 0)
+                recommended_profile = optimal_config.get('recommended_profile', '')
+                
+                # Log detailed results
+                details = {
+                    'container_detected': container_detected,
+                    'kubernetes_detected': kubernetes_detected,
+                    'environment_type': env_type,
+                    'physical_cores': physical_cores,
+                    'logical_cores': logical_cores,
+                    'allocated_cores': allocated_cores,
+                    'mining_profiles_found': found_profiles,
+                    'max_safe_threads': max_safe_threads,
+                    'recommended_profile': recommended_profile
+                }
+                
+                # Success criteria
+                success = (
+                    len(found_profiles) == 4 and  # All 4 mining profiles present
+                    physical_cores > 0 and  # CPU cores detected
+                    max_safe_threads > 0 and  # Thread recommendations available
+                    env_type in ['kubernetes', 'container', 'native']  # Environment detected
+                )
+                
+                if success:
+                    self.log_result("Enhanced CPU Info API", True, 
+                                  f"Enhanced CPU detection working - {physical_cores} cores, {env_type} environment, {len(found_profiles)} mining profiles", 
+                                  details)
                 else:
-                    self.log_result("CPU Info API", False, 
-                                  f"No expected CPU fields found", data)
+                    self.log_result("Enhanced CPU Info API", False, 
+                                  f"Enhanced CPU detection incomplete", details)
             else:
-                self.log_result("CPU Info API", False, 
+                self.log_result("Enhanced CPU Info API", False, 
                               f"HTTP {response.status_code}: {response.text}")
                 
         except requests.exceptions.RequestException as e:
-            self.log_result("CPU Info API", False, f"Request failed: {str(e)}")
+            self.log_result("Enhanced CPU Info API", False, f"Request failed: {str(e)}")
+    
+    def test_environment_api(self):
+        """Test new environment API endpoint (/api/system/environment) - Key focus of review"""
+        try:
+            response = requests.get(f"{BACKEND_URL}/system/environment", timeout=TIMEOUT)
+            
+            if response.status_code == 200:
+                data = response.json()
+                
+                # Check for required environment fields
+                required_fields = ['deployment_type', 'container_info', 'cpu_allocation', 'performance_context', 'mining_recommendations']
+                missing_fields = [field for field in required_fields if field not in data]
+                
+                if missing_fields:
+                    self.log_result("Environment API", False, 
+                                  f"Missing required fields: {missing_fields}", data)
+                    return
+                
+                # Verify deployment type detection
+                deployment_type = data.get('deployment_type', 'unknown')
+                
+                # Verify container info
+                container_info = data.get('container_info', {})
+                is_containerized = container_info.get('is_containerized', False)
+                kubernetes = container_info.get('kubernetes', False)
+                
+                # Verify CPU allocation info
+                cpu_allocation = data.get('cpu_allocation', {})
+                allocated_cores = cpu_allocation.get('allocated_cores', 0)
+                optimal_mining_threads = cpu_allocation.get('optimal_mining_threads', 0)
+                
+                # Verify performance context
+                performance_context = data.get('performance_context', {})
+                environment_optimized = performance_context.get('environment_optimized', False)
+                recommended_profile = performance_context.get('recommended_profile', '')
+                max_safe_threads = performance_context.get('max_safe_threads', 0)
+                performance_notes = performance_context.get('performance_notes', [])
+                
+                # Verify mining recommendations
+                mining_recommendations = data.get('mining_recommendations', {})
+                
+                details = {
+                    'deployment_type': deployment_type,
+                    'is_containerized': is_containerized,
+                    'kubernetes': kubernetes,
+                    'allocated_cores': allocated_cores,
+                    'optimal_mining_threads': optimal_mining_threads,
+                    'recommended_profile': recommended_profile,
+                    'max_safe_threads': max_safe_threads,
+                    'performance_notes_count': len(performance_notes),
+                    'mining_recommendations_count': len(mining_recommendations)
+                }
+                
+                # Success criteria
+                success = (
+                    deployment_type in ['kubernetes', 'container', 'native'] and
+                    allocated_cores > 0 and
+                    optimal_mining_threads > 0 and
+                    len(performance_notes) > 0
+                )
+                
+                if success:
+                    self.log_result("Environment API", True, 
+                                  f"Environment detection working - {deployment_type} with {allocated_cores} cores, {optimal_mining_threads} optimal threads", 
+                                  details)
+                else:
+                    self.log_result("Environment API", False, 
+                                  f"Environment detection incomplete", details)
+            else:
+                self.log_result("Environment API", False, 
+                              f"HTTP {response.status_code}: {response.text}")
+                
+        except requests.exceptions.RequestException as e:
+            self.log_result("Environment API", False, f"Request failed: {str(e)}")
+    
+    def test_mining_profiles_optimization(self):
+        """Test mining profiles for 8-core container optimization"""
+        try:
+            response = requests.get(f"{BACKEND_URL}/system/cpu-info", timeout=TIMEOUT)
+            
+            if response.status_code == 200:
+                data = response.json()
+                mining_profiles = data.get('mining_profiles', {})
+                
+                if not mining_profiles:
+                    self.log_result("Mining Profiles Optimization", False, 
+                                  "No mining profiles found in CPU info")
+                    return
+                
+                # Expected 4 profiles
+                expected_profiles = ['light', 'standard', 'maximum', 'absolute_max']
+                profile_results = {}
+                
+                for profile_name in expected_profiles:
+                    if profile_name in mining_profiles:
+                        profile = mining_profiles[profile_name]
+                        threads = profile.get('threads', 0)
+                        description = profile.get('description', '')
+                        
+                        profile_results[profile_name] = {
+                            'threads': threads,
+                            'description': description,
+                            'present': True
+                        }
+                    else:
+                        profile_results[profile_name] = {'present': False}
+                
+                # Check if all profiles are present
+                all_profiles_present = all(profile_results[p]['present'] for p in expected_profiles)
+                
+                # For 8-core container, verify thread recommendations are reasonable
+                cores_info = data.get('cores', {})
+                physical_cores = cores_info.get('physical', 0)
+                
+                # Verify thread recommendations make sense for container environment
+                reasonable_threads = True
+                if all_profiles_present and physical_cores > 0:
+                    light_threads = profile_results['light'].get('threads', 0)
+                    standard_threads = profile_results['standard'].get('threads', 0)
+                    maximum_threads = profile_results['maximum'].get('threads', 0)
+                    absolute_max_threads = profile_results['absolute_max'].get('threads', 0)
+                    
+                    # Verify ascending thread counts
+                    if not (light_threads <= standard_threads <= maximum_threads <= absolute_max_threads):
+                        reasonable_threads = False
+                    
+                    # For 8-core system, maximum should be around 7 threads (leaving 1 for system)
+                    if physical_cores == 8 and maximum_threads != 7:
+                        reasonable_threads = False
+                
+                details = {
+                    'profiles_found': len([p for p in profile_results.values() if p.get('present', False)]),
+                    'all_profiles_present': all_profiles_present,
+                    'physical_cores': physical_cores,
+                    'profile_details': profile_results,
+                    'reasonable_threads': reasonable_threads
+                }
+                
+                if all_profiles_present and reasonable_threads:
+                    self.log_result("Mining Profiles Optimization", True, 
+                                  f"All 4 mining profiles present with optimized thread counts for {physical_cores}-core container", 
+                                  details)
+                else:
+                    self.log_result("Mining Profiles Optimization", False, 
+                                  f"Mining profiles incomplete or not optimized", details)
+            else:
+                self.log_result("Mining Profiles Optimization", False, 
+                              f"HTTP {response.status_code}: {response.text}")
+                
+        except requests.exceptions.RequestException as e:
+            self.log_result("Mining Profiles Optimization", False, f"Request failed: {str(e)}")
+    
+    def test_container_detection(self):
+        """Test container environment detection (Kubernetes)"""
+        try:
+            # Test both CPU info and environment endpoints for container detection
+            cpu_response = requests.get(f"{BACKEND_URL}/system/cpu-info", timeout=TIMEOUT)
+            env_response = requests.get(f"{BACKEND_URL}/system/environment", timeout=TIMEOUT)
+            
+            container_detected = False
+            kubernetes_detected = False
+            detection_sources = []
+            
+            # Check CPU info endpoint
+            if cpu_response.status_code == 200:
+                cpu_data = cpu_response.json()
+                environment = cpu_data.get('environment', {})
+                if environment.get('container', False):
+                    container_detected = True
+                    detection_sources.append('cpu-info')
+                if environment.get('kubernetes', False):
+                    kubernetes_detected = True
+            
+            # Check environment endpoint
+            if env_response.status_code == 200:
+                env_data = env_response.json()
+                container_info = env_data.get('container_info', {})
+                if container_info.get('is_containerized', False):
+                    container_detected = True
+                    if 'environment' not in detection_sources:
+                        detection_sources.append('environment')
+                if container_info.get('kubernetes', False):
+                    kubernetes_detected = True
+                
+                deployment_type = env_data.get('deployment_type', 'unknown')
+            
+            details = {
+                'container_detected': container_detected,
+                'kubernetes_detected': kubernetes_detected,
+                'detection_sources': detection_sources,
+                'deployment_type': deployment_type if 'env_data' in locals() else 'unknown'
+            }
+            
+            # Success if container environment is properly detected
+            if container_detected and len(detection_sources) > 0:
+                env_type = 'Kubernetes' if kubernetes_detected else 'Container'
+                self.log_result("Container Detection", True, 
+                              f"{env_type} environment properly detected via {', '.join(detection_sources)} endpoints", 
+                              details)
+            else:
+                self.log_result("Container Detection", False, 
+                              f"Container environment not detected or detection incomplete", details)
+                
+        except requests.exceptions.RequestException as e:
+            self.log_result("Container Detection", False, f"Request failed: {str(e)}")
+    
+    def test_thread_recommendations(self):
+        """Test thread recommendations for 8-core container (should recommend 7 threads)"""
+        try:
+            # Get CPU info for thread recommendations
+            cpu_response = requests.get(f"{BACKEND_URL}/system/cpu-info", timeout=TIMEOUT)
+            env_response = requests.get(f"{BACKEND_URL}/system/environment", timeout=TIMEOUT)
+            
+            if cpu_response.status_code == 200:
+                cpu_data = cpu_response.json()
+                
+                # Check optimal mining config
+                optimal_config = cpu_data.get('optimal_mining_config', {})
+                max_safe_threads = optimal_config.get('max_safe_threads', 0)
+                recommended_profile = optimal_config.get('recommended_profile', '')
+                
+                # Check recommended threads from different sources
+                recommended_threads = cpu_data.get('recommended_threads', {})
+                
+                # Get cores information
+                cores = cpu_data.get('cores', {})
+                physical_cores = cores.get('physical', 0)
+                allocated_cores = cores.get('allocated', 0)
+                
+                # Check environment endpoint for additional thread info
+                env_optimal_threads = 0
+                if env_response.status_code == 200:
+                    env_data = env_response.json()
+                    cpu_allocation = env_data.get('cpu_allocation', {})
+                    env_optimal_threads = cpu_allocation.get('optimal_mining_threads', 0)
+                
+                details = {
+                    'physical_cores': physical_cores,
+                    'allocated_cores': allocated_cores,
+                    'max_safe_threads': max_safe_threads,
+                    'env_optimal_threads': env_optimal_threads,
+                    'recommended_profile': recommended_profile,
+                    'recommended_threads': recommended_threads
+                }
+                
+                # For 8-core container, optimal should be 7 threads (leaving 1 for system)
+                expected_optimal = 7 if physical_cores == 8 else max(1, physical_cores - 1)
+                
+                # Check if recommendations are reasonable
+                recommendations_good = (
+                    max_safe_threads == expected_optimal or
+                    env_optimal_threads == expected_optimal or
+                    (recommended_threads.get('balanced', 0) == expected_optimal)
+                )
+                
+                if recommendations_good and physical_cores > 0:
+                    self.log_result("Thread Recommendations", True, 
+                                  f"Optimal thread recommendations for {physical_cores}-core container: {max_safe_threads or env_optimal_threads} threads", 
+                                  details)
+                else:
+                    self.log_result("Thread Recommendations", False, 
+                                  f"Thread recommendations may not be optimal for {physical_cores}-core container", details)
+            else:
+                self.log_result("Thread Recommendations", False, 
+                              f"HTTP {cpu_response.status_code}: {cpu_response.text}")
+                
+        except requests.exceptions.RequestException as e:
+            self.log_result("Thread Recommendations", False, f"Request failed: {str(e)}")
+    
+    def test_cpu_core_detection_explanation(self):
+        """Test that the system properly explains 8-core detection vs 128-core expectation"""
+        try:
+            env_response = requests.get(f"{BACKEND_URL}/system/environment", timeout=TIMEOUT)
+            
+            if env_response.status_code == 200:
+                env_data = env_response.json()
+                
+                # Check performance context for explanatory notes
+                performance_context = env_data.get('performance_context', {})
+                performance_notes = performance_context.get('performance_notes', [])
+                
+                # Check CPU allocation info
+                cpu_allocation = env_data.get('cpu_allocation', {})
+                allocated_cores = cpu_allocation.get('allocated_cores', 0)
+                
+                # Look for container/environment explanation in notes
+                container_explanation_found = False
+                for note in performance_notes:
+                    if any(keyword in note.lower() for keyword in ['container', 'kubernetes', 'allocated', 'docker']):
+                        container_explanation_found = True
+                        break
+                
+                # Check if deployment type indicates containerized environment
+                deployment_type = env_data.get('deployment_type', 'unknown')
+                is_containerized = deployment_type in ['kubernetes', 'container']
+                
+                details = {
+                    'allocated_cores': allocated_cores,
+                    'deployment_type': deployment_type,
+                    'is_containerized': is_containerized,
+                    'performance_notes_count': len(performance_notes),
+                    'container_explanation_found': container_explanation_found,
+                    'performance_notes': performance_notes[:3]  # First 3 notes for reference
+                }
+                
+                # Success if system explains the containerized environment
+                if is_containerized and container_explanation_found and allocated_cores > 0:
+                    self.log_result("CPU Core Detection Explanation", True, 
+                                  f"System properly explains {allocated_cores} cores in {deployment_type} environment", 
+                                  details)
+                else:
+                    self.log_result("CPU Core Detection Explanation", False, 
+                                  f"System doesn't adequately explain containerized CPU allocation", details)
+            else:
+                self.log_result("CPU Core Detection Explanation", False, 
+                              f"HTTP {env_response.status_code}: {env_response.text}")
+                
+        except requests.exceptions.RequestException as e:
+            self.log_result("CPU Core Detection Explanation", False, f"Request failed: {str(e)}")
     
     def test_coin_presets(self):
         """Test coin presets endpoint (/api/coins/presets)"""
