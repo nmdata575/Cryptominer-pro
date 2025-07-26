@@ -221,12 +221,81 @@ install_backend_deps() {
 install_frontend_deps() {
     print_step "Installing frontend dependencies..."
     cd "$APP_DIR/frontend"
+    
+    # Install all dependencies including webpack polyfills
     npm install >> "$LOG_FILE" 2>&1 || handle_error "Frontend dependencies installation failed"
+    
+    # Install webpack polyfill dependencies
+    print_step "Installing webpack polyfills for React compatibility..."
+    npm install --save-dev @craco/craco crypto-browserify stream-browserify https-browserify stream-http util assert url browserify-zlib buffer process >> "$LOG_FILE" 2>&1 || handle_error "Webpack polyfills installation failed"
+    
     print_success "✅ Frontend dependencies installed"
+    
+    # Create CRACO configuration for webpack polyfills
+    print_step "Configuring webpack polyfills..."
+    create_craco_config
+    
+    # Update package.json to use CRACO
+    update_package_json_for_craco
     
     print_step "Building frontend..."
     npm run build >> "$LOG_FILE" 2>&1 || handle_error "Frontend build failed"
     print_success "✅ Frontend built successfully"
+}
+
+# Create CRACO configuration
+create_craco_config() {
+    cat > "$APP_DIR/frontend/craco.config.js" << 'EOF'
+const webpack = require('webpack');
+
+module.exports = {
+  webpack: {
+    configure: (webpackConfig) => {
+      // Add polyfills for Node.js core modules
+      webpackConfig.resolve.fallback = {
+        ...webpackConfig.resolve.fallback,
+        "crypto": require.resolve("crypto-browserify"),
+        "stream": require.resolve("stream-browserify"),
+        "http": require.resolve("stream-http"),
+        "https": require.resolve("https-browserify"),
+        "zlib": require.resolve("browserify-zlib"),
+        "url": require.resolve("url/"),
+        "util": require.resolve("util/"),
+        "assert": require.resolve("assert/"),
+        "buffer": require.resolve("buffer/"),
+        "process": require.resolve("process/browser.js")
+      };
+
+      // Add plugins to provide global variables
+      webpackConfig.plugins = [
+        ...webpackConfig.plugins,
+        new webpack.ProvidePlugin({
+          process: 'process/browser.js',
+          Buffer: ['buffer', 'Buffer'],
+        }),
+      ];
+
+      return webpackConfig;
+    },
+  },
+};
+EOF
+    print_info "✅ CRACO configuration created"
+}
+
+# Update package.json to use CRACO
+update_package_json_for_craco() {
+    cd "$APP_DIR/frontend"
+    
+    # Backup original package.json
+    cp package.json package.json.backup
+    
+    # Update scripts to use CRACO
+    sed -i 's/"start": "react-scripts start"/"start": "craco start"/' package.json
+    sed -i 's/"build": "react-scripts build"/"build": "craco build"/' package.json
+    sed -i 's/"test": "react-scripts test"/"test": "craco test"/' package.json
+    
+    print_info "✅ Package.json updated to use CRACO"
 }
 
 # Configure supervisor
