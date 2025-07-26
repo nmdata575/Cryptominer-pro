@@ -193,6 +193,11 @@ FAST_REFRESH=true
 ## 🧪 Testing
 
 ```bash
+# Clone and setup
+git clone https://github.com/nmdata575/ai-cm.git
+cd ai-cm
+git checkout release-2.03
+
 # Test installation
 ./scripts/test-installation.sh
 
