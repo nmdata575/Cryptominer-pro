@@ -37,11 +37,7 @@ const CustomCoinManager = ({ onCoinAdded }) => {
 
   const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:8001';
 
-  useEffect(() => {
-    fetchCustomCoins();
-  }, []);
-
-  const fetchCustomCoins = async () => {
+  const fetchCustomCoins = useCallback(async () => {
     try {
       setLoading(true);
       const response = await axios.get(`${BACKEND_URL}/api/coins/custom`);
@@ -54,7 +50,11 @@ const CustomCoinManager = ({ onCoinAdded }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [BACKEND_URL]);
+
+  useEffect(() => {
+    fetchCustomCoins();
+  }, [fetchCustomCoins]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
