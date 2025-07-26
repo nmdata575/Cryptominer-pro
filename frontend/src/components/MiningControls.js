@@ -130,7 +130,14 @@ const MiningControls = ({ config, onConfigChange, isMining, onStart, onStop }) =
           <div className="text-green-400 text-sm">
             <div className="flex items-center justify-between mb-2">
               <span className="font-medium">🖥️ System Detected:</span>
-              <span className="text-xs bg-green-500/20 px-2 py-1 rounded">Auto-Optimized</span>
+              <div className="flex items-center space-x-2">
+                {cpuInfo.environment?.container && (
+                  <span className="text-xs bg-blue-500/20 text-blue-300 px-2 py-1 rounded capitalize">
+                    {cpuInfo.environment.type}
+                  </span>
+                )}
+                <span className="text-xs bg-green-500/20 px-2 py-1 rounded">Auto-Optimized</span>
+              </div>
             </div>
             <div className="grid grid-cols-2 gap-4 text-xs">
               <div>
@@ -141,6 +148,18 @@ const MiningControls = ({ config, onConfigChange, isMining, onStart, onStop }) =
                 <span className="text-gray-400">Logical Cores:</span>
                 <span className="text-green-400 ml-2 font-medium">{cpuInfo.cores.logical}</span>
               </div>
+              {cpuInfo.environment?.container && (
+                <>
+                  <div>
+                    <span className="text-gray-400">Allocated Cores:</span>
+                    <span className="text-blue-300 ml-2 font-medium">{cpuInfo.cores.allocated}</span>
+                  </div>
+                  <div>
+                    <span className="text-gray-400">Environment:</span>
+                    <span className="text-blue-300 ml-2 font-medium capitalize">{cpuInfo.environment.type}</span>
+                  </div>
+                </>
+              )}
               {cpuInfo.frequency?.max && (
                 <div>
                   <span className="text-gray-400">Max Frequency:</span>
@@ -152,6 +171,19 @@ const MiningControls = ({ config, onConfigChange, isMining, onStart, onStop }) =
                 <span className="text-green-400 ml-2 font-medium">{cpuInfo.cores.hyperthreading ? 'Yes' : 'No'}</span>
               </div>
             </div>
+            {cpuInfo.optimal_mining_config && (
+              <div className="mt-2 pt-2 border-t border-green-500/20">
+                <div className="text-xs text-gray-400 mb-1">⚡ Optimized for your system:</div>
+                <div className="text-xs">
+                  <span className="text-green-300">
+                    {cpuInfo.optimal_mining_config.max_safe_threads} threads recommended
+                  </span>
+                  <span className="text-gray-400 ml-2">
+                    ({cpuInfo.optimal_mining_config.recommended_profile} profile)
+                  </span>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}
