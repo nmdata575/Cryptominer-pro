@@ -234,9 +234,11 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 📞 Support
 
+- **Repository**: [https://github.com/nmdata575/ai-cm](https://github.com/nmdata575/ai-cm)
 - **Documentation**: Check the [docs](docs/) directory
-- **Issues**: Use GitHub Issues for bug reports and feature requests
-- **Discussions**: Join GitHub Discussions for community support
+- **Issues**: Use [GitHub Issues](https://github.com/nmdata575/ai-cm/issues) for bug reports and feature requests
+- **Discussions**: Join [GitHub Discussions](https://github.com/nmdata575/ai-cm/discussions) for community support
+- **Release Branch**: [release-2.03](https://github.com/nmdata575/ai-cm/tree/release-2.03)
 
 ## 🗺️ Roadmap
 
