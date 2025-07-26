@@ -12,7 +12,7 @@ The installation issue has been resolved. The script was looking for files in ha
 
 ## 🛠️ **Installation Options**
 
-### **Option 1: Quick Installation (Recommended)**
+### **Option 1: Complete Installation v2.1 (Recommended)**
 
 ```bash
 # Clone the repository
@@ -22,10 +22,17 @@ cd ai-cm
 # Switch to release branch
 git checkout release-2.03
 
-# Run the GitHub-compatible installer
-chmod +x install-github.sh
-./install-github.sh
+# Run the complete v2.1 installer (includes all fixes)
+chmod +x install-complete-v2.sh
+./install-complete-v2.sh
 ```
+
+**✅ This installer includes:**
+- Enhanced CPU frequency detection
+- Automatic webpack polyfill configuration
+- CRACO build system setup
+- ARM processor optimization
+- Container environment detection
 
 ### **Option 2: Manual Installation**
 
