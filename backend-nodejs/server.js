@@ -324,6 +324,374 @@ app.get('/api/mining/ai-insights', async (req, res) => {
 });
 
 // ============================================================================
+// CUSTOM COIN MANAGEMENT API ENDPOINTS
+// ============================================================================
+
+// Get all custom coins
+app.get('/api/coins/custom', async (req, res) => {
+  try {
+    const customCoins = await CustomCoin.findActive();
+    res.json({
+      success: true,
+      coins: customCoins,
+      total: customCoins.length
+    });
+  } catch (error) {
+    console.error('Custom coins list error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to get custom coins'
+    });
+  }
+});
+
+// Get specific custom coin
+app.get('/api/coins/custom/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const customCoin = await CustomCoin.findOne({ id: id, is_active: true });
+    
+    if (!customCoin) {
+      return res.status(404).json({
+        success: false,
+        message: 'Custom coin not found'
+      });
+    }
+    
+    res.json({
+      success: true,
+      coin: customCoin
+    });
+  } catch (error) {
+    console.error('Custom coin get error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to get custom coin'
+    });
+  }
+});
+
+// Add new custom coin
+app.post('/api/coins/custom', async (req, res) => {
+  try {
+    const coinData = req.body;
+    
+    // Validate coin data
+    const validationErrors = CustomCoin.validateCoinData(coinData);
+    if (validationErrors.length > 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Validation failed',
+        errors: validationErrors
+      });
+    }
+    
+    // Check if coin ID already exists
+    const existingCoin = await CustomCoin.findOne({ id: coinData.id });
+    if (existingCoin) {
+      return res.status(409).json({
+        success: false,
+        message: 'Coin ID already exists'
+      });
+    }
+    
+    // Check if symbol already exists
+    const existingSymbol = await CustomCoin.findBySymbol(coinData.symbol);
+    if (existingSymbol) {
+      return res.status(409).json({
+        success: false,
+        message: 'Coin symbol already exists'
+      });
+    }
+    
+    // Create new custom coin
+    const customCoin = new CustomCoin(coinData);
+    
+    // Validate scrypt parameters
+    customCoin.validateScryptParams();
+    
+    // Save to database
+    await customCoin.save();
+    
+    res.status(201).json({
+      success: true,
+      message: 'Custom coin created successfully',
+      coin: customCoin
+    });
+  } catch (error) {
+    console.error('Custom coin creation error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to create custom coin',
+      error: error.message
+    });
+  }
+});
+
+// Update custom coin
+app.put('/api/coins/custom/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const updateData = req.body;
+    
+    // Find existing coin
+    const existingCoin = await CustomCoin.findOne({ id: id, is_active: true });
+    if (!existingCoin) {
+      return res.status(404).json({
+        success: false,
+        message: 'Custom coin not found'
+      });
+    }
+    
+    // Validate update data
+    const validationErrors = CustomCoin.validateCoinData(updateData);
+    if (validationErrors.length > 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Validation failed',
+        errors: validationErrors
+      });
+    }
+    
+    // Check if new symbol conflicts with existing coins (excluding current coin)
+    if (updateData.symbol && updateData.symbol !== existingCoin.symbol) {
+      const symbolConflict = await CustomCoin.findOne({
+        symbol: updateData.symbol.toUpperCase(),
+        id: { $ne: id },
+        is_active: true
+      });
+      if (symbolConflict) {
+        return res.status(409).json({
+          success: false,
+          message: 'Coin symbol already exists'
+        });
+      }
+    }
+    
+    // Update coin
+    Object.assign(existingCoin, updateData);
+    existingCoin.updated_at = Date.now();
+    
+    // Validate scrypt parameters
+    existingCoin.validateScryptParams();
+    
+    // Save changes
+    await existingCoin.save();
+    
+    res.json({
+      success: true,
+      message: 'Custom coin updated successfully',
+      coin: existingCoin
+    });
+  } catch (error) {
+    console.error('Custom coin update error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to update custom coin',
+      error: error.message
+    });
+  }
+});
+
+// Delete custom coin
+app.delete('/api/coins/custom/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    // Find and soft delete the coin
+    const customCoin = await CustomCoin.findOne({ id: id, is_active: true });
+    if (!customCoin) {
+      return res.status(404).json({
+        success: false,
+        message: 'Custom coin not found'
+      });
+    }
+    
+    // Soft delete (set is_active to false)
+    customCoin.is_active = false;
+    customCoin.updated_at = Date.now();
+    await customCoin.save();
+    
+    res.json({
+      success: true,
+      message: 'Custom coin deleted successfully'
+    });
+  } catch (error) {
+    console.error('Custom coin deletion error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to delete custom coin'
+    });
+  }
+});
+
+// Validate custom coin configuration
+app.post('/api/coins/custom/validate', async (req, res) => {
+  try {
+    const coinData = req.body;
+    
+    // Validate coin data
+    const validationErrors = CustomCoin.validateCoinData(coinData);
+    
+    if (validationErrors.length > 0) {
+      return res.json({
+        valid: false,
+        errors: validationErrors
+      });
+    }
+    
+    // Additional validation checks
+    const additionalChecks = [];
+    
+    // Check scrypt parameters
+    if (coinData.scrypt_params) {
+      try {
+        const { N, r, p } = coinData.scrypt_params;
+        if ((N & (N - 1)) !== 0) {
+          additionalChecks.push('Scrypt parameter N must be a power of 2');
+        }
+        const memoryUsage = N * r * p;
+        if (memoryUsage > 1000000) {
+          additionalChecks.push('Scrypt parameters result in too high memory usage');
+        }
+      } catch (error) {
+        additionalChecks.push('Invalid scrypt parameters');
+      }
+    }
+    
+    // Check for conflicts if ID is provided
+    if (coinData.id) {
+      const existingCoin = await CustomCoin.findOne({ id: coinData.id, is_active: true });
+      if (existingCoin) {
+        additionalChecks.push('Coin ID already exists');
+      }
+    }
+    
+    // Check for symbol conflicts
+    if (coinData.symbol) {
+      const existingSymbol = await CustomCoin.findBySymbol(coinData.symbol);
+      if (existingSymbol) {
+        additionalChecks.push('Coin symbol already exists');
+      }
+    }
+    
+    const allErrors = [...validationErrors, ...additionalChecks];
+    
+    res.json({
+      valid: allErrors.length === 0,
+      errors: allErrors,
+      warnings: [],
+      suggestions: [
+        'Use standard scrypt parameters (N=1024, r=1, p=1) for compatibility',
+        'Ensure block time target is reasonable (60-600 seconds)',
+        'Verify block reward matches the actual cryptocurrency'
+      ]
+    });
+  } catch (error) {
+    console.error('Custom coin validation error:', error);
+    res.status(500).json({
+      valid: false,
+      errors: ['Validation service failed'],
+      message: error.message
+    });
+  }
+});
+
+// Export custom coins configuration
+app.get('/api/coins/custom/export', async (req, res) => {
+  try {
+    const customCoins = await CustomCoin.findActive();
+    
+    const exportData = {
+      export_date: new Date().toISOString(),
+      version: '1.0',
+      custom_coins: customCoins.map(coin => ({
+        id: coin.id,
+        name: coin.name,
+        symbol: coin.symbol,
+        algorithm: coin.algorithm,
+        block_time_target: coin.block_time_target,
+        block_reward: coin.block_reward,
+        network_difficulty: coin.network_difficulty,
+        scrypt_params: coin.scrypt_params,
+        address_formats: coin.address_formats,
+        metadata: coin.metadata
+      }))
+    };
+    
+    res.setHeader('Content-Type', 'application/json');
+    res.setHeader('Content-Disposition', 'attachment; filename="custom_coins_export.json"');
+    res.json(exportData);
+  } catch (error) {
+    console.error('Custom coins export error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to export custom coins'
+    });
+  }
+});
+
+// Import custom coins configuration
+app.post('/api/coins/custom/import', async (req, res) => {
+  try {
+    const importData = req.body;
+    
+    if (!importData.custom_coins || !Array.isArray(importData.custom_coins)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid import data format'
+      });
+    }
+    
+    const results = {
+      imported: 0,
+      skipped: 0,
+      errors: []
+    };
+    
+    for (const coinData of importData.custom_coins) {
+      try {
+        // Validate coin data
+        const validationErrors = CustomCoin.validateCoinData(coinData);
+        if (validationErrors.length > 0) {
+          results.errors.push(`${coinData.id || 'Unknown'}: ${validationErrors.join(', ')}`);
+          results.skipped++;
+          continue;
+        }
+        
+        // Check if coin already exists
+        const existingCoin = await CustomCoin.findOne({ id: coinData.id });
+        if (existingCoin) {
+          results.errors.push(`${coinData.id}: Coin already exists`);
+          results.skipped++;
+          continue;
+        }
+        
+        // Create new custom coin
+        const customCoin = new CustomCoin(coinData);
+        await customCoin.save();
+        results.imported++;
+      } catch (error) {
+        results.errors.push(`${coinData.id || 'Unknown'}: ${error.message}`);
+        results.skipped++;
+      }
+    }
+    
+    res.json({
+      success: true,
+      message: `Import completed: ${results.imported} imported, ${results.skipped} skipped`,
+      results: results
+    });
+  } catch (error) {
+    console.error('Custom coins import error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to import custom coins'
+    });
+  }
+});
+
+// ============================================================================
 // REMOTE CONNECTIVITY API ENDPOINTS
 // ============================================================================
 
