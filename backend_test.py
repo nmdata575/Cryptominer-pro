@@ -1,11 +1,14 @@
 #!/usr/bin/env python3
 """
-CryptoMiner Pro - Comprehensive Backend API Testing Suite
-Testing all backend functionality after recent improvements:
-- Fixed WebSocket proxy errors (converted to Socket.io)
-- Enhanced CPU detection with container environment awareness
-- Fixed rate limiting issues
-- Resolved ESLint warnings
+CryptoMiner Pro - Real Mining Functionality Testing Suite
+Testing the newly implemented real mining functionality in Node.js backend:
+- Real Scrypt Algorithm (scryptsy library) instead of fake double-SHA256
+- Real Pool Communication with stratum protocol
+- Test Mode Fallback when external pools aren't accessible
+- Real Block Headers construction from pool job data
+- Real Share Submission to pools or simulated acceptance rates
+- Mining status showing real vs test mode indicators
+- Hash rate calculation with actual scrypt processing rates
 """
 
 import requests
