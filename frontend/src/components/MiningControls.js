@@ -44,11 +44,7 @@ const MiningControls = ({ config, onConfigChange, isMining, onStart, onStop }) =
   }, [config.threads, config.intensity, config.ai_enabled, config.auto_optimize, 
       config.auto_thread_detection, config.thread_profile]);
 
-  useEffect(() => {
-    fetchCpuInfo();
-  }, []);
-
-  const fetchCpuInfo = async () => {
+  const fetchCpuInfo = useCallback(async () => {
     try {
       setLoadingCpuInfo(true);
       const response = await axios.get(`${BACKEND_URL}/api/system/cpu-info`);
@@ -78,7 +74,11 @@ const MiningControls = ({ config, onConfigChange, isMining, onStart, onStop }) =
     } finally {
       setLoadingCpuInfo(false);
     }
-  };
+  }, [BACKEND_URL]);
+
+  useEffect(() => {
+    fetchCpuInfo();
+  }, [fetchCpuInfo]);
 
   const handleConfigChange = (key, value) => {
     onConfigChange(prev => ({
