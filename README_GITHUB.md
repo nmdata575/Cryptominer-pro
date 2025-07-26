@@ -87,30 +87,50 @@ sudo supervisorctl start all
 # Clone the repository
 git clone https://github.com/nmdata575/ai-cm.git
 cd ai-cm
-
-# Switch to release branch
 git checkout release-2.03
 
-# Install Node.js dependencies
-cd backend-nodejs
-npm install
+# Install prerequisites
+sudo apt-get update
+sudo apt-get install -y curl software-properties-common
 
-cd ../frontend
-npm install
+# Install Node.js 20.x
+curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+sudo apt-get install -y nodejs
 
-# Set up environment variables
-cp .env.example .env
-# Edit .env with your configuration
+# Install MongoDB
+wget -qO - https://www.mongodb.org/static/pgp/server-7.0.asc | sudo apt-key add -
+echo "deb [ arch=amd64,arm64 ] https://repo.mongodb.org/apt/ubuntu $(lsb_release -cs)/mongodb-org/7.0 multiverse" | sudo tee /etc/apt/sources.list.d/mongodb-org-7.0.list
+sudo apt-get update
+sudo apt-get install -y mongodb-org
 
 # Start MongoDB
-sudo service mongod start
+sudo systemctl start mongod
+# OR for containers: sudo mongod --dbpath /data/db --logpath /var/log/mongodb.log --fork
 
+# Install Supervisor
+sudo apt-get install -y supervisor
+
+# Setup application
+sudo mkdir -p /opt/cryptominer-pro
+sudo chown $(whoami):$(whoami) /opt/cryptominer-pro
+cp -r backend-nodejs frontend /opt/cryptominer-pro/
+
+# Install backend dependencies
+cd /opt/cryptominer-pro/backend-nodejs
+npm install
+
+# Install frontend dependencies with webpack polyfills
+cd ../frontend
+npm install
+npm install --save-dev @craco/craco crypto-browserify stream-browserify https-browserify stream-http util assert url browserify-zlib buffer process
+
+# Create CRACO configuration (see installation guide for full config)
+# Update package.json to use CRACO
 # Build frontend
 npm run build
 
-# Start backend
-cd ../backend-nodejs
-npm start
+# Configure and start services
+sudo supervisorctl restart all
 ```
 
 ### Docker Installation (Optional)
