@@ -84,9 +84,13 @@ class MiningEngine extends EventEmitter {
         efficiency: 0.0
       };
 
-      // Connect to mining pool or setup solo mining
+      // Connect to mining pool or setup solo mining (non-blocking)
       if (this.config.mode === 'pool') {
-        await this.connectToPool();
+        // Start pool connection in background
+        this.connectToPool().catch(error => {
+          console.error('Pool connection failed:', error);
+          this.mining = false;
+        });
       } else {
         await this.setupSoloMining();
       }
