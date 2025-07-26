@@ -984,7 +984,6 @@ io.on('connection', (socket) => {
     timestamp: new Date().toISOString(),
     socketId: socket.id
   });
-  });
 });
 
 // Real-time updates
