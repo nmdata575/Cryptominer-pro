@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
+import io from 'socket.io-client';
 import './App.css';
 
 // Import new role-based components
