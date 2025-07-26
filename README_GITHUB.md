@@ -84,6 +84,13 @@ sudo supervisorctl start all
 
 ### Manual Installation
 ```bash
+# Clone the repository
+git clone https://github.com/nmdata575/ai-cm.git
+cd ai-cm
+
+# Switch to release branch
+git checkout release-2.03
+
 # Install Node.js dependencies
 cd backend-nodejs
 npm install
