@@ -14,7 +14,7 @@ import threading
 from typing import Dict, Any, Optional
 
 class CryptoMinerAPITester:
-    def __init__(self, base_url: str = "http://localhost:8001"):
+    def __init__(self, base_url: str = "https://113c4522-c6a3-4def-b0b5-d97ad7e0f3d8.preview.emergentagent.com"):
         self.base_url = base_url.rstrip('/')
         self.tests_run = 0
         self.tests_passed = 0
