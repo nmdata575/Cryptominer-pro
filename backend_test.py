@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """
 CryptoMiner Pro - Backend API Testing Suite
-Testing Node.js backend endpoints after frontend ESLint fixes
+Testing Mining Start Endpoint Rate Limiting Fix
+Focus: Verify 429 rate limiting error has been resolved
 """
 
 import requests
