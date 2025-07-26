@@ -81,70 +81,71 @@ function App() {
     setMiningConfig(configUpdate);
   }, []);
   
-  const [websocket, setWebsocket] = useState(null);
+  const [socket, setSocket] = useState(null);
   const [connectionStatus, setConnectionStatus] = useState('connecting');
   const [errorMessage, setErrorMessage] = useState('');
 
-  // WebSocket connection management
-  const connectWebSocket = useCallback(() => {
-    if (websocket) return;
-    
-    const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const wsUrl = `${wsProtocol}//${window.location.host}/api/ws`;
+  // Socket.io connection management
+  const connectSocket = useCallback(() => {
+    if (socket) return;
     
     try {
-      const ws = new WebSocket(wsUrl);
+      const newSocket = io(BACKEND_URL, {
+        transports: ['websocket', 'polling'],
+        timeout: 20000,
+        reconnection: true,
+        reconnectionAttempts: 5,
+        reconnectionDelay: 3000
+      });
       
-      ws.onopen = () => {
-        console.log('WebSocket connected');
+      newSocket.on('connect', () => {
+        console.log('Socket.io connected');
         setConnectionStatus('connected');
         setErrorMessage('');
-        setWebsocket(ws);
-      };
+        setSocket(newSocket);
+      });
       
-      ws.onmessage = (event) => {
-        try {
-          const data = JSON.parse(event.data);
-          
-          if (data.type === 'mining_update') {
-            setMiningStatus(prev => ({
-              ...prev,
-              stats: data.stats,
-              is_mining: data.is_mining
-            }));
-          } else if (data.type === 'system_update') {
-            setSystemStats(data.data);
-          }
-        } catch (error) {
-          console.error('WebSocket message parsing error:', error);
-        }
-      };
+      newSocket.on('mining_update', (data) => {
+        setMiningStatus(prev => ({
+          ...prev,
+          stats: data.stats || prev.stats,
+          is_mining: data.is_mining
+        }));
+      });
       
-      ws.onclose = () => {
-        console.log('WebSocket disconnected');
+      newSocket.on('system_update', (data) => {
+        setSystemStats(data);
+      });
+      
+      newSocket.on('disconnect', () => {
+        console.log('Socket.io disconnected');
         setConnectionStatus('disconnected');
-        setWebsocket(null);
-        
-        // Reconnect after 3 seconds
-        setTimeout(() => {
-          if (connectionStatus !== 'connected') {
-            connectWebSocket();
-          }
-        }, 3000);
-      };
+        setSocket(null);
+      });
       
-      ws.onerror = (error) => {
-        console.error('WebSocket error:', error);
+      newSocket.on('connect_error', (error) => {
+        console.error('Socket.io connection error:', error);
         setConnectionStatus('error');
-        setErrorMessage('WebSocket connection failed');
-      };
+        setErrorMessage('Socket connection failed');
+      });
       
     } catch (error) {
-      console.error('WebSocket creation failed:', error);
+      console.error('Socket.io creation failed:', error);
       setConnectionStatus('error');
-      setErrorMessage('Failed to create WebSocket connection');
+      setErrorMessage('Failed to create socket connection');
     }
-  }, [websocket, connectionStatus]);
+  }, [socket]);
+
+  // Replace the useEffect that was using WebSocket
+  useEffect(() => {
+    connectSocket();
+
+    return () => {
+      if (socket) {
+        socket.disconnect();
+      }
+    };
+  }, [connectSocket, socket]);
 
   // API functions
   const fetchMiningStatus = async () => {
