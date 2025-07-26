@@ -388,23 +388,37 @@ class MiningEngine extends EventEmitter {
   }
 
   /**
-   * Submit share to pool
+   * Submit share to pool (or simulate in test mode)
    */
   submitShare(jobId, nonce, result, nTime) {
-    const submitMessage = {
-      id: Date.now(),
-      method: 'mining.submit',
-      params: [
-        this.config.pool_username || 'miner1',
-        jobId,
-        nonce,
-        nTime,
-        result
-      ]
-    };
-    
-    this.sendPoolMessage(submitMessage);
-    console.log(`📤 Submitted share for job ${jobId}`);
+    if (this.poolConnection && this.poolConnection.write) {
+      // Real pool submission
+      const submitMessage = {
+        id: Date.now(),
+        method: 'mining.submit',
+        params: [
+          this.config.pool_username || 'miner1',
+          jobId,
+          nonce,
+          nTime,
+          result
+        ]
+      };
+      
+      this.poolConnection.write(JSON.stringify(submitMessage) + '\n');
+      console.log(`📤 Submitted share for job ${jobId}`);
+    } else {
+      // Test mode - simulate pool response
+      const accepted = Math.random() > 0.1; // 90% acceptance rate for testing
+      
+      if (accepted) {
+        this.stats.accepted_shares++;
+        console.log(`✅ Test mode: Share accepted for job ${jobId}`);
+      } else {
+        this.stats.rejected_shares++;
+        console.log(`❌ Test mode: Share rejected for job ${jobId}`);
+      }
+    }
   }
 
   /**
