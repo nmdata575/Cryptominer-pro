@@ -959,19 +959,31 @@ app.get('/api/remote/connection/test', async (req, res) => {
 // WEBSOCKET HANDLING
 // ============================================================================
 
+// Add debugging for Socket.io connection attempts
+io.engine.on('connection_error', (err) => {
+  console.log('🔌 Socket.io connection error:', err);
+});
+
 io.on('connection', (socket) => {
-  console.log('🔌 Client connected:', socket.id);
+  console.log('🔌 Client connected successfully:', socket.id);
+  console.log('🔌 Connected from:', socket.handshake.address, 'via', socket.handshake.headers.origin);
   connectedSockets.push(socket);
   
-  socket.on('disconnect', () => {
-    console.log('🔌 Client disconnected:', socket.id);
+  socket.on('disconnect', (reason) => {
+    console.log('🔌 Client disconnected:', socket.id, 'reason:', reason);
     connectedSockets = connectedSockets.filter(s => s.id !== socket.id);
+  });
+  
+  socket.on('connect_error', (error) => {
+    console.log('🔌 Socket connect error:', error);
   });
   
   // Send initial data
   socket.emit('connected', {
     message: 'Connected to CryptoMiner Pro',
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
+    socketId: socket.id
+  });
   });
 });
 
