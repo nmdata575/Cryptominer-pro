@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
 CryptoMiner Pro - Backend API Testing Suite
-Testing Mining Start Endpoint Rate Limiting Fix
-Focus: Verify 429 rate limiting error has been resolved
+Testing Enhanced CPU Detection System
+Focus: Verify enhanced CPU detection, container environment detection, and mining profiles
 """
 
 import requests
