@@ -204,8 +204,71 @@ class MiningEngine extends EventEmitter {
   }
 
   /**
-   * Setup solo mining (direct to blockchain)
+   * Start test mode with simulated pool (for containerized environments)
    */
+  startTestModePool() {
+    console.log('🧪 Starting test mode with simulated pool responses');
+    
+    // Simulate pool connection established
+    this.poolConnection = { readyState: 'open' }; // Mock connection
+    this.subscriptionId = 'test_subscription_' + Date.now();
+    
+    // Create simulated mining job
+    this.currentJob = {
+      job_id: crypto.randomBytes(8).toString('hex'),
+      prevhash: crypto.randomBytes(32).toString('hex'),
+      coinb1: crypto.randomBytes(32).toString('hex'),
+      coinb2: crypto.randomBytes(16).toString('hex'),
+      merkle_branch: [],
+      version: '00000001',
+      nbits: '1d00ffff',
+      ntime: Math.floor(Date.now() / 1000).toString(16).padStart(8, '0'),
+      clean_jobs: true
+    };
+    
+    // Set reasonable difficulty for testing
+    this.difficulty = 1;
+    
+    console.log(`✅ Test mode pool simulation active with job: ${this.currentJob.job_id}`);
+    
+    // Notify workers of the test job
+    this.workers.forEach(worker => {
+      if (worker.setJob) {
+        worker.setJob(this.currentJob);
+      }
+    });
+    
+    // Simulate periodic new jobs (every 30 seconds)
+    this.testModeInterval = setInterval(() => {
+      this.generateNewTestJob();
+    }, 30000);
+  }
+
+  /**
+   * Generate new test mining job
+   */
+  generateNewTestJob() {
+    this.currentJob = {
+      job_id: crypto.randomBytes(8).toString('hex'),
+      prevhash: crypto.randomBytes(32).toString('hex'),
+      coinb1: crypto.randomBytes(32).toString('hex'),
+      coinb2: crypto.randomBytes(16).toString('hex'),
+      merkle_branch: [],
+      version: '00000001',
+      nbits: '1d00ffff',
+      ntime: Math.floor(Date.now() / 1000).toString(16).padStart(8, '0'),
+      clean_jobs: true
+    };
+    
+    console.log(`🔨 New test job: ${this.currentJob.job_id}`);
+    
+    // Notify workers
+    this.workers.forEach(worker => {
+      if (worker.setJob) {
+        worker.setJob(this.currentJob);
+      }
+    });
+  }
   async setupSoloMining() {
     console.log('⚡ Setting up solo mining...');
     
