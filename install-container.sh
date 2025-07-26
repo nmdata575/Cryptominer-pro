@@ -53,29 +53,35 @@ mkdir -p /opt/cryptominer-pro
 
 # Copy application files
 print_step "Copying application files..."
-if [ -d "/app/backend-nodejs" ]; then
-    cp -r /app/backend-nodejs /opt/cryptominer-pro/
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+if [ -d "$SCRIPT_DIR/backend-nodejs" ]; then
+    cp -r "$SCRIPT_DIR/backend-nodejs" /opt/cryptominer-pro/
     print_status "Backend copied successfully"
 else
-    print_error "Backend directory not found at /app/backend-nodejs"
+    print_error "Backend directory not found at $SCRIPT_DIR/backend-nodejs"
     exit 1
 fi
 
-if [ -d "/app/frontend" ]; then
-    cp -r /app/frontend /opt/cryptominer-pro/
+if [ -d "$SCRIPT_DIR/frontend" ]; then
+    cp -r "$SCRIPT_DIR/frontend" /opt/cryptominer-pro/
     print_status "Frontend copied successfully"
 else
-    print_error "Frontend directory not found at /app/frontend"
+    print_error "Frontend directory not found at $SCRIPT_DIR/frontend"
     exit 1
 fi
 
 # Copy documentation
-if [ -f "/app/REMOTE_API_GUIDE.md" ]; then
-    cp /app/REMOTE_API_GUIDE.md /opt/cryptominer-pro/
+if [ -f "$SCRIPT_DIR/REMOTE_API_GUIDE.md" ]; then
+    cp "$SCRIPT_DIR/REMOTE_API_GUIDE.md" /opt/cryptominer-pro/
 fi
 
-if [ -f "/app/MANUAL_INSTALL.md" ]; then
-    cp /app/MANUAL_INSTALL.md /opt/cryptominer-pro/
+if [ -f "$SCRIPT_DIR/MANUAL_INSTALL.md" ]; then
+    cp "$SCRIPT_DIR/MANUAL_INSTALL.md" /opt/cryptominer-pro/
+fi
+
+if [ -f "$SCRIPT_DIR/CUSTOM_COINS_GUIDE.md" ]; then
+    cp "$SCRIPT_DIR/CUSTOM_COINS_GUIDE.md" /opt/cryptominer-pro/
 fi
 
 # Install backend dependencies
