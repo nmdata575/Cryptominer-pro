@@ -127,7 +127,7 @@ const SystemMonitoring = ({ systemMetrics }) => {
             {systemMetrics?.disk?.percent?.toFixed(1) || '0.0'}%
           </div>
           <div className="text-xs text-gray-400">
-            {systemMetrics ? `${formatBytes(systemMetrics.disk.used)} / ${formatBytes(systemMetrics.disk.total)}` : 'Loading...'}
+            {systemMetrics?.disk ? `${formatBytes(systemMetrics.disk?.used || 0)} / ${formatBytes(systemMetrics.disk?.total || 0)}` : 'Loading...'}
           </div>
         </div>
 
