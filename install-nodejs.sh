@@ -56,12 +56,33 @@ print_status "npm version: $npm_version"
 
 # Install MongoDB
 print_step "Installing MongoDB..."
-sudo apt-get install -y mongodb
+# Import MongoDB GPG key
+wget -qO - https://www.mongodb.org/static/pgp/server-6.0.asc | sudo apt-key add -
+
+# Add MongoDB repository
+echo "deb [ arch=amd64,arm64 ] https://repo.mongodb.org/apt/ubuntu focal/mongodb-org/6.0 multiverse" | sudo tee /etc/apt/sources.list.d/mongodb-org-6.0.list
+
+# Update package list
+sudo apt-get update
+
+# Install MongoDB
+sudo apt-get install -y mongodb-org
 
 # Start MongoDB
 print_step "Starting MongoDB service..."
-sudo systemctl start mongodb
-sudo systemctl enable mongodb
+sudo systemctl start mongod
+sudo systemctl enable mongod
+
+# Wait for MongoDB to start
+print_step "Waiting for MongoDB to start..."
+sleep 5
+
+# Verify MongoDB is running
+if sudo systemctl is-active --quiet mongod; then
+    print_status "✅ MongoDB is running"
+else
+    print_warning "⚠️  MongoDB may need manual starting"
+fi
 
 # Install supervisor
 print_step "Installing supervisor..."
