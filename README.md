@@ -36,11 +36,31 @@ CryptoMiner Pro is a powerful, AI-driven cryptocurrency mining system that suppo
 ### **Quick Installation (Recommended)**
 
 ```bash
-# Download and run the container-optimized installer
+# NEW: Modern installation script with enhanced features (2025)
+wget https://github.com/your-repo/cryptominer-pro/raw/main/install-modern.sh
+chmod +x install-modern.sh
+./install-modern.sh
+```
+
+**Alternative Installation Methods:**
+```bash
+# Container-optimized installer (good for Docker/Kubernetes)
 wget https://github.com/your-repo/cryptominer-pro/raw/main/install-container.sh
 chmod +x install-container.sh
 ./install-container.sh
+
+# Standard Node.js installer
+wget https://github.com/your-repo/cryptominer-pro/raw/main/install-nodejs.sh  
+chmod +x install-nodejs.sh
+./install-nodejs.sh
 ```
+
+**🎯 Modern Installation Features:**
+- ✅ **Enhanced CPU Detection** - Auto-detects 8+ core systems with container awareness
+- ✅ **Socket.io with HTTP Fallback** - Robust real-time connections even in Kubernetes
+- ✅ **Rate Limiting Protection** - No more 429 errors with optimized proxy configuration  
+- ✅ **Container Environment Support** - Auto-detects Docker, Kubernetes, native systems
+- ✅ **Optimized Mining Profiles** - Thread recommendations based on your specific hardware
 
 ### **Manual Installation**
 
