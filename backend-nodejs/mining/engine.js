@@ -159,7 +159,17 @@ class MiningEngine extends EventEmitter {
       this.poolConnection = new net.Socket();
       this.poolConnection.setKeepAlive(true);
       
+      // Set connection timeout
+      const connectionTimeout = setTimeout(() => {
+        console.log('⏰ Pool connection timeout, will retry...');
+        if (this.poolConnection) {
+          this.poolConnection.destroy();
+        }
+        reject(new Error('Connection timeout'));
+      }, 10000);
+      
       this.poolConnection.connect(poolConfig.port, poolConfig.host.replace('stratum+tcp://', ''), () => {
+        clearTimeout(connectionTimeout);
         console.log('✅ Connected to mining pool');
         this.subscribeToPool();
         resolve();
@@ -170,15 +180,21 @@ class MiningEngine extends EventEmitter {
       });
 
       this.poolConnection.on('error', (error) => {
-        console.error('Pool connection error:', error);
+        clearTimeout(connectionTimeout);
+        console.error('Pool connection error:', error.message);
         reject(error);
       });
 
       this.poolConnection.on('close', () => {
         console.log('🔌 Pool connection closed');
         if (this.mining) {
-          // Attempt to reconnect
-          setTimeout(() => this.connectToPool(), 5000);
+          // Attempt to reconnect after delay
+          setTimeout(() => {
+            console.log('🔄 Attempting to reconnect to pool...');
+            this.connectToPool().catch(err => {
+              console.error('Reconnection failed:', err.message);
+            });
+          }, 5000);
         }
       });
     });
