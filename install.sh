@@ -404,14 +404,14 @@ start_services() {
         print_success "✅ Backend service started successfully"
     else
         print_error "❌ Backend service failed to start"
-        print_tip "Check logs: sudo tail -f /var/log/supervisor/cryptominer-backend.err.log"
+        print_tip "Check logs: sudo tail -f /var/log/supervisor/backend.err.log"
     fi
     
     if [[ $FRONTEND_STATUS == "RUNNING" ]]; then
         print_success "✅ Frontend service started successfully"
     else
         print_error "❌ Frontend service failed to start"
-        print_tip "Check logs: sudo tail -f /var/log/supervisor/cryptominer-frontend.err.log"
+        print_tip "Check logs: sudo tail -f /var/log/supervisor/frontend.err.log"
     fi
 }
 
