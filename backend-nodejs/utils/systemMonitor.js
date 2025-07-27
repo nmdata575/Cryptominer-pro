@@ -160,28 +160,33 @@ class SystemMonitor {
   estimateCPUFrequency(cpuInfo) {
     const arch = process.arch.toLowerCase();
     
-    // Check if we're in a container/Kubernetes environment
+    // Check environment details
     const isKubernetes = !!process.env.KUBERNETES_SERVICE_HOST;
-    const isContainer = isKubernetes || require('fs').existsSync('/.dockerenv');
+    const isGCP = cpuInfo.manufacturer === 'Google' || (cpuInfo.manufacturer === 'Neoverse-N1' && isKubernetes);
+    
+    // For Google Cloud ARM instances (running on virtualized ARM)
+    if (isGCP && (cpuInfo.manufacturer === 'Neoverse-N1' || cpuInfo.vendor === 'ARM')) {
+      // GCP ARM instances have variable frequency managed by the hypervisor
+      return 'Variable (GCP ARM)';
+    }
     
     // For ARM Neoverse-N1 in container environments
     if (cpuInfo.manufacturer === 'Neoverse-N1' || cpuInfo.vendor === 'ARM') {
-      if (isContainer || isKubernetes) {
-        // In containers, frequency is controlled by the host and varies
-        return 'Variable'; // Don't show a fixed frequency
+      if (isKubernetes) {
+        return 'Variable (Container)';
       }
       return 2.8; // Native ARM servers
     }
     
     // Common frequencies for different architectures
     const estimates = {
-      'arm64': isContainer ? 'Variable' : 2.8,
-      'x64': isContainer ? 'Variable' : 2.4,
-      'x86': isContainer ? 'Variable' : 2.0,
-      'aarch64': isContainer ? 'Variable' : 2.8
+      'arm64': isKubernetes ? 'Variable (Container)' : 2.8,
+      'x64': isKubernetes ? 'Variable (Container)' : 2.4,
+      'x86': isKubernetes ? 'Variable (Container)' : 2.0,
+      'aarch64': isKubernetes ? 'Variable (Container)' : 2.8
     };
     
-    return estimates[arch] || (isContainer ? 'Variable' : 2.0);
+    return estimates[arch] || (isKubernetes ? 'Variable (Container)' : 2.0);
   }
 
   /**
