@@ -592,6 +592,11 @@ class MiningEngine extends EventEmitter {
       // Calculate current hashrate
       this.stats.hashrate = this.hashCount / elapsedSeconds;
       
+      // Debug hash rate calculation
+      if (this.hashCount > 0) {
+        console.log(`📊 Hash rate: ${this.stats.hashrate.toFixed(2)} H/s (${this.hashCount} hashes in ${elapsedSeconds.toFixed(1)}s)`);
+      }
+      
       // Update uptime
       this.stats.uptime = elapsedSeconds;
       
