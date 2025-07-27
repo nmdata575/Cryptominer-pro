@@ -48,7 +48,21 @@ app.set('trust proxy', 1); // Trust first proxy (required for Kubernetes/Docker 
 app.use(helmet());
 app.use(compression());
 app.use(morgan('combined'));
-app.use(cors());
+// CORS configuration for native installation
+const corsOptions = {
+  origin: [
+    'http://localhost:3000',
+    'http://127.0.0.1:3000',
+    'http://localhost:8001',
+    'http://127.0.0.1:8001'
+  ],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  credentials: true,
+  optionsSuccessStatus: 200 // Some legacy browsers choke on 204
+};
+
+app.use(cors(corsOptions));
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
