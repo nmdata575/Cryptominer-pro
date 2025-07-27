@@ -177,10 +177,23 @@ echo "  NPM: $NPM_VERSION"
 # Start MongoDB
 echo "🚀 Starting MongoDB..."
 if command -v systemctl >/dev/null 2>&1; then
+    # MongoDB from official repository uses 'mongod' service
     systemctl start mongod
     systemctl enable mongod
+    
+    # Wait for MongoDB to start
+    sleep 3
+    
+    # Test MongoDB connection
+    if mongosh --eval "db.runCommand('ping')" >/dev/null 2>&1; then
+        echo "✅ MongoDB started successfully"
+    elif mongo --eval "db.runCommand('ping')" >/dev/null 2>&1; then
+        echo "✅ MongoDB started successfully (legacy client)"
+    else
+        echo "⚠️  MongoDB may need manual configuration. Continuing anyway..."
+    fi
 else
-    service mongod start
+    service mongod start || service mongodb start
 fi
 
 # Install application dependencies
