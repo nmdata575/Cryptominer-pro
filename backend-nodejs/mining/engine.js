@@ -746,10 +746,12 @@ class RealMiningWorker extends EventEmitter {
     
     console.log(`⚡ Real mining worker ${this.id} started`);
     
-    // Start mining loop
+    // Start mining loop with optimized timing
     this.miningLoop = setInterval(() => {
-      this.mine();
-    }, 1); // Mine as fast as possible
+      if (this.running) {
+        this.mine();
+      }
+    }, 10); // More reasonable interval for scrypt processing
 
     return true;
   }
