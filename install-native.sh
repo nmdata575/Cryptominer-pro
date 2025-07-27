@@ -10,6 +10,18 @@ echo "=============================================="
 echo "This will install CryptoMiner Pro directly on your host system"
 echo "to detect actual hardware (4 cores / 128 cores)"
 echo ""
+echo "⚠️  Requirements:"
+echo "   - Ubuntu 20.04+ / Debian 11+ / RHEL 8+ / CentOS 8+"
+echo "   - Sudo privileges"
+echo "   - Internet connection"
+echo ""
+
+read -p "Continue with installation? (y/N): " -n 1 -r
+echo
+if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+    echo "Installation cancelled."
+    exit 0
+fi
 
 # Check if running as root
 if [[ $EUID -eq 0 ]]; then
