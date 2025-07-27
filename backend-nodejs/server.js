@@ -360,11 +360,9 @@ app.post('/api/mining/stop', async (req, res) => {
 app.get('/api/mining/ai-insights', async (req, res) => {
   try {
     const insights = await aiPredictor.getInsights();
-    const predictions = await aiPredictor.getPredictions();
     
     res.json({
-      insights,
-      predictions,
+      ...insights,
       timestamp: new Date().toISOString()
     });
   } catch (error) {
