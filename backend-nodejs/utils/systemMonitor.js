@@ -328,7 +328,9 @@ class SystemMonitor {
       // Enhanced performance recommendations
       const recommendations = [
         `🖥️ Detected ${physicalCores} CPU cores (${this.formatCPUModel(cpuInfo)})`,
-        `⚡ CPU Frequency: ${cpuSpeed.toFixed(1)} GHz (Max: ${maxSpeed.toFixed(1)} GHz)`,
+        typeof cpuSpeed === 'string' && cpuSpeed.includes('Variable') ? 
+          `⚡ CPU Frequency: ${cpuSpeed} (managed by hypervisor)` :
+          `⚡ CPU Frequency: ${cpuSpeed.toFixed ? cpuSpeed.toFixed(1) : cpuSpeed} GHz (Max: ${maxSpeed.toFixed ? maxSpeed.toFixed(1) : maxSpeed} GHz)`,
         isContainer ? 
           `🐳 Running in ${isKubernetes ? 'Kubernetes' : 'container'} environment with allocated CPU resources` :
           `💻 Running on native system`,
