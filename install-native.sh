@@ -74,26 +74,89 @@ echo ""
 # Install system dependencies
 echo "📦 Installing system dependencies..."
 
-# Detect package manager
+# Detect package manager and OS
 if command -v apt-get >/dev/null 2>&1; then
     PKG_MANAGER="apt"
+    OS_ID=$(lsb_release -si 2>/dev/null | tr '[:upper:]' '[:lower:]')
+    OS_VERSION=$(lsb_release -sr 2>/dev/null)
+    
+    echo "🔍 Detected: $OS_ID $OS_VERSION"
+    
+    # Update package list
     apt-get update
-    apt-get install -y curl wget gnupg2 software-properties-common supervisor mongodb
+    
+    # Install basic dependencies
+    apt-get install -y curl wget gnupg2 software-properties-common supervisor
+    
+    # Install MongoDB from official repository
+    echo "📦 Installing MongoDB from official repository..."
+    
+    # Import MongoDB public GPG key
+    curl -fsSL https://www.mongodb.org/static/pgp/server-7.0.asc | gpg -o /usr/share/keyrings/mongodb-server-7.0.gpg --dearmor
+    
+    # Add MongoDB repository
+    if [[ "$OS_ID" == "ubuntu" ]]; then
+        if [[ "$OS_VERSION" == "22.04" ]]; then
+            echo "deb [ arch=amd64,arm64 signed-by=/usr/share/keyrings/mongodb-server-7.0.gpg ] https://repo.mongodb.org/apt/ubuntu jammy/mongodb-org/7.0 multiverse" | tee /etc/apt/sources.list.d/mongodb-org-7.0.list
+        elif [[ "$OS_VERSION" == "20.04" ]]; then
+            echo "deb [ arch=amd64,arm64 signed-by=/usr/share/keyrings/mongodb-server-7.0.gpg ] https://repo.mongodb.org/apt/ubuntu focal/mongodb-org/7.0 multiverse" | tee /etc/apt/sources.list.d/mongodb-org-7.0.list
+        else
+            echo "deb [ arch=amd64,arm64 signed-by=/usr/share/keyrings/mongodb-server-7.0.gpg ] https://repo.mongodb.org/apt/ubuntu jammy/mongodb-org/7.0 multiverse" | tee /etc/apt/sources.list.d/mongodb-org-7.0.list
+        fi
+    elif [[ "$OS_ID" == "debian" ]]; then
+        echo "deb [ signed-by=/usr/share/keyrings/mongodb-server-7.0.gpg ] http://repo.mongodb.org/apt/debian bullseye/mongodb-org/7.0 main" | tee /etc/apt/sources.list.d/mongodb-org-7.0.list
+    fi
+    
+    # Update package list with new repository
+    apt-get update
+    
+    # Install MongoDB
+    apt-get install -y mongodb-org
+    
 elif command -v yum >/dev/null 2>&1; then
     PKG_MANAGER="yum"
+    
+    # Create MongoDB repository file
+    cat > /etc/yum.repos.d/mongodb-org-7.0.repo << 'EOF'
+[mongodb-org-7.0]
+name=MongoDB Repository
+baseurl=https://repo.mongodb.org/yum/redhat/$releasever/mongodb-org/7.0/x86_64/
+gpgcheck=1
+enabled=1
+gpgkey=https://www.mongodb.org/static/pgp/server-7.0.asc
+EOF
+    
     yum update -y
-    yum install -y curl wget gnupg2 supervisor mongodb-server
+    yum install -y curl wget gnupg2 supervisor mongodb-org
+    
 elif command -v dnf >/dev/null 2>&1; then
-    PKG_MANAGER="dnf" 
+    PKG_MANAGER="dnf"
+    
+    # Create MongoDB repository file
+    cat > /etc/yum.repos.d/mongodb-org-7.0.repo << 'EOF'
+[mongodb-org-7.0]
+name=MongoDB Repository
+baseurl=https://repo.mongodb.org/yum/redhat/$releasever/mongodb-org/7.0/x86_64/
+gpgcheck=1
+enabled=1
+gpgkey=https://www.mongodb.org/static/pgp/server-7.0.asc
+EOF
+    
     dnf update -y
-    dnf install -y curl wget gnupg2 supervisor mongodb-server
+    dnf install -y curl wget gnupg2 supervisor mongodb-org
+    
 else
     echo "❌ Unsupported package manager. Please install manually:"
     echo "  - Node.js 18+"
-    echo "  - MongoDB"
+    echo "  - MongoDB 7.0+"
     echo "  - Supervisor"
+    echo ""
+    echo "MongoDB installation instructions:"
+    echo "  https://docs.mongodb.com/manual/installation/"
     exit 1
 fi
+
+echo "✅ System dependencies installed successfully"
 
 # Install Node.js
 echo "📦 Installing Node.js..."
