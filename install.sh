@@ -485,14 +485,14 @@ EOF
     
     ALIASES="
 # CryptoMiner Pro Command Aliases
-alias cryptominer-start='sudo supervisorctl start cryptominer-pro:*'
-alias cryptominer-stop='sudo supervisorctl stop cryptominer-pro:*'
-alias cryptominer-restart='sudo supervisorctl restart cryptominer-pro:*'
-alias cryptominer-status='sudo supervisorctl status cryptominer-pro:*'
-alias cryptominer-logs='sudo tail -f /var/log/supervisor/cryptominer-*.log'
-alias cryptominer-backend-logs='sudo tail -f /var/log/supervisor/cryptominer-backend.out.log'
-alias cryptominer-frontend-logs='sudo tail -f /var/log/supervisor/cryptominer-frontend.out.log'
-alias cryptominer-error-logs='sudo tail -f /var/log/supervisor/cryptominer-*.err.log'
+alias cryptominer-start='sudo supervisorctl start mining_system:*'
+alias cryptominer-stop='sudo supervisorctl stop mining_system:*'
+alias cryptominer-restart='sudo supervisorctl restart mining_system:*'
+alias cryptominer-status='sudo supervisorctl status mining_system:*'
+alias cryptominer-logs='sudo tail -f /var/log/supervisor/backend.out.log /var/log/supervisor/frontend.out.log'
+alias cryptominer-backend-logs='sudo tail -f /var/log/supervisor/backend.out.log'
+alias cryptominer-frontend-logs='sudo tail -f /var/log/supervisor/frontend.out.log'
+alias cryptominer-error-logs='sudo tail -f /var/log/supervisor/backend.err.log /var/log/supervisor/frontend.err.log'
 alias cryptominer-health='curl -s http://localhost:8001/api/health | jq .'
 alias cryptominer-stats='curl -s http://localhost:8001/api/system/stats | jq .'
 "
