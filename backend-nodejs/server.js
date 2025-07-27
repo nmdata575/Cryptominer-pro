@@ -22,6 +22,7 @@ const systemMonitor = require('./utils/systemMonitor');
 const walletValidator = require('./utils/walletValidator');
 const aiPredictor = require('./ai/predictor');
 const CustomCoin = require('./models/CustomCoin');
+const HighPerformanceMiningEngine = require('./high_performance_engine');
 
 // Initialize Express app
 const app = express();
@@ -40,6 +41,7 @@ const io = socketIo(server, {
 // Global variables
 let connectedSockets = [];
 let currentMiningEngine = null;
+let highPerformanceEngine = new HighPerformanceMiningEngine();
 let remoteDevices = new Map();
 let accessTokens = new Map();
 
@@ -48,15 +50,24 @@ app.set('trust proxy', 1); // Trust first proxy (required for Kubernetes/Docker 
 app.use(helmet());
 app.use(compression());
 app.use(morgan('combined'));
-// CORS configuration for native installation
+
+// Rate limiting with higher limits for mining operations
+const limiter = rateLimit({
+  windowMs: parseInt(process.env.RATE_LIMIT_WINDOW) || 900000, // 15 minutes
+  max: parseInt(process.env.RATE_LIMIT_MAX) || 1000, // Increased from 100 to 1000
+  standardHeaders: true,
+  legacyHeaders: false,
+  // Skip rate limiting for health checks and system stats
+  skip: (req, res) => {
+    return req.path === '/api/health' || req.path === '/api/system/stats';
+  }
+});
+app.use(limiter);
+
+// CORS configuration
 const corsOptions = {
-  origin: [
-    'http://localhost:3000',
-    'http://127.0.0.1:3000',
-    'http://localhost:8001',
-    'http://127.0.0.1:8001'
-  ],
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  origin: ['http://localhost:3000', 'http://localhost:8001', '*'],
+  methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
   credentials: true,
   optionsSuccessStatus: 200 // Some legacy browsers choke on 204
@@ -69,203 +80,121 @@ app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 // Handle preflight OPTIONS requests
 app.options('*', cors(corsOptions));
 
-// Rate limiting - configured for Kubernetes environment
-const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 1000, // Increased limit for mining operations
-  standardHeaders: true,
-  legacyHeaders: false,
-  // Skip internal health checks and monitoring requests
-  skip: (req) => {
-    return req.path === '/api/health' || req.path === '/api/system/stats';
-  }
-});
-app.use(limiter);
-
 // Database connection
-const connectDB = async () => {
+async function connectDB() {
   try {
     const mongoUrl = process.env.MONGO_URL || 'mongodb://localhost:27017/cryptominer';
     await mongoose.connect(mongoUrl);
     console.log('✅ MongoDB connected successfully');
   } catch (error) {
     console.error('❌ MongoDB connection failed:', error);
-    process.exit(1);
+    throw error;
+  }
+}
+
+// Coin presets
+const COIN_PRESETS = {
+  litecoin: {
+    name: 'Litecoin',
+    symbol: 'LTC',
+    algorithm: 'scrypt',
+    block_time_target: 150,
+    block_reward: 12.5,
+    network_difficulty: 12345678,
+    scrypt_params: { N: 1024, r: 1, p: 1 },
+    is_custom: false
+  },
+  dogecoin: {
+    name: 'Dogecoin',
+    symbol: 'DOGE',
+    algorithm: 'scrypt',
+    block_time_target: 60,
+    block_reward: 10000,
+    network_difficulty: 9876543,
+    scrypt_params: { N: 1024, r: 1, p: 1 },
+    is_custom: false
+  },
+  feathercoin: {
+    name: 'Feathercoin',
+    symbol: 'FTC',
+    algorithm: 'scrypt',
+    block_time_target: 60,
+    block_reward: 200,
+    network_difficulty: 5432109,
+    scrypt_params: { N: 1024, r: 1, p: 1 },
+    is_custom: false
   }
 };
 
-// ============================================================================
 // API ENDPOINTS
 // ============================================================================
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
+  const memUsage = process.memoryUsage();
   res.json({
     status: 'healthy',
     timestamp: new Date().toISOString(),
     version: '1.0.0',
     uptime: process.uptime(),
-    memory: process.memoryUsage(),
+    memory: memUsage,
     platform: process.platform,
     node_version: process.version
   });
 });
 
-// System stats endpoint
+// System statistics endpoint
 app.get('/api/system/stats', async (req, res) => {
   try {
     const stats = await systemMonitor.getSystemStats();
     res.json(stats);
   } catch (error) {
     console.error('System stats error:', error);
-    res.status(500).json({ error: 'Failed to get system stats' });
+    res.status(500).json({ error: 'Failed to get system statistics' });
   }
 });
 
-// CPU info endpoint
+// Enhanced CPU info endpoint
 app.get('/api/system/cpu-info', async (req, res) => {
   try {
-    const cpuInfo = await systemMonitor.getCPUInfo();
+    const cpuInfo = await systemMonitor.getEnhancedCPUInfo();
     res.json(cpuInfo);
   } catch (error) {
     console.error('CPU info error:', error);
-    res.status(500).json({ error: 'Failed to get CPU info' });
+    res.status(500).json({ error: 'Failed to get CPU information' });
   }
 });
 
-// System environment info endpoint
+// Environment info endpoint
 app.get('/api/system/environment', async (req, res) => {
   try {
-    const fs = require('fs');
-    const isKubernetes = !!process.env.KUBERNETES_SERVICE_HOST;
-    const isContainer = isKubernetes || fs.existsSync('/.dockerenv');
-    
-    // Get CPU information
-    const cpuInfo = await systemMonitor.getCPUInfo();
-    const cpuCount = require('os').cpus().length;
-    
-    // Read container limits if available
-    let cpuQuota = null;
-    let memoryLimit = null;
-    
-    try {
-      if (fs.existsSync('/sys/fs/cgroup/cpu.max')) {
-        cpuQuota = fs.readFileSync('/sys/fs/cgroup/cpu.max', 'utf8').trim();
-      }
-      if (fs.existsSync('/sys/fs/cgroup/memory.max')) {
-        const limit = fs.readFileSync('/sys/fs/cgroup/memory.max', 'utf8').trim();
-        memoryLimit = limit !== 'max' ? parseInt(limit) : null;
-      }
-    } catch (e) {
-      // Ignore errors reading cgroup files
-    }
-    
-    const environment = {
-      deployment_type: isKubernetes ? 'kubernetes' : isContainer ? 'container' : 'native',
-      container_info: {
-        is_containerized: isContainer,
-        kubernetes: isKubernetes,
-        docker: fs.existsSync('/.dockerenv'),
-      },
-      cpu_allocation: {
-        allocated_cores: cpuCount,
-        physical_cores_detected: cpuInfo.cores.physical,
-        logical_cores_detected: cpuInfo.cores.logical,
-        cpu_quota: cpuQuota,
-        optimal_mining_threads: cpuInfo.optimal_mining_config?.max_safe_threads || cpuCount - 1
-      },
-      memory_info: {
-        total_available: require('os').totalmem(),
-        container_limit: memoryLimit,
-        is_limited: !!memoryLimit
-      },
-      performance_context: {
-        environment_optimized: isContainer,
-        recommended_profile: cpuInfo.optimal_mining_config?.recommended_profile || 'standard',
-        max_safe_threads: cpuInfo.optimal_mining_config?.max_safe_threads || cpuCount - 1,
-        performance_notes: [
-          isContainer ? 
-            `Running in ${isKubernetes ? 'Kubernetes' : 'Docker'} container with ${cpuCount} CPU cores allocated` :
-            `Running on native system with ${cpuCount} CPU cores`,
-          `Optimal mining configuration: ${cpuInfo.optimal_mining_config?.max_safe_threads || cpuCount - 1} threads`,
-          cpuCount >= 8 ? 
-            'Excellent CPU resources available for mining operations' :
-            'Limited CPU resources - use conservative mining settings for system stability'
-        ]
-      },
-      mining_recommendations: cpuInfo.mining_profiles || {}
-    };
-    
-    res.json(environment);
+    const envInfo = await systemMonitor.getEnvironmentInfo();
+    res.json(envInfo);
   } catch (error) {
     console.error('Environment info error:', error);
-    res.status(500).json({ error: 'Failed to get environment info' });
+    res.status(500).json({ error: 'Failed to get environment information' });
   }
 });
 
 // Coin presets endpoint
-app.get('/api/coins/presets', async (req, res) => {
-  try {
-    const presets = {
-      litecoin: {
-        name: 'Litecoin',
-        symbol: 'LTC',
-        algorithm: 'scrypt',
-        block_time_target: 150,
-        block_reward: 12.5,
-        network_difficulty: 12345678,
-        scrypt_params: { N: 1024, r: 1, p: 1 },
-        is_custom: false
-      },
-      dogecoin: {
-        name: 'Dogecoin',
-        symbol: 'DOGE',
-        algorithm: 'scrypt',
-        block_time_target: 60,
-        block_reward: 10000,
-        network_difficulty: 9876543,
-        scrypt_params: { N: 1024, r: 1, p: 1 },
-        is_custom: false
-      },
-      feathercoin: {
-        name: 'Feathercoin',
-        symbol: 'FTC',
-        algorithm: 'scrypt',
-        block_time_target: 60,
-        block_reward: 200,
-        network_difficulty: 5432109,
-        scrypt_params: { N: 1024, r: 1, p: 1 },
-        is_custom: false
-      }
-    };
-    
-    // Add custom coins
-    const customCoins = await CustomCoin.findActive();
-    customCoins.forEach(coin => {
-      presets[coin.id] = coin.toCoinPreset();
-    });
-    
-    res.json({ presets });
-  } catch (error) {
-    console.error('Coin presets error:', error);
-    res.status(500).json({ error: 'Failed to get coin presets' });
-  }
+app.get('/api/coins/presets', (req, res) => {
+  res.json(Object.values(COIN_PRESETS));
 });
 
 // Wallet validation endpoint
 app.post('/api/wallet/validate', async (req, res) => {
   try {
-    const { address, coin_symbol } = req.body;
+    const { address, coin } = req.body;
     
-    if (!address || !coin_symbol) {
+    if (!address || !coin) {
       return res.status(400).json({ 
         valid: false, 
-        error: 'Address and coin symbol are required' 
+        error: 'Address and coin are required' 
       });
     }
-    
-    const validation = await walletValidator.validateAddress(address, coin_symbol);
-    res.json(validation);
+
+    const result = await walletValidator.validateAddress(address, coin);
+    res.json(result);
   } catch (error) {
     console.error('Wallet validation error:', error);
     res.status(500).json({ valid: false, error: 'Validation failed' });
@@ -309,90 +238,115 @@ app.get('/api/mining/status', (req, res) => {
       uptime: 0.0,
       efficiency: 0.0
     },
-    config: null
+    config: {},
+    pool_connected: false,
+    current_job: null,
+    difficulty: 1,
+    test_mode: false
   };
-  
+
   res.json(status);
 });
 
-// Start mining endpoint
+// Regular mining start endpoint
 app.post('/api/mining/start', async (req, res) => {
   try {
     const config = req.body;
     
-    // Validate configuration
-    if (!config.coin || !config.mode) {
-      return res.status(400).json({
-        success: false,
-        message: 'Coin and mode are required'
-      });
-    }
+    // Create new mining engine instance
+    const engineClass = miningEngine.MiningEngine;
+    currentMiningEngine = new engineClass(config);
     
-    // Solo mining requires wallet address
-    if (config.mode === 'solo' && !config.wallet_address) {
-      return res.status(400).json({
-        success: false,
-        message: 'Wallet address is required for solo mining'
-      });
-    }
-    
-    // Pool mining requires username
-    if (config.mode === 'pool' && !config.pool_username) {
-      return res.status(400).json({
-        success: false,
-        message: 'Pool username is required for pool mining'
-      });
-    }
-    
-    // Stop current mining if running
-    if (currentMiningEngine && currentMiningEngine.isMining()) {
-      await currentMiningEngine.stop();
-    }
-    
-    // Create new mining engine
-    currentMiningEngine = new miningEngine.MiningEngine(config);
-    
-    // Start mining
     const result = await currentMiningEngine.start();
     
     if (result.success) {
-      res.json({
-        success: true,
-        message: 'Mining started successfully',
-        config: config,
-        mining_type: config.mode,
-        connection_type: config.custom_pool_address ? 'custom' : 'default'
-      });
-    } else {
-      res.status(500).json({
-        success: false,
-        message: result.message || 'Failed to start mining'
-      });
+      // Emit mining start event to connected sockets
+      io.emit('mining_started', { config, timestamp: new Date().toISOString() });
     }
+    
+    res.json(result);
   } catch (error) {
     console.error('Mining start error:', error);
     res.status(500).json({
       success: false,
-      message: 'Mining start failed: ' + error.message
+      message: 'Failed to start mining: ' + error.message
     });
   }
 });
 
-// Stop mining endpoint
-app.post('/api/mining/stop', async (req, res) => {
+// High-performance mining start endpoint
+app.post('/api/mining/start-hp', async (req, res) => {
   try {
-    if (!currentMiningEngine || !currentMiningEngine.isMining()) {
-      return res.json({
-        success: false,
-        message: 'No active mining session'
+    const config = req.body;
+    const result = await highPerformanceEngine.start(config);
+    
+    if (result.success) {
+      // Update global mining engine reference for status checks
+      currentMiningEngine = highPerformanceEngine;
+      
+      // Emit high-performance mining start event
+      io.emit('hp_mining_started', { 
+        config, 
+        processes: result.processes,
+        expected_hashrate: result.expected_hashrate,
+        timestamp: new Date().toISOString() 
       });
     }
     
-    await currentMiningEngine.stop();
-    res.json({
-      success: true,
-      message: 'Mining stopped successfully'
+    res.json(result);
+  } catch (error) {
+    console.error('High-performance mining start error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to start high-performance mining: ' + error.message
     });
+  }
+});
+
+// High-performance mining stop endpoint  
+app.post('/api/mining/stop-hp', async (req, res) => {
+  try {
+    const result = await highPerformanceEngine.stop();
+    
+    if (result.success) {
+      currentMiningEngine = null;
+      
+      // Emit high-performance mining stop event
+      io.emit('hp_mining_stopped', { 
+        timestamp: new Date().toISOString() 
+      });
+    }
+    
+    res.json(result);
+  } catch (error) {
+    console.error('High-performance mining stop error:', error);
+    res.status(500).json({
+      success: false, 
+      message: 'Failed to stop high-performance mining: ' + error.message
+    });
+  }
+});
+
+// Regular mining stop endpoint
+app.post('/api/mining/stop', async (req, res) => {
+  try {
+    if (!currentMiningEngine) {
+      return res.json({
+        success: false,
+        message: 'No mining operation in progress'
+      });
+    }
+
+    const result = await currentMiningEngine.stop();
+    
+    if (result.success) {
+      currentMiningEngine = null;
+      
+      // Emit mining stop event
+      io.emit('mining_stopped', { timestamp: new Date().toISOString() });
+    }
+    
+    res.json(result);
   } catch (error) {
     console.error('Mining stop error:', error);
     res.status(500).json({
@@ -405,306 +359,116 @@ app.post('/api/mining/stop', async (req, res) => {
 // AI insights endpoint
 app.get('/api/mining/ai-insights', async (req, res) => {
   try {
-    const insights = await aiPredictor.getInsights(currentMiningEngine);
+    const insights = await aiPredictor.getInsights();
+    const predictions = await aiPredictor.getPredictions();
+    
     res.json({
-      insights: insights || {},
-      predictions: insights?.predictions || {},
-      optimization_suggestions: insights?.optimization_suggestions || []
+      insights,
+      predictions,
+      timestamp: new Date().toISOString()
     });
   } catch (error) {
     console.error('AI insights error:', error);
-    res.json({
-      insights: {},
-      predictions: {},
-      optimization_suggestions: []
-    });
+    res.status(500).json({ error: 'Failed to get AI insights' });
   }
 });
 
-// ============================================================================
-// CUSTOM COIN MANAGEMENT API ENDPOINTS
-// ============================================================================
-
-// Get all custom coins
+// Custom coins CRUD endpoints
 app.get('/api/coins/custom', async (req, res) => {
   try {
-    const customCoins = await CustomCoin.findActive();
-    res.json({
-      success: true,
-      coins: customCoins,
-      total: customCoins.length
-    });
+    const customCoins = await CustomCoin.find().sort({ created_at: -1 });
+    res.json(customCoins);
   } catch (error) {
-    console.error('Custom coins list error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to get custom coins'
-    });
+    console.error('Custom coins fetch error:', error);
+    res.status(500).json({ error: 'Failed to fetch custom coins' });
   }
 });
 
-// Get specific custom coin
-app.get('/api/coins/custom/:id', async (req, res) => {
-  try {
-    const { id } = req.params;
-    const customCoin = await CustomCoin.findOne({ id: id, is_active: true });
-    
-    if (!customCoin) {
-      return res.status(404).json({
-        success: false,
-        message: 'Custom coin not found'
-      });
-    }
-    
-    res.json({
-      success: true,
-      coin: customCoin
-    });
-  } catch (error) {
-    console.error('Custom coin get error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to get custom coin'
-    });
-  }
-});
-
-// Add new custom coin
 app.post('/api/coins/custom', async (req, res) => {
   try {
     const coinData = req.body;
     
-    // Validate coin data
-    const validationErrors = CustomCoin.validateCoinData(coinData);
-    if (validationErrors.length > 0) {
+    // Validate required fields
+    const requiredFields = ['name', 'symbol', 'algorithm', 'block_reward'];
+    const missingFields = requiredFields.filter(field => !coinData[field]);
+    
+    if (missingFields.length > 0) {
       return res.status(400).json({
-        success: false,
-        message: 'Validation failed',
-        errors: validationErrors
+        error: `Missing required fields: ${missingFields.join(', ')}`
       });
     }
     
-    // Check if coin ID already exists
-    const existingCoin = await CustomCoin.findOne({ id: coinData.id });
+    // Check for duplicate symbol
+    const existingCoin = await CustomCoin.findOne({ symbol: coinData.symbol.toUpperCase() });
     if (existingCoin) {
-      return res.status(409).json({
-        success: false,
-        message: 'Coin ID already exists'
+      return res.status(400).json({
+        error: `Coin with symbol ${coinData.symbol} already exists`
       });
     }
     
-    // Check if symbol already exists
-    const existingSymbol = await CustomCoin.findBySymbol(coinData.symbol);
-    if (existingSymbol) {
-      return res.status(409).json({
-        success: false,
-        message: 'Coin symbol already exists'
-      });
-    }
-    
-    // Create new custom coin
-    const customCoin = new CustomCoin(coinData);
-    
-    // Validate scrypt parameters
-    customCoin.validateScryptParams();
-    
-    // Save to database
-    await customCoin.save();
-    
-    res.status(201).json({
-      success: true,
-      message: 'Custom coin created successfully',
-      coin: customCoin
+    const customCoin = new CustomCoin({
+      ...coinData,
+      symbol: coinData.symbol.toUpperCase(),
+      is_custom: true,
+      created_at: new Date()
     });
+    
+    await customCoin.save();
+    res.status(201).json(customCoin);
   } catch (error) {
     console.error('Custom coin creation error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to create custom coin',
-      error: error.message
-    });
+    res.status(500).json({ error: 'Failed to create custom coin' });
   }
 });
 
-// Update custom coin
 app.put('/api/coins/custom/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const updateData = req.body;
+    const updates = req.body;
     
-    // Find existing coin
-    const existingCoin = await CustomCoin.findOne({ id: id, is_active: true });
-    if (!existingCoin) {
-      return res.status(404).json({
-        success: false,
-        message: 'Custom coin not found'
-      });
+    const customCoin = await CustomCoin.findByIdAndUpdate(
+      id, 
+      { ...updates, updated_at: new Date() },
+      { new: true, runValidators: true }
+    );
+    
+    if (!customCoin) {
+      return res.status(404).json({ error: 'Custom coin not found' });
     }
     
-    // Validate update data
-    const validationErrors = CustomCoin.validateCoinData(updateData);
-    if (validationErrors.length > 0) {
-      return res.status(400).json({
-        success: false,
-        message: 'Validation failed',
-        errors: validationErrors
-      });
-    }
-    
-    // Check if new symbol conflicts with existing coins (excluding current coin)
-    if (updateData.symbol && updateData.symbol !== existingCoin.symbol) {
-      const symbolConflict = await CustomCoin.findOne({
-        symbol: updateData.symbol.toUpperCase(),
-        id: { $ne: id },
-        is_active: true
-      });
-      if (symbolConflict) {
-        return res.status(409).json({
-          success: false,
-          message: 'Coin symbol already exists'
-        });
-      }
-    }
-    
-    // Update coin
-    Object.assign(existingCoin, updateData);
-    existingCoin.updated_at = Date.now();
-    
-    // Validate scrypt parameters
-    existingCoin.validateScryptParams();
-    
-    // Save changes
-    await existingCoin.save();
-    
-    res.json({
-      success: true,
-      message: 'Custom coin updated successfully',
-      coin: existingCoin
-    });
+    res.json(customCoin);
   } catch (error) {
     console.error('Custom coin update error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to update custom coin',
-      error: error.message
-    });
+    res.status(500).json({ error: 'Failed to update custom coin' });
   }
 });
 
-// Delete custom coin
 app.delete('/api/coins/custom/:id', async (req, res) => {
   try {
     const { id } = req.params;
     
-    // Find and soft delete the coin
-    const customCoin = await CustomCoin.findOne({ id: id, is_active: true });
+    const customCoin = await CustomCoin.findByIdAndDelete(id);
+    
     if (!customCoin) {
-      return res.status(404).json({
-        success: false,
-        message: 'Custom coin not found'
-      });
+      return res.status(404).json({ error: 'Custom coin not found' });
     }
     
-    // Soft delete (set is_active to false)
-    customCoin.is_active = false;
-    customCoin.updated_at = Date.now();
-    await customCoin.save();
-    
-    res.json({
-      success: true,
-      message: 'Custom coin deleted successfully'
-    });
+    res.json({ message: 'Custom coin deleted successfully' });
   } catch (error) {
     console.error('Custom coin deletion error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to delete custom coin'
-    });
-  }
-});
-
-// Validate custom coin configuration
-app.post('/api/coins/custom/validate', async (req, res) => {
-  try {
-    const coinData = req.body;
-    
-    // Validate coin data
-    const validationErrors = CustomCoin.validateCoinData(coinData);
-    
-    if (validationErrors.length > 0) {
-      return res.json({
-        valid: false,
-        errors: validationErrors
-      });
-    }
-    
-    // Additional validation checks
-    const additionalChecks = [];
-    
-    // Check scrypt parameters
-    if (coinData.scrypt_params) {
-      try {
-        const { N, r, p } = coinData.scrypt_params;
-        if ((N & (N - 1)) !== 0) {
-          additionalChecks.push('Scrypt parameter N must be a power of 2');
-        }
-        const memoryUsage = N * r * p;
-        if (memoryUsage > 1000000) {
-          additionalChecks.push('Scrypt parameters result in too high memory usage');
-        }
-      } catch (error) {
-        additionalChecks.push('Invalid scrypt parameters');
-      }
-    }
-    
-    // Check for conflicts if ID is provided
-    if (coinData.id) {
-      const existingCoin = await CustomCoin.findOne({ id: coinData.id, is_active: true });
-      if (existingCoin) {
-        additionalChecks.push('Coin ID already exists');
-      }
-    }
-    
-    // Check for symbol conflicts
-    if (coinData.symbol) {
-      const existingSymbol = await CustomCoin.findBySymbol(coinData.symbol);
-      if (existingSymbol) {
-        additionalChecks.push('Coin symbol already exists');
-      }
-    }
-    
-    const allErrors = [...validationErrors, ...additionalChecks];
-    
-    res.json({
-      valid: allErrors.length === 0,
-      errors: allErrors,
-      warnings: [],
-      suggestions: [
-        'Use standard scrypt parameters (N=1024, r=1, p=1) for compatibility',
-        'Ensure block time target is reasonable (60-600 seconds)',
-        'Verify block reward matches the actual cryptocurrency'
-      ]
-    });
-  } catch (error) {
-    console.error('Custom coin validation error:', error);
-    res.status(500).json({
-      valid: false,
-      errors: ['Validation service failed'],
-      message: error.message
-    });
+    res.status(500).json({ error: 'Failed to delete custom coin' });
   }
 });
 
 // Export custom coins configuration
 app.get('/api/coins/custom/export', async (req, res) => {
   try {
-    const customCoins = await CustomCoin.findActive();
+    const customCoins = await CustomCoin.find();
     
     const exportData = {
       export_date: new Date().toISOString(),
       version: '1.0',
       custom_coins: customCoins.map(coin => ({
-        id: coin.id,
         name: coin.name,
         symbol: coin.symbol,
         algorithm: coin.algorithm,
@@ -712,8 +476,8 @@ app.get('/api/coins/custom/export', async (req, res) => {
         block_reward: coin.block_reward,
         network_difficulty: coin.network_difficulty,
         scrypt_params: coin.scrypt_params,
-        address_formats: coin.address_formats,
-        metadata: coin.metadata
+        pool_config: coin.pool_config,
+        rpc_config: coin.rpc_config
       }))
     };
     
@@ -723,8 +487,7 @@ app.get('/api/coins/custom/export', async (req, res) => {
   } catch (error) {
     console.error('Custom coins export error:', error);
     res.status(500).json({
-      success: false,
-      message: 'Failed to export custom coins'
+      error: 'Failed to export custom coins'
     });
   }
 });
@@ -736,8 +499,7 @@ app.post('/api/coins/custom/import', async (req, res) => {
     
     if (!importData.custom_coins || !Array.isArray(importData.custom_coins)) {
       return res.status(400).json({
-        success: false,
-        message: 'Invalid import data format'
+        error: 'Invalid import data format'
       });
     }
     
@@ -749,299 +511,283 @@ app.post('/api/coins/custom/import', async (req, res) => {
     
     for (const coinData of importData.custom_coins) {
       try {
-        // Validate coin data
-        const validationErrors = CustomCoin.validateCoinData(coinData);
-        if (validationErrors.length > 0) {
-          results.errors.push(`${coinData.id || 'Unknown'}: ${validationErrors.join(', ')}`);
-          results.skipped++;
-          continue;
-        }
-        
         // Check if coin already exists
-        const existingCoin = await CustomCoin.findOne({ id: coinData.id });
+        const existingCoin = await CustomCoin.findOne({ symbol: coinData.symbol });
         if (existingCoin) {
-          results.errors.push(`${coinData.id}: Coin already exists`);
           results.skipped++;
           continue;
         }
         
-        // Create new custom coin
-        const customCoin = new CustomCoin(coinData);
+        const customCoin = new CustomCoin({
+          ...coinData,
+          is_custom: true,
+          created_at: new Date()
+        });
+        
         await customCoin.save();
         results.imported++;
       } catch (error) {
-        results.errors.push(`${coinData.id || 'Unknown'}: ${error.message}`);
-        results.skipped++;
+        results.errors.push(`Error importing ${coinData.symbol}: ${error.message}`);
       }
     }
     
     res.json({
-      success: true,
       message: `Import completed: ${results.imported} imported, ${results.skipped} skipped`,
-      results: results
+      results
     });
   } catch (error) {
     console.error('Custom coins import error:', error);
     res.status(500).json({
-      success: false,
-      message: 'Failed to import custom coins'
+      error: 'Failed to import custom coins'
     });
   }
 });
 
-// ============================================================================
-// REMOTE CONNECTIVITY API ENDPOINTS
-// ============================================================================
-
-// Register device endpoint
-app.post('/api/remote/register', (req, res) => {
-  try {
-    const { device_id, device_name } = req.body;
-    
-    if (!device_id || !device_name) {
-      return res.status(400).json({
-        success: false,
-        message: 'Device ID and name are required'
-      });
-    }
-    
-    // Generate access token
-    const accessToken = require('crypto').randomBytes(32).toString('hex');
-    
-    // Store device info
-    const deviceStatus = {
-      device_id,
-      device_name,
-      is_mining: currentMiningEngine ? currentMiningEngine.isMining() : false,
-      hashrate: currentMiningEngine ? currentMiningEngine.getHashrate() : 0.0,
-      uptime: currentMiningEngine ? currentMiningEngine.getUptime() : 0.0,
-      last_seen: new Date(),
-      system_health: {} // Will be populated by system monitor
-    };
-    
-    remoteDevices.set(device_id, deviceStatus);
-    accessTokens.set(accessToken, device_id);
-    
-    res.json({
-      success: true,
-      access_token: accessToken,
-      device_id: device_id,
-      message: 'Device registered successfully'
-    });
-  } catch (error) {
-    console.error('Remote device registration error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Registration failed: ' + error.message
-    });
-  }
-});
-
-// Get remote device status
-app.get('/api/remote/status/:device_id', async (req, res) => {
-  try {
-    const { device_id } = req.params;
-    
-    if (!remoteDevices.has(device_id)) {
-      return res.status(404).json({
-        success: false,
-        message: 'Device not found'
-      });
-    }
-    
-    const deviceStatus = remoteDevices.get(device_id);
-    
-    // Update current status
-    deviceStatus.is_mining = currentMiningEngine ? currentMiningEngine.isMining() : false;
-    deviceStatus.hashrate = currentMiningEngine ? currentMiningEngine.getHashrate() : 0.0;
-    deviceStatus.uptime = currentMiningEngine ? currentMiningEngine.getUptime() : 0.0;
-    deviceStatus.last_seen = new Date();
-    deviceStatus.system_health = await systemMonitor.getSystemStats();
-    
-    res.json(deviceStatus);
-  } catch (error) {
-    console.error('Remote status error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Status retrieval failed: ' + error.message
-    });
-  }
-});
-
-// List all remote devices
-app.get('/api/remote/devices', (req, res) => {
-  try {
-    const devices = Array.from(remoteDevices.values());
-    res.json({
-      devices: devices,
-      total: devices.length
-    });
-  } catch (error) {
-    console.error('Remote devices list error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Device list failed: ' + error.message
-    });
-  }
-});
-
-// Remote mining control endpoints
-app.post('/api/remote/mining/start', async (req, res) => {
-  const { device_id } = req.query;
-  
-  // Use the same mining start logic but with remote device tracking
-  const result = await app.get('/api/mining/start').handler(req, res);
-  
-  // Update device status if device_id provided
-  if (device_id && remoteDevices.has(device_id)) {
-    const deviceStatus = remoteDevices.get(device_id);
-    deviceStatus.is_mining = true;
-    deviceStatus.last_seen = new Date();
-  }
-  
-  return result;
-});
-
-app.post('/api/remote/mining/stop', async (req, res) => {
-  const { device_id } = req.query;
-  
-  // Use the same mining stop logic
-  const result = await app.get('/api/mining/stop').handler(req, res);
-  
-  // Update device status if device_id provided
-  if (device_id && remoteDevices.has(device_id)) {
-    const deviceStatus = remoteDevices.get(device_id);
-    deviceStatus.is_mining = false;
-    deviceStatus.last_seen = new Date();
-  }
-  
-  return result;
-});
-
-app.get('/api/remote/mining/status', async (req, res) => {
-  try {
-    const status = currentMiningEngine ? currentMiningEngine.getStatus() : {
-      is_mining: false,
-      stats: {
-        hashrate: 0.0,
-        accepted_shares: 0,
-        rejected_shares: 0,
-        blocks_found: 0,
-        uptime: 0.0
-      }
-    };
-    
-    res.json({
-      ...status,
-      remote_access: true,
-      connected_devices: remoteDevices.size,
-      api_version: '1.0'
-    });
-  } catch (error) {
-    console.error('Remote mining status error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Remote status failed: ' + error.message
-    });
-  }
-});
-
-app.get('/api/remote/connection/test', async (req, res) => {
-  try {
-    const systemStats = await systemMonitor.getSystemStats();
-    
-    res.json({
-      success: true,
-      message: 'Remote connection successful',
-      server_time: new Date().toISOString(),
-      system_health: systemStats,
+// Remote connectivity endpoints for Android app
+app.post('/api/remote/connection/test', (req, res) => {
+  res.json({
+    success: true,
+    message: 'Connection successful',
+    server_info: {
+      name: 'CryptoMiner Pro',
+      version: '1.0.0',
       api_version: '1.0',
+      timestamp: new Date().toISOString(),
       features: {
         remote_mining: true,
         real_time_monitoring: true,
         multi_device_support: true,
         secure_authentication: true
       }
+    }
+  });
+});
+
+app.post('/api/remote/register', (req, res) => {
+  const { device_name, device_type } = req.body;
+  
+  if (!device_name || !device_type) {
+    return res.status(400).json({
+      success: false,
+      message: 'Device name and type are required'
+    });
+  }
+  
+  const deviceId = cryptoUtils.generateDeviceId();
+  const accessToken = cryptoUtils.generateAccessToken();
+  
+  remoteDevices.set(deviceId, {
+    device_name,
+    device_type,
+    registered_at: new Date().toISOString(),
+    last_seen: new Date().toISOString(),
+    status: 'active'
+  });
+  
+  accessTokens.set(accessToken, deviceId);
+  
+  res.json({
+    success: true,
+    message: 'Device registered successfully',
+    device_id: deviceId,
+    access_token: accessToken
+  });
+});
+
+app.get('/api/remote/status/:device_id', (req, res) => {
+  const { device_id } = req.params;
+  
+  if (!remoteDevices.has(device_id)) {
+    return res.status(404).json({
+      success: false,
+      message: 'Device not found'
+    });
+  }
+  
+  const device = remoteDevices.get(device_id);
+  const miningStatus = currentMiningEngine ? currentMiningEngine.getStatus() : {
+    is_mining: false,
+    stats: { hashrate: 0, uptime: 0 }
+  };
+  
+  res.json({
+    success: true,
+    device_info: device,
+    mining_status: miningStatus,
+    system_health: 'healthy'
+  });
+});
+
+app.get('/api/remote/devices', (req, res) => {
+  const devices = Array.from(remoteDevices.entries()).map(([id, device]) => ({
+    device_id: id,
+    ...device
+  }));
+  
+  res.json({
+    success: true,
+    devices,
+    total_count: devices.length
+  });
+});
+
+app.get('/api/remote/mining/status', (req, res) => {
+  const status = currentMiningEngine ? currentMiningEngine.getStatus() : {
+    is_mining: false,
+    stats: {
+      hashrate: 0.0,
+      accepted_shares: 0,
+      rejected_shares: 0,
+      blocks_found: 0,
+      uptime: 0.0
+    }
+  };
+  
+  res.json({
+    ...status,
+    remote_access: true,
+    connected_devices: remoteDevices.size
+  });
+});
+
+app.post('/api/remote/mining/start', async (req, res) => {
+  try {
+    const config = req.body;
+    
+    if (!currentMiningEngine) {
+      const engineClass = miningEngine.MiningEngine;
+      currentMiningEngine = new engineClass(config);
+    }
+    
+    const result = await currentMiningEngine.start();
+    
+    res.json({
+      ...result,
+      remote_controlled: true
     });
   } catch (error) {
-    console.error('Remote connection test error:', error);
+    console.error('Remote mining start error:', error);
     res.status(500).json({
       success: false,
-      message: 'Connection test failed: ' + error.message
+      message: 'Failed to start remote mining: ' + error.message
     });
   }
 });
 
-// ============================================================================
-// WEBSOCKET HANDLING
-// ============================================================================
+app.post('/api/remote/mining/stop', async (req, res) => {
+  try {
+    if (!currentMiningEngine) {
+      return res.json({
+        success: false,
+        message: 'No mining operation in progress'
+      });
+    }
 
-// Add debugging for Socket.io connection attempts
-io.engine.on('connection_error', (err) => {
-  console.log('🔌 Socket.io connection error:', err);
+    const result = await currentMiningEngine.stop();
+    
+    if (result.success) {
+      currentMiningEngine = null;
+    }
+    
+    res.json({
+      ...result,
+      remote_controlled: true
+    });
+  } catch (error) {
+    console.error('Remote mining stop error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to stop remote mining: ' + error.message
+    });
+  }
 });
 
+// WebSocket connection handling
 io.on('connection', (socket) => {
-  console.log('🔌 Client connected successfully:', socket.id);
-  console.log('🔌 Connected from:', socket.handshake.address, 'via', socket.handshake.headers.origin);
+  console.log(`🔌 Client connected: ${socket.id}`);
   connectedSockets.push(socket);
-  
-  socket.on('disconnect', (reason) => {
-    console.log('🔌 Client disconnected:', socket.id, 'reason:', reason);
+
+  // Send initial mining status
+  const status = currentMiningEngine ? currentMiningEngine.getStatus() : {
+    is_mining: false,
+    stats: { hashrate: 0 }
+  };
+  socket.emit('mining_status', status);
+
+  // Handle client disconnect
+  socket.on('disconnect', () => {
+    console.log(`📤 Client disconnected: ${socket.id}`);
     connectedSockets = connectedSockets.filter(s => s.id !== socket.id);
   });
-  
-  socket.on('connect_error', (error) => {
-    console.log('🔌 Socket connect error:', error);
-  });
-  
-  // Send initial data
-  socket.emit('connected', {
-    message: 'Connected to CryptoMiner Pro',
-    timestamp: new Date().toISOString(),
-    socketId: socket.id
+
+  // Handle mining status requests
+  socket.on('get_mining_status', () => {
+    const status = currentMiningEngine ? currentMiningEngine.getStatus() : {
+      is_mining: false,
+      stats: { hashrate: 0 }
+    };
+    socket.emit('mining_status', status);
   });
 });
 
-// Real-time updates
-const broadcastUpdates = async () => {
+// Real-time updates for connected clients
+setInterval(() => {
+  if (connectedSockets.length > 0 && currentMiningEngine) {
+    const status = currentMiningEngine.getStatus();
+    connectedSockets.forEach(socket => {
+      try {
+        socket.emit('mining_update', status);
+      } catch (error) {
+        console.error('WebSocket emit error:', error);
+      }
+    });
+  }
+}, 5000);
+
+// System monitoring updates
+setInterval(async () => {
   if (connectedSockets.length > 0) {
     try {
-      // Mining updates
-      if (currentMiningEngine) {
-        const miningData = {
-          type: 'mining_update',
-          timestamp: new Date().toISOString(),
-          stats: currentMiningEngine.getStatus().stats,
-          is_mining: currentMiningEngine.isMining()
-        };
-        
-        connectedSockets.forEach(socket => {
-          socket.emit('mining_update', miningData);
-        });
-      }
-      
-      // System updates
       const systemStats = await systemMonitor.getSystemStats();
-      const systemData = {
-        type: 'system_update',
-        timestamp: new Date().toISOString(),
-        data: systemStats
-      };
-      
       connectedSockets.forEach(socket => {
-        socket.emit('system_update', systemData);
+        try {
+          socket.emit('system_update', systemStats);
+        } catch (error) {
+          console.error('WebSocket system update error:', error);
+        }
       });
     } catch (error) {
-      console.error('Broadcast error:', error);
+      console.error('System stats error:', error);
     }
   }
-};
+}, 10000);
 
-// Start real-time updates
-setInterval(broadcastUpdates, 1000);
+// High-performance mining hashrate updates
+if (highPerformanceEngine) {
+  highPerformanceEngine.on('hashrate_update', (data) => {
+    if (connectedSockets.length > 0) {
+      connectedSockets.forEach(socket => {
+        try {
+          socket.emit('hp_hashrate_update', data);
+        } catch (error) {
+          console.error('WebSocket HP hashrate update error:', error);
+        }
+      });
+    }
+  });
+}
 
-// ============================================================================
+// Error handling
+app.use((err, req, res, next) => {
+  console.error('Unhandled error:', err);
+  res.status(500).json({ error: 'Internal server error' });
+});
+
+// 404 handler
+app.use((req, res) => {
+  res.status(404).json({ error: 'Endpoint not found' });
+});
+
 // SERVER STARTUP
 // ============================================================================
 
@@ -1068,34 +814,48 @@ async function startServer() {
     process.on('SIGTERM', async () => {
       console.log('🛑 Received SIGTERM, shutting down gracefully...');
       
-      // Stop mining if running
-      if (currentMiningEngine && currentMiningEngine.isMining()) {
+      if (currentMiningEngine) {
         await currentMiningEngine.stop();
       }
       
-      // Close database connection
-      await mongoose.connection.close();
+      if (highPerformanceEngine) {
+        await highPerformanceEngine.stop();
+      }
       
-      // Close server
       server.close(() => {
-        console.log('✅ Server closed successfully');
-        process.exit(0);
+        console.log('✅ Server closed');
+        mongoose.connection.close(() => {
+          console.log('✅ Database connection closed');
+          process.exit(0);
+        });
+      });
+    });
+
+    process.on('SIGINT', async () => {
+      console.log('\n🛑 Received SIGINT, shutting down gracefully...');
+      
+      if (currentMiningEngine) {
+        await currentMiningEngine.stop();
+      }
+      
+      if (highPerformanceEngine) {
+        await highPerformanceEngine.stop();
+      }
+      
+      server.close(() => {
+        console.log('✅ Server closed');
+        mongoose.connection.close(() => {
+          console.log('✅ Database connection closed');
+          process.exit(0);
+        });
       });
     });
     
   } catch (error) {
-    console.error('❌ Server startup failed:', error);
+    console.error('❌ Failed to start server:', error);
     process.exit(1);
   }
 }
 
 // Start the server
 startServer();
-
-console.log(`
-🚀 CryptoMiner Pro Backend (Node.js) Started Successfully!
-📡 Server: http://${HOST}:${PORT}
-🔌 WebSocket: ws://${HOST}:${PORT}
-💾 Database: ${process.env.MONGO_URL || 'mongodb://localhost:27017/cryptominer'}
-🕐 Started: ${new Date().toISOString()}
-`);

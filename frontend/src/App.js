@@ -1,482 +1,481 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import axios from 'axios';
 import io from 'socket.io-client';
 import './App.css';
 
-// Import new role-based components
-import DashboardSection from './components/DashboardSection';
-import MiningControlCenter from './components/MiningControlCenter';
+// Import components
+import MiningDashboard from './components/MiningDashboard';
 import CoinSelector from './components/CoinSelector';
 import WalletConfig from './components/WalletConfig';
 import MiningControls from './components/MiningControls';
-import MiningPerformance from './components/MiningPerformance';
 import SystemMonitoring from './components/SystemMonitoring';
 import AIInsights from './components/AIInsights';
-
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:8001';
+import RealtimeMetrics from './components/RealtimeMetrics';
+import MiningPerformance from './components/MiningPerformance';
 
 function App() {
-  // Core state
+  // State management
+  const [selectedCoin, setSelectedCoin] = useState(null);
+  const [coinPresets, setCoinPresets] = useState([]);
   const [miningStatus, setMiningStatus] = useState({
     is_mining: false,
     stats: {
-      hashrate: 0.0,
+      hashrate: 0,
       accepted_shares: 0,
       rejected_shares: 0,
       blocks_found: 0,
-      cpu_usage: 0.0,
-      memory_usage: 0.0,
-      temperature: null,
-      uptime: 0.0,
-      efficiency: 0.0
+      cpu_usage: 0,
+      memory_usage: 0,
+      uptime: 0,
+      efficiency: 0
     },
-    config: null
+    high_performance: false,
+    processes: 0,
+    expected_hashrate: 0
   });
-  
-  const [systemStats, setSystemStats] = useState({
-    cpu: { usage_percent: 0, count: 0 },
-    memory: { total: 0, available: 0, percent: 0, used: 0 },
-    disk: { total: 0, used: 0, free: 0, percent: 0 }
-  });
-  
-  const [aiInsights, setAiInsights] = useState({
-    insights: {
-      hash_pattern_prediction: {},
-      difficulty_forecast: {},
-      coin_switching_recommendation: {},
-      optimization_suggestions: []
-    },
-    predictions: {}
-  });
-  
-  const [coinPresets, setCoinPresets] = useState({});
-  const [selectedCoin, setSelectedCoin] = useState('litecoin');
   const [miningConfig, setMiningConfig] = useState({
-    mode: 'solo',
+    coin: null,
+    mode: 'pool',
     threads: 4,
-    intensity: 1.0,
-    auto_optimize: true,
-    ai_enabled: true,
+    intensity: 0.8,
+    auto_optimize: false,
+    ai_enabled: false,
     wallet_address: '',
     pool_username: '',
     pool_password: 'x',
-    // NEW: Custom pool/RPC configuration fields
     custom_pool_address: '',
     custom_pool_port: '',
     custom_rpc_host: '',
     custom_rpc_port: '',
     custom_rpc_username: '',
     custom_rpc_password: '',
-    // NEW: Dynamic thread management
     auto_thread_detection: true,
     thread_profile: 'standard',
-    // NEW: Real mining mode toggle
-    real_mining: false
+    real_mining: true
   });
-  
-  // Create stable callback functions
-  const handleCoinChange = useCallback((coin) => {
-    setSelectedCoin(coin);
-  }, []);
-  
-  const handleConfigChange = useCallback((configUpdate) => {
-    setMiningConfig(configUpdate);
-  }, []);
-  
+  const [systemStats, setSystemStats] = useState(null);
+  const [cpuInfo, setCpuInfo] = useState(null);
   const [socket, setSocket] = useState(null);
-  const [connectionStatus, setConnectionStatus] = useState('connecting');
-  const [errorMessage, setErrorMessage] = useState('');
+  const [connectionStatus, setConnectionStatus] = useState('Connecting...');
+  const [aiInsights, setAiInsights] = useState(null);
+  
+  // High-performance mode state
+  const [highPerformanceMode, setHighPerformanceMode] = useState(false);
 
-  // Socket.io connection management
-  const connectSocket = useCallback(() => {
-    if (socket) return;
-    
-    try {
-      const newSocket = io(BACKEND_URL, {
-        transports: ['websocket', 'polling'],
-        timeout: 20000,
-        reconnection: true,
-        reconnectionAttempts: 3,
-        reconnectionDelay: 3000,
-        forceNew: true
-      });
-      
-      // Set a timeout for connection attempt
-      const connectionTimeout = setTimeout(() => {
-        if (connectionStatus === 'connecting') {
-          console.log('Socket.io connection timeout - falling back to HTTP polling');
-          setConnectionStatus('polling');
-          setErrorMessage('Real-time connection failed - using HTTP updates');
-          newSocket.disconnect();
-        }
-      }, 15000);
-      
-      newSocket.on('connect', () => {
-        console.log('Socket.io connected successfully');
-        clearTimeout(connectionTimeout);
-        setConnectionStatus('connected');
-        setErrorMessage('');
-        setSocket(newSocket);
-      });
-      
-      newSocket.on('mining_update', (data) => {
-        setMiningStatus(prev => ({
-          ...prev,
-          stats: data.stats || prev.stats,
-          is_mining: data.is_mining
-        }));
-      });
-      
-      newSocket.on('system_update', (data) => {
-        setSystemStats(data);
-      });
-      
-      newSocket.on('disconnect', () => {
-        console.log('Socket.io disconnected');
-        clearTimeout(connectionTimeout);
-        setConnectionStatus('disconnected');
-        setSocket(null);
-      });
-      
-      newSocket.on('connect_error', (error) => {
-        console.error('Socket.io connection error:', error);
-        clearTimeout(connectionTimeout);
-        setConnectionStatus('error');
-        setErrorMessage('Socket connection failed');
-      });
-      
-    } catch (error) {
-      console.error('Socket.io creation failed:', error);
-      setConnectionStatus('error');
-      setErrorMessage('Failed to create socket connection');
-    }
-  }, [socket, connectionStatus]);
+  // Get backend URL from environment
+  const backendUrl = process.env.REACT_APP_BACKEND_URL || 'http://localhost:8001';
 
-  // Replace the useEffect that was using WebSocket
-  useEffect(() => {
-    connectSocket();
-
-    return () => {
-      if (socket) {
-        socket.disconnect();
-      }
-    };
-  }, [connectSocket, socket]);
-
-  // API functions wrapped in useCallback to prevent infinite re-renders
+  // API functions with useCallback to prevent infinite re-renders
   const fetchMiningStatus = useCallback(async () => {
     try {
-      const response = await axios.get(`${BACKEND_URL}/api/mining/status`);
-      setMiningStatus(response.data);
-      setErrorMessage(''); // Clear error on success
+      const response = await fetch(`${backendUrl}/api/mining/status`);
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const data = await response.json();
+      setMiningStatus(data);
     } catch (error) {
       console.error('Failed to fetch mining status:', error);
-      setErrorMessage('Failed to fetch mining status');
     }
-  }, []);
-
-  const fetchAIInsights = useCallback(async () => {
-    try {
-      const response = await axios.get(`${BACKEND_URL}/api/mining/ai-insights`);
-      if (!response.data.error) {
-        setAiInsights(response.data);
-      }
-    } catch (error) {
-      console.error('Failed to fetch AI insights:', error);
-    }
-  }, []);
+  }, [backendUrl]);
 
   const fetchCoinPresets = useCallback(async () => {
     try {
-      const response = await axios.get(`${BACKEND_URL}/api/coins/presets`);
-      setCoinPresets(response.data.presets);
-      setErrorMessage(''); // Clear error on success
+      const response = await fetch(`${backendUrl}/api/coins/presets`);
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const data = await response.json();
+      setCoinPresets(data);
+      // Set default coin if none selected
+      if (!selectedCoin && data.length > 0) {
+        setSelectedCoin(data[0]);
+        setMiningConfig(prev => ({ ...prev, coin: data[0] }));
+      }
     } catch (error) {
       console.error('Failed to fetch coin presets:', error);
-      setErrorMessage('Failed to fetch coin presets');
     }
-  }, []);
+  }, [backendUrl, selectedCoin]);
 
   const fetchSystemStats = useCallback(async () => {
     try {
-      const response = await axios.get(`${BACKEND_URL}/api/system/stats`);
-      if (!response.data.error) {
-        setSystemStats(response.data);
-      }
+      const response = await fetch(`${backendUrl}/api/system/stats`);
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const data = await response.json();
+      setSystemStats(data);
     } catch (error) {
       console.error('Failed to fetch system stats:', error);
     }
-  }, []);
+  }, [backendUrl]);
 
-  const startMining = async () => {
+  const fetchCpuInfo = useCallback(async () => {
     try {
-      const coinConfig = coinPresets[selectedCoin];
-      if (!coinConfig) {
-        setErrorMessage('Please select a valid coin');
-        return;
+      const response = await fetch(`${backendUrl}/api/system/cpu-info`);
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const data = await response.json();
+      setCpuInfo(data);
+    } catch (error) {
+      console.error('Failed to fetch CPU info:', error);
+    }
+  }, [backendUrl]);
+
+  const fetchAiInsights = useCallback(async () => {
+    try {
+      const response = await fetch(`${backendUrl}/api/mining/ai-insights`);
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const data = await response.json();
+      setAiInsights(data);
+    } catch (error) {
+      console.error('Failed to fetch AI insights:', error);
+    }
+  }, [backendUrl]);
+
+  // High-performance mining functions
+  const startHighPerformanceMining = async (config) => {
+    try {
+      const response = await fetch(`${backendUrl}/api/mining/start-hp`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          threads: config.threads || 32,
+          intensity: config.intensity || 1.0
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
 
-      // Validate wallet address for solo mining
-      if (miningConfig.mode === 'solo' && !miningConfig.wallet_address.trim()) {
-        setErrorMessage('Wallet address is required for solo mining');
-        return;
-      }
-
-      // Validate pool credentials for pool mining
-      if (miningConfig.mode === 'pool' && !miningConfig.pool_username.trim()) {
-        setErrorMessage('Pool username is required for pool mining');
-        return;
-      }
-
-      const fullConfig = {
-        coin: coinConfig,
-        mode: miningConfig.mode,
-        threads: miningConfig.threads,
-        intensity: miningConfig.intensity,
-        auto_optimize: miningConfig.auto_optimize,
-        ai_enabled: miningConfig.ai_enabled,
-        wallet_address: miningConfig.wallet_address.trim(),
-        pool_username: miningConfig.pool_username.trim(),
-        pool_password: miningConfig.pool_password || 'x',
-        // Include custom connection fields
-        custom_pool_address: miningConfig.custom_pool_address?.trim() || '',
-        custom_pool_port: miningConfig.custom_pool_port?.trim() || '',
-        custom_rpc_host: miningConfig.custom_rpc_host?.trim() || '',
-        custom_rpc_port: miningConfig.custom_rpc_port?.trim() || '',
-        custom_rpc_username: miningConfig.custom_rpc_username?.trim() || '',
-        custom_rpc_password: miningConfig.custom_rpc_password?.trim() || '',
-        // Include dynamic thread management
-        auto_thread_detection: miningConfig.auto_thread_detection,
-        thread_profile: miningConfig.thread_profile
-      };
-
-      const response = await axios.post(`${BACKEND_URL}/api/mining/start`, fullConfig);
+      const result = await response.json();
       
-      if (response.data.success) {
-        setErrorMessage('');
-        await fetchMiningStatus();
+      if (result.success) {
+        setMiningStatus(prev => ({
+          ...prev,
+          is_mining: true,
+          high_performance: true,
+          processes: result.processes,
+          expected_hashrate: result.expected_hashrate
+        }));
+        
+        console.log('🚀 High-performance mining started:', result.message);
+        return { success: true, message: result.message };
       } else {
-        setErrorMessage('Failed to start mining');
+        throw new Error(result.message || 'Failed to start high-performance mining');
       }
     } catch (error) {
-      console.error('Failed to start mining:', error);
-      setErrorMessage('Failed to start mining: ' + (error.response?.data?.detail || error.message));
+      console.error('High-performance mining start error:', error);
+      return { success: false, message: error.message };
+    }
+  };
+
+  const stopHighPerformanceMining = async () => {
+    try {
+      const response = await fetch(`${backendUrl}/api/mining/stop-hp`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const result = await response.json();
+      
+      if (result.success) {
+        setMiningStatus(prev => ({
+          ...prev,
+          is_mining: false,
+          high_performance: false,
+          processes: 0,
+          expected_hashrate: 0
+        }));
+        
+        console.log('🛑 High-performance mining stopped');
+        return { success: true, message: result.message };
+      } else {
+        throw new Error(result.message || 'Failed to stop high-performance mining');
+      }
+    } catch (error) {
+      console.error('High-performance mining stop error:', error);
+      return { success: false, message: error.message };
+    }
+  };
+
+  // Regular mining functions
+  const startMining = async () => {
+    try {
+      if (highPerformanceMode) {
+        // Use high-performance mining
+        const result = await startHighPerformanceMining(miningConfig);
+        return result;
+      } else {
+        // Use regular mining
+        const response = await fetch(`${backendUrl}/api/mining/start`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(miningConfig),
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const result = await response.json();
+        
+        if (result.success) {
+          setMiningStatus(prev => ({ ...prev, is_mining: true }));
+          fetchMiningStatus(); // Update status immediately
+        }
+        
+        return result;
+      }
+    } catch (error) {
+      console.error('Mining start error:', error);
+      return { success: false, message: error.message };
     }
   };
 
   const stopMining = async () => {
     try {
-      const response = await axios.post(`${BACKEND_URL}/api/mining/stop`);
-      
-      if (response.data.success) {
-        setErrorMessage('');
-        await fetchMiningStatus();
+      if (miningStatus.high_performance) {
+        // Stop high-performance mining
+        const result = await stopHighPerformanceMining();
+        return result;
       } else {
-        setErrorMessage('Failed to stop mining');
+        // Use regular stop mining
+        const response = await fetch(`${backendUrl}/api/mining/stop`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const result = await response.json();
+        
+        if (result.success) {
+          setMiningStatus(prev => ({ ...prev, is_mining: false }));
+          fetchMiningStatus(); // Update status immediately
+        }
+        
+        return result;
       }
     } catch (error) {
-      console.error('Failed to stop mining:', error);
-      setErrorMessage('Failed to stop mining: ' + (error.response?.data?.detail || error.message));
+      console.error('Mining stop error:', error);
+      return { success: false, message: error.message };
     }
   };
 
-  // Effects
+  // Socket.io connection
   useEffect(() => {
-    // Initial data loading
+    const socketConnection = io(backendUrl, {
+      transports: ['websocket', 'polling'],
+      timeout: 20000,
+    });
+
+    socketConnection.on('connect', () => {
+      console.log('Connected to backend via WebSocket');
+      setConnectionStatus('Connected');
+      setSocket(socketConnection);
+    });
+
+    socketConnection.on('disconnect', () => {
+      console.log('Disconnected from backend');
+      setConnectionStatus('Disconnected');
+    });
+
+    socketConnection.on('connect_error', (error) => {
+      console.log('WebSocket connection error:', error);
+      setConnectionStatus('Polling'); // Fallback to HTTP polling
+    });
+
+    socketConnection.on('mining_update', (data) => {
+      setMiningStatus(data);
+    });
+
+    socketConnection.on('system_update', (data) => {
+      setSystemStats(data);
+    });
+
+    socketConnection.on('hp_hashrate_update', (data) => {
+      console.log('High-performance hashrate update:', data);
+    });
+
+    return () => {
+      socketConnection.disconnect();
+    };
+  }, [backendUrl]);
+
+  // Initial data fetch
+  useEffect(() => {
     fetchCoinPresets();
     fetchMiningStatus();
     fetchSystemStats();
-    fetchAIInsights();
-    
-    // Socket connection is handled separately
-  }, [fetchCoinPresets, fetchMiningStatus, fetchSystemStats, fetchAIInsights]);
+    fetchCpuInfo();
+    fetchAiInsights();
+  }, [fetchCoinPresets, fetchMiningStatus, fetchSystemStats, fetchCpuInfo, fetchAiInsights]);
 
-  // Periodic updates for non-Socket.io data and fallback polling
+  // Periodic data updates with HTTP polling fallback
   useEffect(() => {
-    let interval;
+    const intervals = [];
     
-    if (connectionStatus === 'connected') {
-      // Less frequent polling when Socket.io is connected
-      interval = setInterval(() => {
-        fetchAIInsights(); // AI insights still use HTTP
-      }, 10000);
-    } else {
-      // More frequent polling when Socket.io is not connected
-      const pollFrequency = connectionStatus === 'polling' ? 3000 : 5000;
-      interval = setInterval(() => {
-        fetchMiningStatus();
-        fetchSystemStats();
-        fetchAIInsights();
-      }, pollFrequency);
+    // If WebSocket connection failed, use HTTP polling
+    if (connectionStatus === 'Polling' || connectionStatus === 'Disconnected') {
+      intervals.push(setInterval(fetchMiningStatus, 5000));
+      intervals.push(setInterval(fetchSystemStats, 10000));
     }
+    
+    // Always update AI insights periodically
+    intervals.push(setInterval(fetchAiInsights, 30000));
 
-    return () => clearInterval(interval);
-  }, [connectionStatus, fetchMiningStatus, fetchSystemStats, fetchAIInsights]);
+    return () => {
+      intervals.forEach(clearInterval);
+    };
+  }, [connectionStatus, fetchMiningStatus, fetchSystemStats, fetchAiInsights]);
+
+  // Coin selection handler
+  const handleCoinSelect = (coin) => {
+    setSelectedCoin(coin);
+    setMiningConfig(prev => ({ ...prev, coin }));
+  };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-crypto-dark via-crypto-blue to-crypto-accent">
+    <div className="min-h-screen bg-gray-900">
       {/* Header */}
-      <header className="bg-crypto-dark/90 backdrop-blur-sm border-b border-crypto-accent/30 sticky top-0 z-50">
-        <div className="container mx-auto px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <div className="w-12 h-12 bg-gradient-to-br from-crypto-gold to-yellow-600 rounded-xl flex items-center justify-center">
-                <span className="text-2xl font-bold text-crypto-dark">₿</span>
-              </div>
-              <div>
-                <h1 className="text-2xl font-bold text-white">CryptoMiner Pro</h1>
-                <p className="text-crypto-gold text-sm">AI-Powered Mining Dashboard</p>
+      <header className="bg-gray-800 shadow-lg">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center py-6">
+            <div className="flex items-center">
+              <div className="flex-shrink-0">
+                <h1 className="text-3xl font-bold text-white">
+                  ⚡ CryptoMiner Pro
+                </h1>
+                <p className="text-sm text-gray-400 mt-1">
+                  AI-Powered Mining Dashboard
+                </p>
               </div>
             </div>
             
-            {/* Connection Status */}
             <div className="flex items-center space-x-4">
-              <div className={`flex items-center space-x-2 px-3 py-1 rounded-full text-sm ${
-                connectionStatus === 'connected' 
-                  ? 'bg-crypto-green/20 text-crypto-green' 
-                  : connectionStatus === 'error'
-                  ? 'bg-crypto-red/20 text-crypto-red'
-                  : 'bg-yellow-500/20 text-yellow-500'
-              }`}>
-                <div className={`w-2 h-2 rounded-full ${
-                  connectionStatus === 'connected' 
-                    ? 'bg-crypto-green animate-pulse' 
-                    : connectionStatus === 'error'
-                    ? 'bg-crypto-red'
-                    : 'bg-yellow-500 animate-pulse'
+              {/* Connection Status */}
+              <div className="flex items-center space-x-2">
+                <div className={`w-3 h-3 rounded-full ${
+                  connectionStatus === 'Connected' ? 'bg-green-400' :
+                  connectionStatus === 'Polling' ? 'bg-yellow-400' : 'bg-red-400'
                 }`}></div>
-                <span className="capitalize">{connectionStatus}</span>
+                <span className="text-sm text-gray-300">
+                  {connectionStatus === 'Connected' ? 'Real-time' : 
+                   connectionStatus === 'Polling' ? 'HTTP Updates' : 'Offline'}
+                </span>
+              </div>
+
+              {/* System Health Indicator */}
+              <div className="text-sm">
+                <span className="text-gray-400">System: </span>
+                <span className={`font-semibold ${
+                  systemStats ? 'text-green-400' : 'text-yellow-400'
+                }`}>
+                  {systemStats ? 'HEALTHY' : 'LOADING'}
+                </span>
               </div>
             </div>
           </div>
         </div>
       </header>
 
-      {/* Error Message */}
-      {errorMessage && (
-        <div className="container mx-auto px-6 py-4">
-          <div className="bg-crypto-red/20 border border-crypto-red/30 rounded-lg p-4 text-crypto-red">
-            <p className="font-medium">⚠️ {errorMessage}</p>
-          </div>
-        </div>
-      )}
-
-      {/* Main Content - Role-Based Sections */}
-      <main className="container mx-auto px-6 py-8">
-        <div className="space-y-8">
-          
-          {/* Section 1: Mining Control Center */}
-          <DashboardSection
-            title="Mining Control Center"
-            icon="🎛️"
-            description="Quick actions, status overview, and mining controls"
-            headerColor="text-crypto-gold"
-            borderColor="border-crypto-gold/30"
-          >
-            <MiningControlCenter
-              miningStatus={miningStatus}
+      {/* Main Content */}
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Left Column */}
+          <div className="lg:col-span-2 space-y-8">
+            {/* Mining Dashboard */}
+            <MiningDashboard 
+              miningStatus={miningStatus} 
               selectedCoin={selectedCoin}
-              coinPresets={coinPresets}
-              miningConfig={miningConfig}
-              onStart={startMining}
-              onStop={stopMining}
-              errorMessage={errorMessage}
-              systemMetrics={systemStats}
+              highPerformanceMode={highPerformanceMode}
             />
-          </DashboardSection>
 
-          {/* Section 2: Miner Setup */}
-          <DashboardSection
-            title="Miner Setup"
-            icon="⚙️"
-            description="Cryptocurrency selection, wallet configuration, and performance settings"
-            headerColor="text-crypto-blue"
-            borderColor="border-crypto-blue/30"
-            collapsible={true}
-            defaultExpanded={!miningStatus.is_mining}
-          >
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              <CoinSelector
-                coinPresets={coinPresets}
-                selectedCoin={selectedCoin}
-                onCoinChange={handleCoinChange}
-              />
-              
-              <WalletConfig
-                config={miningConfig}
-                onConfigChange={handleConfigChange}
-                selectedCoin={selectedCoin}
-                coinPresets={coinPresets}
-                isMining={miningStatus.is_mining}
-              />
-              
-              <MiningControls
-                config={miningConfig}
-                onConfigChange={handleConfigChange}
-                isMining={miningStatus.is_mining}
-                onStart={startMining}
-                onStop={stopMining}
-              />
-            </div>
-          </DashboardSection>
+            {/* Coin Selection */}
+            <CoinSelector
+              coins={coinPresets}
+              selectedCoin={selectedCoin}
+              onCoinSelect={handleCoinSelect}
+            />
 
-          {/* Section 3: Mining Performance */}
-          <DashboardSection
-            title="Mining Performance"
-            icon="📊"
-            description="Real-time mining statistics, performance metrics, and efficiency analysis"
-            headerColor="text-crypto-green"
-            borderColor="border-crypto-green/30"
-          >
+            {/* Mining Performance */}
             <MiningPerformance
               miningStatus={miningStatus}
               selectedCoin={selectedCoin}
-              coinPresets={coinPresets}
             />
-          </DashboardSection>
 
-          {/* Section 4: System Monitoring */}
-          <DashboardSection
-            title="System Monitoring"
-            icon="🖥️"
-            description="Hardware statistics, resource usage, and system health monitoring"
-            headerColor="text-purple-400"
-            borderColor="border-purple-400/30"
-            collapsible={true}
-            defaultExpanded={true}
-          >
+            {/* Real-time Metrics */}
+            <RealtimeMetrics
+              miningStatus={miningStatus}
+              systemStats={systemStats}
+              socket={socket}
+            />
+          </div>
+
+          {/* Right Column */}
+          <div className="space-y-8">
+            {/* Mining Controls */}
+            <MiningControls
+              miningStatus={miningStatus}
+              miningConfig={miningConfig}
+              setMiningConfig={setMiningConfig}
+              startMining={startMining}
+              stopMining={stopMining}
+              systemStats={systemStats}
+              highPerformanceMode={highPerformanceMode}
+              setHighPerformanceMode={setHighPerformanceMode}
+            />
+
+            {/* Wallet Configuration */}
+            <WalletConfig
+              miningConfig={miningConfig}
+              setMiningConfig={setMiningConfig}
+              selectedCoin={selectedCoin}
+            />
+
+            {/* System Monitoring */}
             <SystemMonitoring
-              systemMetrics={systemStats}
+              systemStats={systemStats}
+              cpuInfo={cpuInfo}
+              fetchCpuInfo={fetchCpuInfo}
             />
-          </DashboardSection>
 
-          {/* Section 5: AI Assistant */}
-          <DashboardSection
-            title="AI Assistant"
-            icon="🤖"
-            description="Mining insights, optimization recommendations, and predictive analysis"
-            headerColor="text-crypto-accent"
-            borderColor="border-crypto-accent/30"
-            collapsible={true}
-            defaultExpanded={false}
-          >
+            {/* AI Insights */}
             <AIInsights
-              insights={aiInsights.insights}
-              predictions={aiInsights.predictions}
+              insights={aiInsights}
+              miningStatus={miningStatus}
+              selectedCoin={selectedCoin}
             />
-          </DashboardSection>
-
+          </div>
         </div>
       </main>
 
       {/* Footer */}
-      <footer className="bg-crypto-dark/50 border-t border-crypto-accent/30 mt-12">
-        <div className="container mx-auto px-6 py-6">
-          <div className="text-center text-gray-400">
-            <p>&copy; 2025 CryptoMiner Pro - Advanced AI-Powered Mining System</p>
-            <p className="text-sm mt-2">
-              Featuring complete scrypt implementation with multi-coin support
-            </p>
+      <footer className="bg-gray-800 mt-16">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="flex justify-between items-center">
+            <div>
+              <p className="text-gray-400 text-sm">
+                CryptoMiner Pro v1.0 - Advanced Cryptocurrency Mining Platform
+              </p>
+              <p className="text-gray-500 text-xs mt-1">
+                {connectionStatus === 'Polling' && 'Real-time connection failed - using HTTP updates'}
+              </p>
+            </div>
+            <div className="flex items-center space-x-4 text-sm text-gray-400">
+              <span>Mining: {miningStatus.is_mining ? 
+                (miningStatus.high_performance ? 'HIGH PERFORMANCE' : 'ACTIVE') : 'STOPPED'}</span>
+              <span>•</span>
+              <span>Selected: {selectedCoin?.name || 'None'}</span>
+            </div>
           </div>
         </div>
       </footer>
