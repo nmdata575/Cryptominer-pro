@@ -284,7 +284,7 @@ app.post('/api/pool/test-connection', async (req, res) => {
       });
     }
     
-    const result = await miningEngine.testPoolConnection(pool_address, pool_port, type);
+    const result = await miningEngine.constructor.testPoolConnection(pool_address, pool_port, type);
     res.json(result);
   } catch (error) {
     console.error('Pool connection test error:', error);
