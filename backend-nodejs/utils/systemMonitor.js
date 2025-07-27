@@ -277,7 +277,7 @@ class SystemMonitor {
         cpuSpeed = cpuInfo.speed;
       } else if (cpuInfo.speedMax && cpuInfo.speedMax > 0) {
         cpuSpeed = cpuInfo.speedMax;
-      } else if (osCpus.length > 0 && osCpus[0].speed) {
+      } else if (osCpus.length > 0 && osCpus[0].speed && osCpus[0].speed > 0) {
         // os.cpus() returns speed in MHz, convert to GHz
         cpuSpeed = osCpus[0].speed / 1000;
       } else {
@@ -288,10 +288,10 @@ class SystemMonitor {
       // Get max frequency
       if (cpuInfo.speedMax && cpuInfo.speedMax > 0) {
         maxSpeed = cpuInfo.speedMax;
-      } else if (osCpus.length > 0 && osCpus[0].speed) {
+      } else if (osCpus.length > 0 && osCpus[0].speed && osCpus[0].speed > 0) {
         maxSpeed = osCpus[0].speed / 1000;
       } else {
-        maxSpeed = cpuSpeed;
+        maxSpeed = cpuSpeed === 'Variable (GCP ARM)' ? 'Variable (GCP ARM)' : cpuSpeed;
       }
       
       // Detect container environment
