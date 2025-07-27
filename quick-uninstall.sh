@@ -18,17 +18,39 @@ fi
 echo ""
 echo "🛑 Stopping all CryptoMiner services..."
 
-# Stop all services
+# Stop supervisor services
 sudo supervisorctl stop cryptominer-native:* 2>/dev/null || true
 sudo supervisorctl stop cryptominer-simple:* 2>/dev/null || true
 sudo supervisorctl stop cryptominer-pro:* 2>/dev/null || true
 sudo supervisorctl stop cryptominer-fixed:* 2>/dev/null || true
 sudo supervisorctl stop mining_system:* 2>/dev/null || true
 
+# Stop and disable systemd services
+sudo systemctl stop cryptominer-pro.service 2>/dev/null || true
+sudo systemctl stop cryptominer.service 2>/dev/null || true
+sudo systemctl stop cryptominer-backend.service 2>/dev/null || true
+sudo systemctl stop cryptominer-frontend.service 2>/dev/null || true
+
+sudo systemctl disable cryptominer-pro.service 2>/dev/null || true
+sudo systemctl disable cryptominer.service 2>/dev/null || true
+sudo systemctl disable cryptominer-backend.service 2>/dev/null || true
+sudo systemctl disable cryptominer-frontend.service 2>/dev/null || true
+
 echo "✅ Services stopped"
 
 echo ""
-echo "🗂️  Removing supervisor configurations..."
+echo "🗂️  Removing service configurations..."
+
+# Remove systemd service files
+sudo rm -f /etc/systemd/system/cryptominer-pro.service
+sudo rm -f /etc/systemd/system/cryptominer.service
+sudo rm -f /etc/systemd/system/cryptominer-backend.service
+sudo rm -f /etc/systemd/system/cryptominer-frontend.service
+sudo rm -f /lib/systemd/system/cryptominer-pro.service
+sudo rm -f /lib/systemd/system/cryptominer.service
+
+# Reload systemd daemon
+sudo systemctl daemon-reload 2>/dev/null || true
 
 # Remove supervisor configs
 sudo rm -f /etc/supervisor/conf.d/cryptominer-*.conf
@@ -38,7 +60,7 @@ sudo rm -f /etc/supervisor/conf.d/mining_app.conf
 sudo supervisorctl reread 2>/dev/null || true
 sudo supervisorctl update 2>/dev/null || true
 
-echo "✅ Supervisor configs removed"
+echo "✅ Service configurations removed"
 
 echo ""
 echo "📂 Removing application files..."
