@@ -62,9 +62,12 @@ const corsOptions = {
   optionsSuccessStatus: 200 // Some legacy browsers choke on 204
 };
 
-app.use(cors(corsOptions));
+app.use(corsOptions);
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
+
+// Handle preflight OPTIONS requests
+app.options('*', cors(corsOptions));
 
 // Rate limiting - configured for Kubernetes environment
 const limiter = rateLimit({
