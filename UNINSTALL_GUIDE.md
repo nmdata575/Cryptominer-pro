@@ -63,6 +63,10 @@ sudo supervisorctl stop cryptominer-native:*
 sudo supervisorctl stop cryptominer-simple:*
 sudo supervisorctl stop cryptominer-fixed:*
 
+# Stop systemd services
+sudo systemctl stop cryptominer-pro.service
+sudo systemctl disable cryptominer-pro.service
+
 # Kill any remaining processes
 sudo pkill -f "cryptominer"
 sudo pkill -f "node.*server.js"
@@ -77,6 +81,11 @@ sudo rm -rf /opt/cryptominer-pro
 # Remove supervisor configs
 sudo rm -f /etc/supervisor/conf.d/cryptominer-*.conf
 sudo supervisorctl reread && sudo supervisorctl update
+
+# Remove systemd services
+sudo rm -f /etc/systemd/system/cryptominer-pro.service
+sudo rm -f /etc/systemd/system/cryptominer*.service
+sudo systemctl daemon-reload
 ```
 
 ## ⚠️ Important Notes
