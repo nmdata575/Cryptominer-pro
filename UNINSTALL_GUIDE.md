@@ -131,6 +131,11 @@ find /opt -name "*cryptominer*" 2>/dev/null
 
 # Check supervisor configs
 ls /etc/supervisor/conf.d/ | grep crypto
+
+# Check systemd services
+systemctl list-units --all | grep crypto
+ls /etc/systemd/system/ | grep crypto
+ls /lib/systemd/system/ | grep crypto
 ```
 
 ## 🔄 Reinstalling Later
