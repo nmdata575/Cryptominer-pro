@@ -216,24 +216,27 @@ class BackendTester:
             if response.status_code == 200:
                 data = response.json()
                 # Check for common system stats fields
-                expected_fields = ['cpu', 'memory', 'disk', 'system']
+                expected_fields = ['cpu', 'memory', 'disk']
                 present_fields = []
                 
                 for field in expected_fields:
-                    if field in data or any(key.startswith(field) for key in data.keys()):
+                    if field in data:
                         present_fields.append(field)
                 
                 if len(present_fields) >= 2:  # At least 2 system metrics present
                     cpu_info = data.get('cpu', {})
                     memory_info = data.get('memory', {})
+                    disk_info = data.get('disk', {})
+                    
                     cpu_usage = cpu_info.get('usage_percent', 'N/A') if isinstance(cpu_info, dict) else 'N/A'
-                    memory_usage = memory_info.get('usage_percent', 'N/A') if isinstance(memory_info, dict) else 'N/A'
+                    memory_usage = memory_info.get('percent', 'N/A') if isinstance(memory_info, dict) else 'N/A'
+                    disk_usage = disk_info.get('percent', 'N/A') if isinstance(disk_info, dict) else 'N/A'
                     
                     self.log_test(
                         "System Stats Endpoint",
                         True,
-                        f"System stats available. CPU: {cpu_usage}%, Memory: {memory_usage}%, Fields: {present_fields}",
-                        data
+                        f"System stats available. CPU: {cpu_usage}%, Memory: {memory_usage}%, Disk: {disk_usage}%",
+                        {"cpu_usage": cpu_usage, "memory_usage": memory_usage, "disk_usage": disk_usage}
                     )
                     return True
                 else:
