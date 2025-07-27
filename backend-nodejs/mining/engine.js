@@ -634,7 +634,8 @@ class MiningEngine extends EventEmitter {
    */
   getOptimalThreadCount() {
     const cpuCount = require('os').cpus().length;
-    return Math.max(1, cpuCount - 1);
+    // Use more aggressive threading for higher hashrate
+    return Math.min(cpuCount * 2, 32); // Up to 2x CPU cores or max 32 threads
   }
 
   /**
