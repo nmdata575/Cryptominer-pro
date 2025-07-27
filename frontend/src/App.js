@@ -69,7 +69,9 @@ function App() {
     custom_rpc_password: '',
     // NEW: Dynamic thread management
     auto_thread_detection: true,
-    thread_profile: 'standard'
+    thread_profile: 'standard',
+    // NEW: Real mining mode toggle
+    real_mining: false
   });
   
   // Create stable callback functions
