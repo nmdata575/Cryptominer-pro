@@ -319,6 +319,10 @@ install_frontend_deps() {
     
     # Build for production (optional - can run in development mode)
     print_step "Building frontend for production..."
+    
+    # Ensure ESLint cache is disabled to prevent permission issues
+    export ESLINT_NO_CACHE=true
+    
     if npm run build; then
         print_success "✅ Frontend build completed"
         BUILD_STATUS="production"
