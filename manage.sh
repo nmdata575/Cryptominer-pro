@@ -9,17 +9,33 @@ echo "=================================="
 # Function to kill processes on specific ports
 kill_port() {
     local port=$1
-    echo "🔍 Checking for processes on port $port..."
+    echo "🔍 Aggressively clearing port $port..."
     
-    # Find processes using the port
-    local pids=$(sudo netstat -tlnp 2>/dev/null | grep ":$port " | awk '{print $7}' | cut -d'/' -f1)
-    
+    # Method 1: Kill by netstat
+    local pids=$(sudo netstat -tulnp 2>/dev/null | grep ":$port " | awk '{print $7}' | cut -d'/' -f1 | sort -u)
     if [ ! -z "$pids" ]; then
-        echo "⚡ Killing processes on port $port: $pids"
+        echo "⚡ Killing PIDs: $pids"
         echo "$pids" | xargs -r sudo kill -9
-        sleep 2
-    else
+    fi
+    
+    # Method 2: Kill by process pattern
+    sudo pkill -9 -f "server.js" 2>/dev/null || true
+    sudo pkill -9 -f ":$port" 2>/dev/null || true
+    
+    # Method 3: Wait and double-check
+    sleep 2
+    local remaining=$(sudo netstat -tulnp 2>/dev/null | grep ":$port " | awk '{print $7}' | cut -d'/' -f1)
+    if [ ! -z "$remaining" ]; then
+        echo "⚡ Final cleanup: $remaining"
+        echo "$remaining" | xargs -r sudo kill -SIGKILL
+    fi
+    
+    # Verification
+    if ! sudo netstat -tulnp 2>/dev/null | grep -q ":$port "; then
         echo "✅ Port $port is free"
+    else
+        echo "❌ Port $port still in use:"
+        sudo netstat -tulnp | grep ":$port "
     fi
 }
 
