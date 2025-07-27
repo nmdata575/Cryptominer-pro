@@ -283,16 +283,26 @@ class MiningEngine extends EventEmitter {
     this.currentJob = {
       job_id: crypto.randomBytes(8).toString('hex'),
       prevhash: '0'.repeat(64), // Would be real previous block hash
-      coinb1: '',
-      coinb2: '',
+      coinb1: crypto.randomBytes(32).toString('hex'),
+      coinb2: crypto.randomBytes(16).toString('hex'),
       merkle_branch: [],
       version: '00000001',
       nbits: '1d00ffff', // Difficulty bits
       ntime: Math.floor(Date.now() / 1000).toString(16).padStart(8, '0'),
       clean_jobs: true
     };
+    
+    // Set difficulty for solo mining
+    this.difficulty = 1;
 
-    console.log('✅ Solo mining setup complete');
+    console.log(`✅ Solo mining setup complete with job: ${this.currentJob.job_id}`);
+    
+    // Notify existing workers of the job
+    this.workers.forEach(worker => {
+      if (worker.setJob) {
+        worker.setJob(this.currentJob);
+      }
+    });
   }
 
   /**
