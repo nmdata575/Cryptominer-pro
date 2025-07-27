@@ -158,22 +158,30 @@ class SystemMonitor {
    * Estimate CPU frequency for environments where it's not reported
    */
   estimateCPUFrequency(cpuInfo) {
-    // Common frequencies for different architectures
-    const estimates = {
-      'arm64': 2.8,      // Modern ARM servers typically 2.8GHz
-      'x64': 2.4,        // Intel/AMD typically 2.4GHz base
-      'x86': 2.0,        // Older x86
-      'aarch64': 2.8     // ARM64
-    };
-    
     const arch = process.arch.toLowerCase();
     
-    // For ARM Neoverse-N1 (common in cloud environments)
+    // Check if we're in a container/Kubernetes environment
+    const isKubernetes = !!process.env.KUBERNETES_SERVICE_HOST;
+    const isContainer = isKubernetes || require('fs').existsSync('/.dockerenv');
+    
+    // For ARM Neoverse-N1 in container environments
     if (cpuInfo.manufacturer === 'Neoverse-N1' || cpuInfo.vendor === 'ARM') {
-      return 2.8; // AWS Graviton2 typical frequency
+      if (isContainer || isKubernetes) {
+        // In containers, frequency is controlled by the host and varies
+        return 'Variable'; // Don't show a fixed frequency
+      }
+      return 2.8; // Native ARM servers
     }
     
-    return estimates[arch] || 2.0;
+    // Common frequencies for different architectures
+    const estimates = {
+      'arm64': isContainer ? 'Variable' : 2.8,
+      'x64': isContainer ? 'Variable' : 2.4,
+      'x86': isContainer ? 'Variable' : 2.0,
+      'aarch64': isContainer ? 'Variable' : 2.8
+    };
+    
+    return estimates[arch] || (isContainer ? 'Variable' : 2.0);
   }
 
   /**
