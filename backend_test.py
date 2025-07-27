@@ -1,18 +1,21 @@
 #!/usr/bin/env python3
 """
 CryptoMiner Pro Backend Testing Suite
-Tests basic backend functionality after CORS middleware fixes
+Comprehensive testing for AI integration fix and overall system stability
 """
 
 import requests
 import json
 import time
 import sys
+import websocket
+import threading
 from urllib.parse import urljoin
 
 # Backend URL from frontend environment
 BACKEND_URL = "https://c3afa07b-1fb9-4c63-ac26-b479af170cae.preview.emergentagent.com"
 API_BASE = f"{BACKEND_URL}/api"
+WS_URL = BACKEND_URL.replace('https://', 'wss://').replace('http://', 'ws://')
 
 class BackendTester:
     def __init__(self):
