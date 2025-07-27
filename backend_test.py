@@ -169,16 +169,19 @@ class BackendTester:
             response = self.session.get(f"{API_BASE}/mining/status", timeout=10)
             if response.status_code == 200:
                 data = response.json()
-                required_fields = ['is_mining', 'hashrate', 'uptime']
-                present_fields = [field for field in required_fields if field in data]
+                # Check for is_mining field and stats object
+                has_is_mining = 'is_mining' in data
+                has_stats = 'stats' in data and isinstance(data['stats'], dict)
                 
-                if len(present_fields) >= 2:  # At least 2 out of 3 required fields
+                if has_is_mining and has_stats:
                     mining_status = "ACTIVE" if data.get('is_mining') else "STOPPED"
-                    hashrate = data.get('hashrate', 0)
+                    stats = data.get('stats', {})
+                    hashrate = stats.get('hashrate', 0)
+                    uptime = stats.get('uptime', 0)
                     self.log_test(
                         "Basic Mining Status Endpoint",
                         True,
-                        f"Mining status: {mining_status}, Hashrate: {hashrate} H/s, Fields present: {present_fields}",
+                        f"Mining status: {mining_status}, Hashrate: {hashrate} H/s, Uptime: {uptime}s",
                         data
                     )
                     return True
@@ -186,7 +189,7 @@ class BackendTester:
                     self.log_test(
                         "Basic Mining Status Endpoint",
                         False,
-                        f"Missing required fields. Present: {present_fields}, Required: {required_fields}",
+                        f"Missing required structure. has_is_mining: {has_is_mining}, has_stats: {has_stats}",
                         data
                     )
                     return False
