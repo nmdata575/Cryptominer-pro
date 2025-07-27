@@ -83,14 +83,17 @@ detect_environment() {
 
 # Check if running as root
 check_user() {
-    if [[ $EUID -eq 0 ]]; then
-        print_error "This script should not be run as root for security reasons."
+    # In container environments, running as root is often necessary
+    if [[ $EUID -eq 0 ]] && [[ "$ENV_TYPE" == "native" ]]; then
+        print_error "This script should not be run as root for security reasons on native systems."
         print_tip "Please run as a regular user with sudo privileges"
         exit 1
+    elif [[ $EUID -eq 0 ]]; then
+        print_status "🐳 Running as root in container environment - this is expected"
     fi
     
-    # Check sudo access
-    if ! sudo -n true 2>/dev/null; then
+    # Check sudo access for non-root users
+    if [[ $EUID -ne 0 ]] && ! sudo -n true 2>/dev/null; then
         print_warning "This script requires sudo privileges"
         print_tip "Please ensure your user has sudo access"
     fi
