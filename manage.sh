@@ -125,6 +125,37 @@ case "${1:-menu}" in
     "mongodb")
         start_mongodb
         ;;
+    "cors")
+        echo "🌐 Testing and fixing CORS issues..."
+        
+        # Test backend connectivity
+        if curl -s http://localhost:8001/api/health > /dev/null; then
+            echo "✅ Backend is responding"
+            
+            # Test CORS headers
+            echo "🔍 Testing CORS headers..."
+            cors_response=$(curl -s -I -H "Origin: http://localhost:3000" \
+                         -H "Access-Control-Request-Method: GET" \
+                         http://localhost:8001/api/health)
+            
+            if echo "$cors_response" | grep -i "access-control-allow-origin" > /dev/null; then
+                echo "✅ CORS headers are present"
+            else
+                echo "❌ CORS headers missing - restarting backend..."
+                kill_port 8001
+                sleep 3
+                start_mongodb
+                sudo supervisorctl restart mining_system:backend 2>/dev/null || \
+                sudo supervisorctl restart cryptominer-native:cryptominer-backend 2>/dev/null || \
+                sudo supervisorctl restart cryptominer-fixed:cryptominer-backend-fixed
+            fi
+        else
+            echo "❌ Backend not responding - starting services..."
+            restart_services
+        fi
+        
+        check_health
+        ;;
     "menu"|*)
         echo "Usage: $0 [command]"
         echo ""
