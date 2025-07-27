@@ -963,65 +963,142 @@ class BackendTester:
             return False
 
     def run_all_tests(self):
-        """Run all backend tests"""
-        print("🚀 STARTING COMPREHENSIVE BACKEND TESTING")
-        print("=" * 60)
+        """Run comprehensive backend tests"""
+        print("🚀 STARTING COMPREHENSIVE BACKEND TESTING FOR AI INTEGRATION FIX")
+        print("=" * 80)
         print(f"Testing backend at: {BACKEND_URL}")
         print(f"API base URL: {API_BASE}")
-        print("=" * 60)
+        print("Focus: AI Integration, Mining Functionality, High-Performance Engine, Database Connectivity")
+        print("=" * 80)
         print()
 
-        # Run all tests
+        # Comprehensive test suite
         tests = [
-            self.test_backend_startup_and_port_binding,
-            self.test_api_endpoint_health_check,
-            self.test_cors_headers_verification,
-            self.test_basic_mining_status_endpoint,
-            self.test_system_stats_endpoint,
-            self.test_mongodb_connectivity_expectation
+            # Core API Endpoints
+            self.test_health_check_api,
+            self.test_coin_presets_api,
+            self.test_system_stats_api,
+            self.test_mining_status_api,
+            
+            # AI System Integration (CRITICAL)
+            self.test_ai_insights_api,
+            
+            # Mining Functionality
+            self.test_wallet_validation,
+            self.test_mining_start_stop_workflow,
+            self.test_pool_mining_capability,
+            
+            # High-Performance Engine
+            self.test_high_performance_mining,
+            
+            # Database Connectivity
+            self.test_database_connectivity,
+            
+            # Real-time Updates
+            self.test_websocket_connection,
+            
+            # Error Handling
+            self.test_error_handling,
+            
+            # Enhanced Features
+            self.test_enhanced_cpu_detection,
+            self.test_remote_connectivity_apis
         ]
 
         passed = 0
         total = len(tests)
+        critical_tests = ['AI Insights API Endpoint', 'Mining Start/Stop Functionality', 'Pool Mining Capability']
+        critical_passed = 0
+        critical_total = len(critical_tests)
 
         for test in tests:
             try:
+                test_name = test.__name__.replace('test_', '').replace('_', ' ').title()
                 if test():
                     passed += 1
+                    if any(critical in test_name for critical in critical_tests):
+                        critical_passed += 1
+                else:
+                    if any(critical in test_name for critical in critical_tests):
+                        print(f"⚠️  CRITICAL TEST FAILED: {test_name}")
             except Exception as e:
                 print(f"❌ Test {test.__name__} crashed: {str(e)}")
+                if any(critical in test.__name__ for critical in critical_tests):
+                    print(f"🚨 CRITICAL TEST CRASHED: {test.__name__}")
             
             # Small delay between tests
             time.sleep(0.5)
 
         # Summary
-        print("=" * 60)
-        print("🎯 BACKEND TESTING SUMMARY")
-        print("=" * 60)
+        print("=" * 80)
+        print("🎯 COMPREHENSIVE BACKEND TESTING SUMMARY")
+        print("=" * 80)
         success_rate = (passed / total) * 100
-        print(f"Tests Passed: {passed}/{total} ({success_rate:.1f}%)")
+        critical_success_rate = (critical_passed / critical_total) * 100 if critical_total > 0 else 100
+        
+        print(f"Overall Tests Passed: {passed}/{total} ({success_rate:.1f}%)")
+        print(f"Critical Tests Passed: {critical_passed}/{critical_total} ({critical_success_rate:.1f}%)")
         print()
 
         # Detailed results
+        print("📊 DETAILED TEST RESULTS:")
+        print("-" * 40)
         for result in self.test_results:
-            print(f"{result['status']} - {result['test']}")
+            status_icon = "✅" if result['success'] else "❌"
+            critical_marker = " [CRITICAL]" if any(critical in result['test'] for critical in critical_tests) else ""
+            print(f"{status_icon} {result['test']}{critical_marker}")
             if result['details']:
                 print(f"   {result['details']}")
-
         print()
-        print("=" * 60)
+
+        # AI Integration Status
+        ai_test_result = next((r for r in self.test_results if 'AI Insights' in r['test']), None)
+        if ai_test_result:
+            print("🤖 AI INTEGRATION STATUS:")
+            print("-" * 30)
+            if ai_test_result['success']:
+                print("✅ AI Integration Fix VERIFIED - System is working correctly")
+                print("✅ AI predictor.getInsights() method is functional")
+                print("✅ AI predictions and optimization suggestions available")
+            else:
+                print("❌ AI Integration Fix FAILED - Issues detected")
+                print("❌ AI system may still have integration problems")
+            print()
+
+        # Mining Functionality Status
+        mining_tests = [r for r in self.test_results if any(keyword in r['test'] for keyword in ['Mining', 'Pool', 'High-Performance'])]
+        mining_passed = sum(1 for r in mining_tests if r['success'])
+        mining_total = len(mining_tests)
         
-        if success_rate >= 80:
-            print("🎉 BACKEND TESTING COMPLETED SUCCESSFULLY!")
-            print("✅ Backend is operational and ready for production use")
-        elif success_rate >= 60:
+        print("⛏️  MINING FUNCTIONALITY STATUS:")
+        print("-" * 35)
+        if mining_passed >= mining_total * 0.8:
+            print(f"✅ Mining System OPERATIONAL ({mining_passed}/{mining_total} tests passed)")
+            print("✅ Real pool mining capabilities verified")
+            print("✅ High-performance engine functional")
+        else:
+            print(f"⚠️  Mining System ISSUES ({mining_passed}/{mining_total} tests passed)")
+            print("⚠️  Some mining functionality may be impaired")
+        print()
+
+        print("=" * 80)
+        
+        # Final assessment
+        if success_rate >= 85 and critical_success_rate >= 80:
+            print("🎉 COMPREHENSIVE BACKEND TESTING COMPLETED SUCCESSFULLY!")
+            print("✅ AI integration fix verified and working correctly")
+            print("✅ All critical systems operational and ready for production")
+            print("✅ Mining functionality, database connectivity, and error handling working")
+        elif success_rate >= 70 and critical_success_rate >= 60:
             print("⚠️  BACKEND TESTING COMPLETED WITH WARNINGS")
-            print("🔧 Some issues detected but core functionality working")
+            print("🔧 Most systems working but some issues detected")
+            print("🔧 AI integration may need additional attention")
         else:
             print("❌ BACKEND TESTING FAILED")
             print("🚨 Critical issues detected requiring immediate attention")
+            print("🚨 AI integration fix may not be working properly")
 
-        return success_rate >= 60
+        return success_rate >= 70 and critical_success_rate >= 60
 
 def main():
     """Main test execution"""
