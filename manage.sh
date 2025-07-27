@@ -82,6 +82,14 @@ check_health() {
     # Check backend
     if curl -s http://localhost:8001/api/health > /dev/null; then
         echo "✅ Backend: Healthy"
+        
+        # Test CORS
+        cors_test=$(curl -s -I -H "Origin: http://localhost:3000" http://localhost:8001/api/health | grep -i "access-control-allow-origin" || echo "")
+        if [[ -n "$cors_test" ]]; then
+            echo "✅ CORS: Configured"
+        else
+            echo "⚠️  CORS: May have issues"
+        fi
     else
         echo "❌ Backend: Not responding"
     fi
@@ -94,7 +102,7 @@ check_health() {
     fi
     
     # Check MongoDB
-    if ps aux | grep -q "[m]ongod"; then
+    if pgrep mongod > /dev/null; then
         echo "✅ MongoDB: Running"
     else
         echo "❌ MongoDB: Not running"
