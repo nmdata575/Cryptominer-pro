@@ -11,7 +11,7 @@ import sys
 from urllib.parse import urljoin
 
 # Backend URL from frontend environment
-BACKEND_URL = "https://e57c9fe4-e97c-45ec-a738-62e3451435a8.preview.emergentagent.com"
+BACKEND_URL = "https://c3afa07b-1fb9-4c63-ac26-b479af170cae.preview.emergentagent.com"
 API_BASE = f"{BACKEND_URL}/api"
 
 class BackendTester:
