@@ -338,39 +338,39 @@ create_supervisor_config() {
     RECOMMENDED_THREADS=$((CPU_CORES > 2 ? CPU_CORES - 1 : 1))
     
     # Create supervisor configuration with environment-specific optimizations
-    sudo tee /etc/supervisor/conf.d/cryptominer-pro.conf > /dev/null <<EOF
-[program:cryptominer-backend]
+    sudo tee /etc/supervisor/conf.d/mining_app.conf > /dev/null <<EOF
+[program:backend]
 command=npm start
 directory=$APP_DIR/backend-nodejs
 autostart=true
 autorestart=true
-stderr_logfile=/var/log/supervisor/cryptominer-backend.err.log
-stdout_logfile=/var/log/supervisor/cryptominer-backend.out.log
-environment=NODE_ENV=production,MONGO_URL="mongodb://localhost:27017/cryptominer",CPU_CORES=$CPU_CORES,RECOMMENDED_THREADS=$RECOMMENDED_THREADS,ENV_TYPE=$ENV_TYPE
-user=$USER
+stderr_logfile=/var/log/supervisor/backend.err.log
+stdout_logfile=/var/log/supervisor/backend.out.log
+environment=NODE_ENV=production,MONGO_URL="mongodb://localhost:27017/cryptominer"
+user=root
 startsecs=10
 startretries=3
 redirect_stderr=false
 stdout_logfile_maxbytes=50MB
 stdout_logfile_backups=10
 
-[program:cryptominer-frontend]
+[program:frontend]
 command=npm start
 directory=$APP_DIR/frontend
 autostart=true
 autorestart=true
-stderr_logfile=/var/log/supervisor/cryptominer-frontend.err.log
-stdout_logfile=/var/log/supervisor/cryptominer-frontend.out.log
-environment=PORT=3000,GENERATE_SOURCEMAP=false,REACT_APP_BACKEND_URL="http://localhost:8001"
-user=$USER
+stderr_logfile=/var/log/supervisor/frontend.err.log
+stdout_logfile=/var/log/supervisor/frontend.out.log
+environment=PORT=3000,GENERATE_SOURCEMAP=false,ESLINT_NO_CACHE=true
+user=root
 startsecs=15
 startretries=3
 redirect_stderr=false
 stdout_logfile_maxbytes=50MB
 stdout_logfile_backups=10
 
-[group:cryptominer-pro]
-programs=cryptominer-backend,cryptominer-frontend
+[group:mining_system]
+programs=backend,frontend
 priority=999
 EOF
 
