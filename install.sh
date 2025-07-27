@@ -230,40 +230,45 @@ install_mongodb() {
     fi
 }
 
-# Create application directory and copy files
+# Create application directory and setup files
 setup_application() {
     print_step "Setting up CryptoMiner Pro application..."
     
-    # Create application directory
-    APP_DIR="/opt/cryptominer-pro"
-    sudo mkdir -p "$APP_DIR" || handle_error "Application directory creation failed"
-    sudo chown -R $USER:$USER "$APP_DIR" || handle_error "Application directory ownership failed"
+    # Get current directory (should be /app)
+    CURRENT_DIR=$(pwd)
     
-    # Copy application files
-    print_step "Copying application files..."
-    
-    # Check if source files exist
-    if [[ ! -d "/app/backend-nodejs" ]]; then
-        print_error "Backend source files not found at /app/backend-nodejs"
-        print_tip "Make sure you're running this script from the correct directory"
+    # Check if we're in the correct directory
+    if [[ ! -d "./backend-nodejs" ]] || [[ ! -d "./frontend" ]]; then
+        print_error "Source files not found in current directory: $CURRENT_DIR"
+        print_tip "Make sure you're running this script from the CryptoMiner Pro root directory"
+        print_tip "Expected structure: ./backend-nodejs/ and ./frontend/"
         exit 1
     fi
     
-    if [[ ! -d "/app/frontend" ]]; then
-        print_error "Frontend source files not found at /app/frontend"
-        exit 1
+    # Create application directory (use current directory for development)
+    if [[ "$CURRENT_DIR" == "/app" ]]; then
+        # We're already in the right place - no need to copy
+        APP_DIR="/app"
+        print_status "🏠 Using existing application directory: $APP_DIR"
+    else
+        # For other locations, copy to /opt/cryptominer-pro
+        APP_DIR="/opt/cryptominer-pro"
+        sudo mkdir -p "$APP_DIR" || handle_error "Application directory creation failed"
+        sudo chown -R $USER:$USER "$APP_DIR" || handle_error "Application directory ownership failed"
+        
+        # Copy application files
+        print_step "Copying application files to $APP_DIR..."
+        cp -r ./backend-nodejs "$APP_DIR/" || handle_error "Backend files copy failed"
+        cp -r ./frontend "$APP_DIR/" || handle_error "Frontend files copy failed"
+        
+        # Copy documentation
+        [[ -f "./README.md" ]] && cp ./README.md "$APP_DIR/"
+        [[ -f "./REMOTE_API_GUIDE.md" ]] && cp ./REMOTE_API_GUIDE.md "$APP_DIR/"
+        [[ -f "./CUSTOM_COINS_GUIDE.md" ]] && cp ./CUSTOM_COINS_GUIDE.md "$APP_DIR/"
+        [[ -f "./manage.sh" ]] && cp ./manage.sh "$APP_DIR/" && chmod +x "$APP_DIR/manage.sh"
+        
+        print_success "✅ Application files copied successfully"
     fi
-    
-    # Copy files
-    cp -r /app/backend-nodejs "$APP_DIR/" || handle_error "Backend files copy failed"
-    cp -r /app/frontend "$APP_DIR/" || handle_error "Frontend files copy failed"
-    
-    # Copy documentation
-    [[ -f "/app/README.md" ]] && cp /app/README.md "$APP_DIR/"
-    [[ -f "/app/REMOTE_API_GUIDE.md" ]] && cp /app/REMOTE_API_GUIDE.md "$APP_DIR/"
-    [[ -f "/app/CUSTOM_COINS_GUIDE.md" ]] && cp /app/CUSTOM_COINS_GUIDE.md "$APP_DIR/"
-    
-    print_success "✅ Application files copied successfully"
 }
 
 # Install backend dependencies
