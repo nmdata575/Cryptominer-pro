@@ -390,15 +390,15 @@ start_services() {
     sleep 3
     
     # Start services
-    sudo supervisorctl start cryptominer-pro:* || handle_error "Service start failed"
+    sudo supervisorctl start mining_system:* || handle_error "Service start failed"
     
     # Wait for services to start
     print_step "Waiting for services to initialize..."
     sleep 10
     
     # Check service status
-    BACKEND_STATUS=$(sudo supervisorctl status cryptominer-pro:cryptominer-backend | grep -o "RUNNING" || echo "FAILED")
-    FRONTEND_STATUS=$(sudo supervisorctl status cryptominer-pro:cryptominer-frontend | grep -o "RUNNING" || echo "FAILED")
+    BACKEND_STATUS=$(sudo supervisorctl status mining_system:backend | grep -o "RUNNING" || echo "FAILED")
+    FRONTEND_STATUS=$(sudo supervisorctl status mining_system:frontend | grep -o "RUNNING" || echo "FAILED")
     
     if [[ $BACKEND_STATUS == "RUNNING" ]]; then
         print_success "✅ Backend service started successfully"
