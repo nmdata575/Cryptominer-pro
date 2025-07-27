@@ -200,10 +200,14 @@ install_mongodb() {
     # Configure MongoDB for containerized environments
     if [[ "$ENV_TYPE" != "native" ]]; then
         print_step "Configuring MongoDB for container environment..."
-        sudo mkdir -p /var/lib/mongodb
-        sudo chown mongodb:mongodb /var/lib/mongodb
+        sudo mkdir -p /data/db
+        sudo chown mongodb:mongodb /data/db 2>/dev/null || sudo chown root:root /data/db
         sudo mkdir -p /var/log/mongodb
-        sudo chown mongodb:mongodb /var/log/mongodb
+        sudo chown mongodb:mongodb /var/log/mongodb 2>/dev/null || sudo chown root:root /var/log/mongodb
+    else
+        # For native systems, use standard paths
+        sudo mkdir -p /var/lib/mongodb /var/log/mongodb
+        sudo chown mongodb:mongodb /var/lib/mongodb /var/log/mongodb
     fi
     
     # Start and enable MongoDB
@@ -212,8 +216,8 @@ install_mongodb() {
         sudo systemctl start mongod || handle_error "MongoDB start failed"
         sudo systemctl enable mongod || print_warning "MongoDB auto-start setup failed"
     else
-        # For container environments, start manually
-        sudo mongod --dbpath /var/lib/mongodb --logpath /var/log/mongodb/mongod.log --fork || handle_error "MongoDB manual start failed"
+        # For container environments, use /data/db path
+        sudo mongod --dbpath /data/db --logpath /var/log/mongodb/mongod.log --fork || handle_error "MongoDB manual start failed"
     fi
     
     # Wait for MongoDB to start
