@@ -98,7 +98,7 @@ class SystemMonitor {
       } else if (osCpus.length > 0 && osCpus[0].speed && osCpus[0].speed > 0) {
         maxSpeed = osCpus[0].speed / 1000;
       } else {
-        maxSpeed = cpuSpeed === 'Variable' ? 'Variable' : cpuSpeed;
+        maxSpeed = cpuSpeed === 'Variable (GCP ARM)' || cpuSpeed === 'Variable (Container)' || typeof cpuSpeed === 'string' ? cpuSpeed : cpuSpeed;
       }
       
       return {
