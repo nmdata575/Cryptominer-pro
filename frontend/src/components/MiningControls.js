@@ -337,6 +337,78 @@ const MiningControls = ({ config, onConfigChange, isMining, onStart, onStop }) =
         </p>
       </div>
 
+      {/* Real Mining Mode Toggle */}
+      <div className="form-group mb-6">
+        <div className="bg-gradient-to-r from-green-500/10 to-green-600/10 p-4 rounded-lg border border-green-500/20">
+          <div className="flex items-center justify-between mb-3">
+            <div>
+              <h4 className="text-sm font-medium text-green-400 mb-1">Mining Mode</h4>
+              <p className="text-xs text-gray-400">
+                Toggle between real cryptocurrency mining and performance testing
+              </p>
+            </div>
+            <div className="flex items-center space-x-3">
+              <span className={`text-xs ${config.real_mining ? 'text-gray-400' : 'text-crypto-gold font-medium'}`}>
+                Test Mode
+              </span>
+              <div className="relative">
+                <input
+                  type="checkbox"
+                  id="real-mining-mode"
+                  checked={config.real_mining || false}
+                  onChange={(e) => handleConfigChange('real_mining', e.target.checked)}
+                  disabled={isMining}
+                  className="sr-only"
+                />
+                <label 
+                  htmlFor="real-mining-mode" 
+                  className={`block w-12 h-6 rounded-full cursor-pointer transition-colors ${
+                    config.real_mining ? 'bg-green-500' : 'bg-gray-600'
+                  } ${isMining ? 'opacity-50 cursor-not-allowed' : ''}`}
+                >
+                  <span 
+                    className={`block w-5 h-5 mt-0.5 ml-0.5 bg-white rounded-full transition-transform ${
+                      config.real_mining ? 'transform translate-x-6' : ''
+                    }`}
+                  />
+                </label>
+              </div>
+              <span className={`text-xs ${config.real_mining ? 'text-crypto-gold font-medium' : 'text-gray-400'}`}>
+                Real Mining
+              </span>
+            </div>
+          </div>
+          
+          {config.real_mining ? (
+            <div className="bg-green-500/20 p-3 rounded-lg">
+              <div className="flex items-center space-x-2 mb-2">
+                <span className="text-green-400">⚡</span>
+                <span className="text-sm font-medium text-green-300">Real Mining Active</span>
+              </div>
+              <p className="text-xs text-green-200">
+                • Connects to actual mining pools<br/>
+                • Submits real shares for cryptocurrency rewards<br/>
+                • Uses full system resources<br/>
+                • Generates actual income potential
+              </p>
+            </div>
+          ) : (
+            <div className="bg-yellow-500/20 p-3 rounded-lg">
+              <div className="flex items-center space-x-2 mb-2">
+                <span className="text-yellow-400">🧪</span>
+                <span className="text-sm font-medium text-yellow-300">Test Mode Active</span>
+              </div>
+              <p className="text-xs text-yellow-200">
+                • Performance testing and benchmarking<br/>
+                • No actual cryptocurrency mining<br/>
+                • Safe for system evaluation<br/>
+                • Shows potential mining performance
+              </p>
+            </div>
+          )}
+        </div>
+      </div>
+
       {/* AI Features */}
       <div className="space-y-3 mb-6">
         <div className="flex items-center space-x-3">
