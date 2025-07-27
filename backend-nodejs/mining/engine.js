@@ -496,6 +496,11 @@ class MiningEngine extends EventEmitter {
       
       this.workers.push(worker);
       await worker.start();
+      
+      // Set current job if available
+      if (this.currentJob) {
+        worker.setJob(this.currentJob);
+      }
     }
   }
 
