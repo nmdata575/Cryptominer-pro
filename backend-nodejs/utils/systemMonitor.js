@@ -132,6 +132,10 @@ class SystemMonitor {
   formatCPUModel(cpuInfo) {
     let model = '';
     
+    // Check if we're in Google Cloud Platform
+    const isKubernetes = !!process.env.KUBERNETES_SERVICE_HOST;
+    const isGCP = cpuInfo.manufacturer === 'Google' || (cpuInfo.manufacturer === 'Neoverse-N1' && isKubernetes);
+    
     if (cpuInfo.manufacturer) {
       model += cpuInfo.manufacturer;
     }
@@ -142,8 +146,10 @@ class SystemMonitor {
       model += (model ? ' ' : '') + cpuInfo.vendor;
     }
     
-    // For ARM processors, add more descriptive info
-    if (!model || model.trim() === '') {
+    // For ARM processors in GCP, provide more descriptive info
+    if (isGCP && (cpuInfo.manufacturer === 'Neoverse-N1' || cpuInfo.vendor === 'ARM')) {
+      model = 'ARM Neoverse-N1 (GCP)';
+    } else if (!model || model.trim() === '') {
       if (cpuInfo.vendor === 'ARM') {
         model = 'ARM Neoverse-N1';
       } else {
