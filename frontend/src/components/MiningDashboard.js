@@ -1,209 +1,234 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 
-const MiningDashboard = ({ stats, isMining, config }) => {
-  const [hashHistory, setHashHistory] = useState([]);
-
-  useEffect(() => {
-    if (stats.hashrate !== undefined) {
-      setHashHistory(prev => {
-        const newHistory = [...prev, {
-          timestamp: Date.now(),
-          hashrate: stats.hashrate,
-          efficiency: stats.efficiency
-        }];
-        // Keep only last 50 data points
-        return newHistory.slice(-50);
-      });
-    }
-  }, [stats.hashrate]);
-
+const MiningDashboard = ({ miningStatus, selectedCoin, highPerformanceMode }) => {
   const formatHashrate = (hashrate) => {
-    if (hashrate >= 1000000000) return `${(hashrate / 1000000000).toFixed(2)} GH/s`;
-    if (hashrate >= 1000000) return `${(hashrate / 1000000).toFixed(2)} MH/s`;
-    if (hashrate >= 1000) return `${(hashrate / 1000).toFixed(2)} KH/s`;
-    return `${hashrate.toFixed(2)} H/s`;
+    if (hashrate >= 1000000) {
+      return `${(hashrate / 1000000).toFixed(2)} MH/s`;
+    } else if (hashrate >= 1000) {
+      return `${(hashrate / 1000).toFixed(2)} KH/s`;
+    } else {
+      return `${hashrate.toFixed(2)} H/s`;
+    }
   };
 
-  const formatUptime = (seconds) => {
-    const hours = Math.floor(seconds / 3600);
-    const minutes = Math.floor((seconds % 3600) / 60);
-    const secs = Math.floor(seconds % 60);
-    return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  const formatNumber = (num) => {
+    return new Intl.NumberFormat().format(num || 0);
   };
 
-  const getEfficiencyColor = (efficiency) => {
-    if (efficiency >= 90) return 'text-crypto-green';
-    if (efficiency >= 70) return 'text-crypto-gold';
-    return 'text-crypto-red';
+  const getStatusColor = () => {
+    if (!miningStatus.is_mining) return 'text-gray-400';
+    if (miningStatus.high_performance) return 'text-red-400';
+    return 'text-green-400';
   };
+
+  const getStatusText = () => {
+    if (!miningStatus.is_mining) return 'STOPPED';
+    if (miningStatus.high_performance) return 'HIGH PERFORMANCE ACTIVE';
+    return 'ACTIVE';
+  };
+
+  const currentHashrate = miningStatus.stats?.hashrate || 0;
+  const isHighPerformance = miningStatus.high_performance || false;
 
   return (
-    <div className="space-y-6">
-      {/* Main Mining Status */}
-      <div className="mining-card">
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-bold text-white">Mining Dashboard</h2>
-          <div className={`status-indicator ${isMining ? 'mining' : 'stopped'}`}>
-            <div className={`w-3 h-3 rounded-full ${isMining ? 'bg-crypto-green animate-pulse' : 'bg-gray-400'}`}></div>
-            <span>{isMining ? 'Mining Active' : 'Mining Stopped'}</span>
-          </div>
-        </div>
+    <div className="bg-gray-800 rounded-lg p-6">
+      <h2 className="text-xl font-bold text-white mb-4 flex items-center">
+        <span className="mr-2">📊</span>
+        Mining Dashboard
+      </h2>
 
-        {/* Current Hash Rate */}
-        <div className="text-center mb-8">
-          <div className="hashrate-display mb-2">
-            {formatHashrate(stats.hashrate || 0)}
-          </div>
-          <p className="text-gray-300 text-sm">Current Hash Rate</p>
-        </div>
-
-        {/* Mining Statistics Grid */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-          <div className="stat-card text-center">
-            <div className="text-2xl font-bold text-crypto-green mb-1">
-              {stats.accepted_shares || 0}
-            </div>
-            <div className="text-xs text-gray-300">Accepted Shares</div>
-          </div>
-          
-          <div className="stat-card text-center">
-            <div className="text-2xl font-bold text-crypto-red mb-1">
-              {stats.rejected_shares || 0}
-            </div>
-            <div className="text-xs text-gray-300">Rejected Shares</div>
-          </div>
-          
-          <div className="stat-card text-center">
-            <div className="text-2xl font-bold text-crypto-gold mb-1">
-              {stats.blocks_found || 0}
-            </div>
-            <div className="text-xs text-gray-300">Blocks Found</div>
-          </div>
-          
-          <div className="stat-card text-center">
-            <div className={`text-2xl font-bold mb-1 ${getEfficiencyColor(stats.efficiency || 0)}`}>
-              {(stats.efficiency || 0).toFixed(1)}%
-            </div>
-            <div className="text-xs text-gray-300">Efficiency</div>
-          </div>
-        </div>
-
-        {/* Hash Rate Trend */}
-        <div className="chart-container">
-          <h3 className="text-lg font-semibold text-white mb-4">Hash Rate Trend</h3>
-          <div className="h-32 flex items-end space-x-1">
-            {hashHistory.map((point, index) => {
-              const maxHashrate = Math.max(...hashHistory.map(p => p.hashrate), 1);
-              const height = (point.hashrate / maxHashrate) * 100;
-              
-              return (
-                <div
-                  key={index}
-                  className="flex-1 bg-gradient-to-t from-crypto-gold to-yellow-400 rounded-t transition-all duration-300"
-                  style={{ height: `${height}%`, minHeight: '4px' }}
-                  title={`${formatHashrate(point.hashrate)} at ${new Date(point.timestamp).toLocaleTimeString()}`}
-                ></div>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Mining Details */}
-        {config && (
-          <div className="mt-6 p-4 bg-crypto-accent/20 rounded-lg">
-            <h3 className="text-lg font-semibold text-white mb-3">Current Configuration</h3>
-            <div className="grid grid-cols-2 gap-4 text-sm">
+      {/* High Performance Mode Indicator */}
+      {isHighPerformance && (
+        <div className="bg-gradient-to-r from-red-500 to-orange-500 p-4 rounded-lg mb-6 animate-pulse">
+          <div className="flex items-center justify-between text-white">
+            <div className="flex items-center space-x-3">
+              <div className="text-3xl">🚀</div>
               <div>
-                <span className="text-gray-300">Coin:</span>
-                <span className="ml-2 text-white font-medium">{config.coin?.name || 'Not specified'}</span>
-              </div>
-              <div>
-                <span className="text-gray-300">Mode:</span>
-                <span className="ml-2 text-white font-medium capitalize">{config.mode || 'Solo'}</span>
-              </div>
-              <div>
-                <span className="text-gray-300">Threads:</span>
-                <span className="ml-2 text-white font-medium">{config.threads || 'N/A'}</span>
-              </div>
-              <div>
-                <span className="text-gray-300">Intensity:</span>
-                <span className="ml-2 text-white font-medium">{((config.intensity || 1) * 100).toFixed(0)}%</span>
+                <h3 className="font-bold text-xl">HIGH PERFORMANCE MODE ACTIVE</h3>
+                <p className="text-red-100">
+                  {miningStatus.processes || 0} processes running • Expected: {formatNumber(miningStatus.expected_hashrate || 0)} H/s
+                </p>
               </div>
             </div>
-          </div>
-        )}
-
-        {/* Uptime */}
-        {isMining && (
-          <div className="mt-4 text-center">
-            <div className="text-crypto-gold font-mono text-lg">
-              ⏱️ {formatUptime(stats.uptime || 0)}
+            <div className="text-right">
+              <div className="text-3xl font-mono font-bold">{formatHashrate(currentHashrate)}</div>
+              <div className="text-red-100 text-sm">Live Hashrate</div>
             </div>
-            <p className="text-gray-300 text-xs">Mining Uptime</p>
           </div>
-        )}
+        </div>
+      )}
+
+      {/* Mining Status Banner */}
+      <div className={`p-4 rounded-lg mb-6 ${
+        miningStatus.is_mining 
+          ? (isHighPerformance ? 'bg-gradient-to-r from-red-600 to-orange-600' : 'bg-green-600') 
+          : 'bg-gray-700'
+      }`}>
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="text-white font-bold text-lg">Mining Status</h3>
+            <p className={`font-mono text-lg ${getStatusColor()}`}>
+              {getStatusText()}
+            </p>
+          </div>
+          <div className="text-right">
+            <div className="text-white text-sm">Current Coin</div>
+            <div className="text-white font-bold">
+              {selectedCoin?.name || 'None Selected'} ({selectedCoin?.symbol || 'N/A'})
+            </div>
+          </div>
+        </div>
       </div>
 
-      {/* Share Statistics */}
-      <div className="mining-card">
-        <h3 className="text-xl font-bold text-white mb-4">Share Statistics</h3>
-        
-        <div className="space-y-4">
-          {/* Accepted Shares Progress */}
-          <div>
-            <div className="flex justify-between items-center mb-2">
-              <span className="text-sm text-gray-300">Accepted Shares</span>
-              <span className="text-sm font-medium text-crypto-green">
-                {stats.accepted_shares || 0}
+      {/* Hashrate Display */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+        <div className="bg-gray-700 p-6 rounded-lg">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-white font-semibold flex items-center">
+              <span className="mr-2">⚡</span>
+              Hash Rate
+            </h3>
+            {isHighPerformance && (
+              <span className="bg-red-500 text-white px-2 py-1 rounded text-xs font-bold">
+                HIGH PERF
               </span>
-            </div>
-            <div className="progress-bar">
-              <div 
-                className="progress-fill bg-crypto-green"
-                style={{ 
-                  width: `${Math.min(100, ((stats.accepted_shares || 0) / Math.max(1, (stats.accepted_shares || 0) + (stats.rejected_shares || 0))) * 100)}%` 
-                }}
-              ></div>
-            </div>
+            )}
           </div>
-
-          {/* Efficiency Meter */}
-          <div>
-            <div className="flex justify-between items-center mb-2">
-              <span className="text-sm text-gray-300">Mining Efficiency</span>
-              <span className={`text-sm font-medium ${getEfficiencyColor(stats.efficiency || 0)}`}>
-                {(stats.efficiency || 0).toFixed(1)}%
-              </span>
+          <div className="text-center">
+            <div className={`text-4xl font-mono font-bold mb-2 ${
+              currentHashrate > 1000000 ? 'text-red-400' :
+              currentHashrate > 10000 ? 'text-green-400' :
+              currentHashrate > 1000 ? 'text-yellow-400' : 'text-gray-400'
+            }`}>
+              {formatHashrate(currentHashrate)}
             </div>
-            <div className="progress-bar">
-              <div 
-                className={`progress-fill ${
-                  (stats.efficiency || 0) >= 90 ? 'bg-crypto-green' : 
-                  (stats.efficiency || 0) >= 70 ? 'bg-crypto-gold' : 'bg-crypto-red'
-                }`}
-                style={{ width: `${Math.min(100, stats.efficiency || 0)}%` }}
-              ></div>
+            <div className="text-gray-400 text-sm">
+              {formatNumber(currentHashrate)} hashes per second
             </div>
-          </div>
-
-          {/* Blocks Found */}
-          {stats.blocks_found > 0 && (
-            <div className="bg-crypto-gold/20 border border-crypto-gold/30 rounded-lg p-3">
-              <div className="flex items-center space-x-2">
-                <span className="text-crypto-gold text-xl">🏆</span>
-                <div>
-                  <div className="text-crypto-gold font-semibold">
-                    {stats.blocks_found} Block{stats.blocks_found !== 1 ? 's' : ''} Found!
-                  </div>
-                  <div className="text-crypto-gold/80 text-xs">
-                    Congratulations on your mining success!
-                  </div>
-                </div>
+            {isHighPerformance && (
+              <div className="text-red-400 text-xs mt-2 font-semibold">
+                Multi-Process Mining Active
               </div>
+            )}
+          </div>
+        </div>
+
+        <div className="bg-gray-700 p-6 rounded-lg">
+          <h3 className="text-white font-semibold mb-4 flex items-center">
+            <span className="mr-2">⏱️</span>
+            Performance Stats
+          </h3>
+          <div className="space-y-3">
+            <div className="flex justify-between">
+              <span className="text-gray-400">Uptime:</span>
+              <span className="text-white font-mono">
+                {Math.floor((miningStatus.stats?.uptime || 0) / 60)}m {Math.floor((miningStatus.stats?.uptime || 0) % 60)}s
+              </span>
             </div>
-          )}
+            <div className="flex justify-between">
+              <span className="text-gray-400">Efficiency:</span>
+              <span className="text-green-400 font-mono">
+                {(miningStatus.stats?.efficiency || 0).toFixed(1)}%
+              </span>
+            </div>
+            {isHighPerformance && (
+              <div className="flex justify-between">
+                <span className="text-gray-400">Processes:</span>
+                <span className="text-red-400 font-mono">
+                  {miningStatus.processes || 0}
+                </span>
+              </div>
+            )}
+          </div>
         </div>
       </div>
+
+      {/* Mining Statistics */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <div className="bg-gray-700 p-4 rounded-lg text-center">
+          <h4 className="text-gray-400 text-sm mb-2">Accepted Shares</h4>
+          <div className="text-green-400 text-2xl font-bold">
+            {formatNumber(miningStatus.stats?.accepted_shares || 0)}
+          </div>
+        </div>
+
+        <div className="bg-gray-700 p-4 rounded-lg text-center">
+          <h4 className="text-gray-400 text-sm mb-2">Rejected Shares</h4>
+          <div className="text-red-400 text-2xl font-bold">
+            {formatNumber(miningStatus.stats?.rejected_shares || 0)}
+          </div>
+        </div>
+
+        <div className="bg-gray-700 p-4 rounded-lg text-center">
+          <h4 className="text-gray-400 text-sm mb-2">Blocks Found</h4>
+          <div className="text-yellow-400 text-2xl font-bold">
+            {formatNumber(miningStatus.stats?.blocks_found || 0)}
+          </div>
+        </div>
+
+        <div className="bg-gray-700 p-4 rounded-lg text-center">
+          <h4 className="text-gray-400 text-sm mb-2">CPU Usage</h4>
+          <div className="text-blue-400 text-2xl font-bold">
+            {(miningStatus.stats?.cpu_usage || 0).toFixed(1)}%
+          </div>
+        </div>
+      </div>
+
+      {/* Hash Rate Trend Chart Placeholder */}
+      <div className="bg-gray-700 p-4 rounded-lg">
+        <h4 className="text-white font-semibold mb-4 flex items-center">
+          <span className="mr-2">📈</span>
+          Hash Rate Trend
+        </h4>
+        <div className="h-32 bg-gray-600 rounded flex items-center justify-center">
+          <div className="text-center text-gray-400">
+            <div className="text-lg mb-2">📊</div>
+            <div className="text-sm">
+              {miningStatus.is_mining 
+                ? `Live monitoring: ${formatHashrate(currentHashrate)}`
+                : 'Start mining to see hash rate trends'
+              }
+            </div>
+            {isHighPerformance && (
+              <div className="text-red-400 text-xs mt-2">
+                High Performance Mode: Maximum CPU Utilization
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Connection Status */}
+      {miningStatus.is_mining && (
+        <div className="mt-4 p-3 bg-gray-700 rounded-lg">
+          <div className="flex items-center justify-between text-sm">
+            <div className="flex items-center space-x-4">
+              <div className="flex items-center">
+                <div className={`w-2 h-2 rounded-full mr-2 ${
+                  miningStatus.pool_connected ? 'bg-green-400' : 'bg-yellow-400'
+                }`}></div>
+                <span className="text-gray-400">
+                  {isHighPerformance ? 'High Performance' : 'Pool'}: 
+                </span>
+                <span className="text-white ml-2">
+                  {miningStatus.pool_connected ? 'Connected' : 'Connecting...'}
+                </span>
+              </div>
+              <div className="flex items-center">
+                <span className="text-gray-400">Mode:</span>
+                <span className="text-white ml-2">
+                  {isHighPerformance ? 'Multi-Process' : (miningStatus.test_mode ? 'Test' : 'Live')}
+                </span>
+              </div>
+            </div>
+            {miningStatus.current_job && (
+              <div className="text-gray-400 text-xs font-mono">
+                Job: {miningStatus.current_job.substring(0, 8)}...
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 };
