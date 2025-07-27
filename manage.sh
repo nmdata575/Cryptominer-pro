@@ -164,9 +164,11 @@ case "${1:-menu}" in
         echo "  health      - Check service health"
         echo "  kill-ports  - Kill processes on ports 8001 and 3000"
         echo "  mongodb     - Start MongoDB if not running"
+        echo "  cors        - Test and fix CORS connectivity issues"
         echo ""
         echo "Quick fixes:"
         echo "  ./manage.sh restart     # Fix port conflicts and restart"
         echo "  ./manage.sh health      # Check if everything is working"
+        echo "  ./manage.sh cors        # Fix CORS and connectivity issues"
         ;;
 esac
