@@ -477,8 +477,10 @@ class MiningEngine extends EventEmitter {
         return { valid: false, error: 'Pool username is required for pool mining' };
       }
 
-      if (this.config.threads && (this.config.threads < 1 || this.config.threads > 64)) {
-        return { valid: false, error: 'Thread count must be between 1 and 64' };
+      // Thread validation using environment variable
+      const maxThreads = parseInt(process.env.MAX_THREADS) || 128; // Default to 128 for high-performance systems
+      if (this.config.threads && (this.config.threads < 1 || this.config.threads > maxThreads)) {
+        return { valid: false, error: `Thread count must be between 1 and ${maxThreads}` };
       }
 
       if (this.config.intensity && (this.config.intensity < 0.1 || this.config.intensity > 1.0)) {
