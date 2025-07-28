@@ -7,6 +7,7 @@ const MiningControls = ({
   startMining, 
   stopMining,
   systemStats,
+  cpuInfo,
   highPerformanceMode,
   setHighPerformanceMode 
 }) => {
@@ -22,16 +23,18 @@ const MiningControls = ({
   const [isStarting, setIsStarting] = useState(false);
   const [isStopping, setIsStopping] = useState(false);
 
-  // Get system info for optimal settings
-  const cpuCores = systemStats?.cpu?.cores || 8;
-  const maxSafeThreads = Math.max(1, cpuCores - 1);
+  // Get CPU info for optimal settings (use override-aware CPU detection)
+  const cpuCores = cpuInfo?.cores?.physical || systemStats?.cpu?.cores || 16;
+  const maxSafeThreads = Math.min(256, Math.max(1, cpuCores - 1)); // Respect MAX_THREADS limit
+  const hasOverride = cpuInfo?.cores?.override_active || false;
 
-  // Mining profiles
-  const miningProfiles = {
+  // Use backend-provided mining profiles if available, otherwise calculate
+  const backendProfiles = cpuInfo?.mining_profiles;
+  const miningProfiles = backendProfiles || {
     light: { threads: Math.max(1, Math.floor(cpuCores * 0.25)), intensity: 0.5, description: 'Light usage' },
     standard: { threads: Math.max(1, Math.floor(cpuCores * 0.75)), intensity: 0.8, description: 'Balanced performance' },
     maximum: { threads: maxSafeThreads, intensity: 0.9, description: 'High performance' },
-    absolute_max: { threads: cpuCores, intensity: 1.0, description: 'Maximum (may affect system)' }
+    absolute_max: { threads: Math.min(256, cpuCores), intensity: 1.0, description: 'Maximum (may affect system)' }
   };
 
   // Update parent config when local config changes
