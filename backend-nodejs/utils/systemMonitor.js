@@ -264,8 +264,13 @@ class SystemMonitor {
     try {
       const cpuInfo = await si.cpu();
       const cpuCount = os.cpus().length;
-      const physicalCores = cpuInfo.physicalCores || cpuCount;
-      const logicalCores = cpuCount;
+      
+      // Check for CPU override in environment variables
+      const forceOverride = process.env.FORCE_CPU_OVERRIDE === 'true';
+      const actualCores = forceOverride ? parseInt(process.env.ACTUAL_CPU_CORES) || cpuCount : null;
+      
+      const physicalCores = actualCores || cpuInfo.physicalCores || cpuCount;
+      const logicalCores = actualCores || cpuCount;
       const osCpus = os.cpus();
       
       // Enhanced CPU frequency detection (same logic as getCPUUsage)
@@ -305,15 +310,15 @@ class SystemMonitor {
         aggressive: physicalCores
       };
       
-      // Enhanced mining profiles for container environments
+      // Enhanced mining profiles for all CPU counts
       const miningProfiles = {
         light: {
-          threads: Math.max(1, Math.floor(physicalCores / 3)),
-          description: `Light mining - ${Math.max(1, Math.floor(physicalCores / 3))} threads (minimal system impact)`
+          threads: Math.max(1, Math.floor(physicalCores * 0.25)),
+          description: `Light mining - ${Math.max(1, Math.floor(physicalCores * 0.25))} threads (minimal system impact)`
         },
         standard: {
-          threads: Math.max(1, physicalCores - 2),
-          description: `Standard mining - ${Math.max(1, physicalCores - 2)} threads (balanced performance)`
+          threads: Math.max(1, Math.floor(physicalCores * 0.75)),
+          description: `Standard mining - ${Math.max(1, Math.floor(physicalCores * 0.75))} threads (balanced performance)`
         },
         maximum: {
           threads: Math.max(1, physicalCores - 1),
@@ -328,6 +333,7 @@ class SystemMonitor {
       // Enhanced performance recommendations
       const recommendations = [
         `🖥️ Detected ${physicalCores} CPU cores (${this.formatCPUModel(cpuInfo)})`,
+        actualCores ? `🔧 Using CPU override: ${actualCores} cores (container shows ${cpuCount})` : '',
         typeof cpuSpeed === 'string' && cpuSpeed.includes('Variable') ? 
           `⚡ CPU Frequency: ${cpuSpeed} (managed by hypervisor)` :
           `⚡ CPU Frequency: ${cpuSpeed.toFixed ? cpuSpeed.toFixed(1) : cpuSpeed} GHz (Max: ${maxSpeed.toFixed ? maxSpeed.toFixed(1) : maxSpeed} GHz)`,
@@ -337,10 +343,12 @@ class SystemMonitor {
         `⚡ Recommended: Use ${recommendedThreads.balanced} threads for optimal mining performance`,
         `🔥 For maximum performance: Use up to ${physicalCores} threads (monitor system responsiveness)`,
         `📊 Monitor CPU temperature and usage during intensive mining operations`,
-        physicalCores >= 8 ? 
-          `🚀 Excellent CPU count for mining - consider using standard or maximum profiles` :
-          `⚠️ Limited CPU cores - recommend light or standard mining profiles for system stability`
-      ];
+        physicalCores >= 32 ? 
+          `🚀 Excellent high-core CPU for mining - consider using maximum profiles with thread counts 32-64+` :
+          physicalCores >= 8 ? 
+            `🚀 Good CPU count for mining - consider using standard or maximum profiles` :
+            `⚠️ Limited CPU cores - recommend light or standard mining profiles for system stability`
+      ].filter(Boolean);
       
       return {
         cores: {
@@ -348,7 +356,8 @@ class SystemMonitor {
           logical: logicalCores,
           hyperthreading: logicalCores > physicalCores,
           allocated: cpuCount, // For container environments
-          available: physicalCores
+          available: physicalCores,
+          override_active: !!actualCores
         },
         environment: {
           container: isContainer,
@@ -376,15 +385,18 @@ class SystemMonitor {
         recommendations: recommendations,
         optimal_mining_config: {
           max_safe_threads: Math.max(1, physicalCores - 1),
-          recommended_profile: physicalCores >= 8 ? 'standard' : 'light',
-          intensity_recommendation: physicalCores >= 8 ? 'medium-high' : 'medium'
+          recommended_profile: physicalCores >= 32 ? 'maximum' : physicalCores >= 8 ? 'standard' : 'light',
+          intensity_recommendation: physicalCores >= 32 ? 'high' : physicalCores >= 8 ? 'medium-high' : 'medium'
         }
       };
     } catch (error) {
       console.error('CPU info error:', error);
       
-      // Enhanced fallback with container detection
+      // Enhanced fallback with container detection and override
       const cpuCount = os.cpus().length;
+      const forceOverride = process.env.FORCE_CPU_OVERRIDE === 'true';
+      const actualCores = forceOverride ? parseInt(process.env.ACTUAL_CPU_CORES) || cpuCount : cpuCount;
+      
       const osCpus = os.cpus();
       const isKubernetes = !!process.env.KUBERNETES_SERVICE_HOST;
       const isContainer = isKubernetes || require('fs').existsSync('/.dockerenv');
