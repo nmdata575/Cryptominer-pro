@@ -157,7 +157,7 @@ app.get('/api/system/stats', async (req, res) => {
 // Enhanced CPU info endpoint
 app.get('/api/system/cpu-info', async (req, res) => {
   try {
-    const cpuInfo = await systemMonitor.getEnhancedCPUInfo();
+    const cpuInfo = await systemMonitor.getCPUInfo();
     res.json(cpuInfo);
   } catch (error) {
     console.error('CPU info error:', error);
