@@ -239,6 +239,13 @@ const MiningControls = ({
               <span className="text-white ml-2">{cpuCores}</span>
             </div>
             <div>
+              <span className="text-gray-400">CPU Cores:</span>
+              <span className="text-blue-400 ml-2">{cpuCores} cores</span>
+              {hasOverride && (
+                <span className="text-yellow-400 ml-1 text-sm">(Override Active)</span>
+              )}
+            </div>
+            <div>
               <span className="text-gray-400">Max Safe Threads:</span>
               <span className="text-green-400 ml-2">{maxSafeThreads}</span>
             </div>
