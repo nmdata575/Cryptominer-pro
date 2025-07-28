@@ -783,7 +783,7 @@ setup_enhanced_application() {
         done
         
         # Copy enhancement scripts
-        for script in clear-ports.sh start-mining.sh manage-mining.sh optimize_threads.sh; do
+        for script in clear-ports.sh start-mining.sh manage-mining.sh optimize_threads.sh startup-manager.sh; do
             [[ -f "./$script" ]] && cp "./$script" "$APP_DIR/" && chmod +x "$APP_DIR/$script"
         done
         
