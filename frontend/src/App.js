@@ -430,6 +430,7 @@ function App() {
               startMining={startMining}
               stopMining={stopMining}
               systemStats={systemStats}
+              cpuInfo={cpuInfo}
               highPerformanceMode={highPerformanceMode}
               setHighPerformanceMode={setHighPerformanceMode}
             />
