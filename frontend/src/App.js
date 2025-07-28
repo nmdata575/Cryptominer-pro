@@ -436,9 +436,11 @@ function App() {
 
             {/* Wallet Configuration */}
             <WalletConfig
-              miningConfig={miningConfig}
-              setMiningConfig={setMiningConfig}
+              config={miningConfig}
+              onConfigChange={setMiningConfig}
               selectedCoin={selectedCoin}
+              coinPresets={coinPresets}
+              isMining={miningStatus.is_mining}
             />
 
             {/* System Monitoring */}
