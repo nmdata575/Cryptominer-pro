@@ -985,10 +985,8 @@ main() {
     create_enhanced_config
     create_enhanced_supervisor
     
-    # Start services
-    sudo supervisorctl reread
-    sudo supervisorctl update
-    sudo supervisorctl start mining_system:*
+    # Enhanced service startup with robust validation
+    start_enhanced_services
     
     # Test and finalize
     test_enhanced_features
