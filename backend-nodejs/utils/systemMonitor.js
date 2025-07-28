@@ -452,11 +452,11 @@ class SystemMonitor {
           isContainer ? '🐳 Running in container environment' : '💻 Running on native system',
           'Unable to get detailed CPU information',
           'Use system monitoring to optimize mining performance'
-        ],
+        ].filter(Boolean),
         optimal_mining_config: {
-          max_safe_threads: Math.max(1, cpuCount - 1),
-          recommended_profile: cpuCount >= 8 ? 'standard' : 'light',
-          intensity_recommendation: 'medium'
+          max_safe_threads: Math.max(1, actualCores - 1),
+          recommended_profile: actualCores >= 32 ? 'maximum' : actualCores >= 8 ? 'standard' : 'light',
+          intensity_recommendation: actualCores >= 32 ? 'high' : 'medium'
         }
       };
     }
