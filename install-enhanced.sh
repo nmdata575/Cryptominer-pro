@@ -956,6 +956,9 @@ display_enhanced_completion() {
     print_tip "💾 Monitor memory usage with high thread counts (max safe: $MEMORY_SAFE_PROCESSES processes)"
     print_tip "🌊 Use real pool mining for actual cryptocurrency earnings"
     print_tip "📊 Check AI insights regularly for optimization recommendations"
+    print_tip "🔧 Use startup-manager.sh for handling service issues automatically"
+    print_tip "🛠️  Run './startup-manager.sh fix-mongodb' if you encounter connection issues"
+    print_tip "🚀 Use './startup-manager.sh full-reset' for complete system recovery"
     echo ""
     
     print_success "Enhanced installation completed successfully! 🚀"
