@@ -270,40 +270,261 @@ operationProfiling:
 EOF
     
     # Set up data directories with proper permissions
-    sudo mkdir -p /var/lib/mongodb /var/log/mongodb /var/run/mongodb
-    sudo chown -R mongodb:mongodb /var/lib/mongodb /var/log/mongodb /var/run/mongodb
+    sudo mkdir -p /var/lib/mongodb /var/log/mongodb /var/run/mongodb /data/db
+    sudo chown -R mongodb:mongodb /var/lib/mongodb /var/log/mongodb /var/run/mongodb 2>/dev/null || true
+    sudo chown -R mongodb:mongodb /data/db 2>/dev/null || sudo chown -R root:root /data/db
     
-    # Start and enable MongoDB
+    # Kill any existing MongoDB processes to avoid conflicts
+    print_step "Cleaning up any existing MongoDB processes..."
+    sudo pkill -f mongod 2>/dev/null || true
+    sleep 3
+    
+    # Start and enable MongoDB with robust startup
     print_step "Starting optimized MongoDB service..."
-    if [[ "$ENV_TYPE" == "native" ]]; then
-        sudo systemctl start mongod || handle_error "MongoDB start failed"
-        sudo systemctl enable mongod || print_warning "MongoDB auto-start setup failed"
+    
+    # Try systemd first (for native systems)
+    if [[ "$ENV_TYPE" == "native" ]] && command -v systemctl >/dev/null 2>&1; then
+        print_status "Starting MongoDB via systemd..."
+        sudo systemctl stop mongod 2>/dev/null || true
+        sleep 2
+        sudo systemctl start mongod || {
+            print_warning "Systemd start failed, trying manual start..."
+            sudo mongod --dbpath /data/db --logpath /var/log/mongodb/mongod.log --fork || handle_error "MongoDB manual start failed"
+        }
+        sudo systemctl enable mongod 2>/dev/null || print_warning "MongoDB auto-start setup failed"
     else
-        # For container environments
-        sudo mongod --config /etc/mongod.conf || handle_error "MongoDB container start failed"
+        # For container environments or when systemd fails
+        print_status "Starting MongoDB manually for container environment..."
+        sudo mongod --dbpath /data/db --logpath /var/log/mongodb/mongod.log --fork || handle_error "MongoDB container start failed"
     fi
     
-    # Wait and verify MongoDB
-    print_step "Waiting for MongoDB to initialize..."
+    # Robust MongoDB startup verification with retries
+    print_step "Verifying MongoDB startup..."
+    MONGODB_READY=false
+    MAX_RETRIES=10
+    RETRY_COUNT=0
+    
+    while [ $RETRY_COUNT -lt $MAX_RETRIES ] && [ "$MONGODB_READY" = false ]; do
+        sleep 2
+        RETRY_COUNT=$((RETRY_COUNT + 1))
+        
+        if pgrep mongod > /dev/null; then
+            print_status "MongoDB process detected (attempt $RETRY_COUNT/$MAX_RETRIES)"
+            
+            # Test connection
+            if mongosh --eval "db.runCommand('ping')" --quiet >/dev/null 2>&1; then
+                MONGODB_READY=true
+                print_success "✅ MongoDB is running and accessible via mongosh"
+            elif mongo --eval "db.runCommand('ping')" --quiet >/dev/null 2>&1; then
+                MONGODB_READY=true
+                print_success "✅ MongoDB is running and accessible via legacy mongo client"
+            else
+                print_status "MongoDB process running but not yet accepting connections..."
+            fi
+        else
+            print_status "Waiting for MongoDB process to start (attempt $RETRY_COUNT/$MAX_RETRIES)..."
+        fi
+    done
+    
+    if [ "$MONGODB_READY" = false ]; then
+        print_error "❌ MongoDB failed to start after $MAX_RETRIES attempts"
+        print_tip "Checking MongoDB logs..."
+        tail -20 /var/log/mongodb/mongod.log 2>/dev/null || echo "No MongoDB logs found"
+        handle_error "MongoDB startup verification failed"
+    fi
+    
+    # Create mining database and optimize it
+    print_step "Setting up optimized mining database..."
+    mongosh --eval "
+    db = db.getSiblingDB('cryptominer');
+    db.createCollection('mining_stats', {capped: true, size: 100000000, max: 10000});
+    db.createCollection('ai_predictions', {capped: true, size: 50000000, max: 5000});
+    db.createCollection('system_metrics', {capped: true, size: 50000000, max: 5000});
+    print('✅ Mining database optimized for performance');
+    " 2>/dev/null || print_warning "Database optimization failed - continuing anyway"
+    
+    print_success "✅ MongoDB installation and optimization completed"
+}
+
+# Robust port cleanup and conflict resolution
+cleanup_port_conflicts() {
+    print_step "Cleaning up potential port conflicts..."
+    
+    # Ports used by the application
+    PORTS=(8001 3000 27017)
+    
+    for PORT in "${PORTS[@]}"; do
+        if sudo lsof -i :$PORT >/dev/null 2>&1; then
+            print_warning "Port $PORT is in use, cleaning up..."
+            
+            # Get processes using the port
+            PIDS=$(sudo lsof -t -i :$PORT 2>/dev/null || true)
+            
+            if [ -n "$PIDS" ]; then
+                print_status "Terminating processes on port $PORT: $PIDS"
+                sudo kill -TERM $PIDS 2>/dev/null || true
+                sleep 2
+                
+                # Force kill if still running
+                REMAINING_PIDS=$(sudo lsof -t -i :$PORT 2>/dev/null || true)
+                if [ -n "$REMAINING_PIDS" ]; then
+                    print_status "Force killing stubborn processes: $REMAINING_PIDS"
+                    sudo kill -KILL $REMAINING_PIDS 2>/dev/null || true
+                fi
+            fi
+        fi
+    done
+    
+    # Clean up any orphaned Node.js processes
+    print_step "Cleaning up orphaned Node.js processes..."
+    sudo pkill -f "node.*server.js" 2>/dev/null || true
+    sudo pkill -f "npm.*start" 2>/dev/null || true
+    
+    sleep 3
+    print_success "✅ Port cleanup completed"
+}
+
+# Create enhanced supervisor configuration with dependency management
+create_enhanced_supervisor() {
+    print_step "Creating enhanced supervisor configuration with dependency management..."
+    
+    # Create supervisor configuration with proper service dependencies and startup order
+    sudo tee /etc/supervisor/conf.d/cryptominer_enhanced.conf > /dev/null <<EOF
+[program:backend]
+command=npm start
+directory=$APP_DIR/backend-nodejs
+autostart=true
+autorestart=true
+stderr_logfile=/var/log/supervisor/backend.err.log
+stdout_logfile=/var/log/supervisor/backend.out.log
+environment=NODE_ENV=production,NODE_OPTIONS="--max-old-space-size=4096",MONGO_URL="mongodb://localhost:27017/cryptominer"
+user=root
+startsecs=20
+startretries=5
+redirect_stderr=false
+stdout_logfile_maxbytes=100MB
+stdout_logfile_backups=5
+priority=100
+stopwaitsecs=10
+
+[program:frontend]
+command=npm start
+directory=$APP_DIR/frontend
+autostart=true
+autorestart=true
+stderr_logfile=/var/log/supervisor/frontend.err.log
+stdout_logfile=/var/log/supervisor/frontend.out.log
+environment=PORT=3000,GENERATE_SOURCEMAP=false,ESLINT_NO_CACHE=true,NODE_OPTIONS="--max-old-space-size=2048"
+user=root
+startsecs=25
+startretries=5
+redirect_stderr=false
+stdout_logfile_maxbytes=100MB
+stdout_logfile_backups=5
+priority=200
+stopwaitsecs=10
+
+[group:mining_system]
+programs=backend,frontend
+priority=999
+EOF
+
+    print_success "✅ Enhanced supervisor configuration created with dependency management"
+    print_feature "⚡ Optimized startup order: MongoDB → Backend → Frontend"
+}
+
+# Robust service startup with comprehensive validation
+start_enhanced_services() {
+    print_step "Starting CryptoMiner Pro services with enhanced validation..."
+    
+    # First, ensure MongoDB is running
+    print_step "Verifying MongoDB is ready for connections..."
+    if ! pgrep mongod > /dev/null; then
+        print_warning "MongoDB not running, attempting to start..."
+        sudo mongod --dbpath /data/db --logpath /var/log/mongodb/mongod.log --fork || handle_error "Failed to start MongoDB"
+        sleep 5
+    fi
+    
+    # Clean up any port conflicts before starting services
+    cleanup_port_conflicts
+    
+    # Update supervisor configuration
+    print_step "Updating supervisor configuration..."
+    sudo supervisorctl reread || handle_error "Supervisor reread failed"
+    sudo supervisorctl update || handle_error "Supervisor update failed"
+    
+    # Give supervisor time to process configuration changes
+    sleep 3
+    
+    # Start services with proper dependency order
+    print_step "Starting backend service..."
+    sudo supervisorctl start mining_system:backend || {
+        print_warning "Backend start failed, checking for issues..."
+        tail -10 /var/log/supervisor/backend.err.log
+        handle_error "Backend service start failed"
+    }
+    
+    # Wait for backend to stabilize
+    print_step "Waiting for backend to stabilize..."
     sleep 10
     
-    if pgrep mongod > /dev/null; then
-        print_success "✅ MongoDB is running with performance optimizations"
+    # Verify backend is responding before starting frontend
+    BACKEND_READY=false
+    MAX_BACKEND_RETRIES=10
+    BACKEND_RETRY_COUNT=0
+    
+    while [ $BACKEND_RETRY_COUNT -lt $MAX_BACKEND_RETRIES ] && [ "$BACKEND_READY" = false ]; do
+        BACKEND_RETRY_COUNT=$((BACKEND_RETRY_COUNT + 1))
         
-        # Create mining database and optimize it
-        print_step "Setting up mining database..."
-        mongosh --eval "
-        db = db.getSiblingDB('cryptominer');
-        db.createCollection('mining_stats', {capped: true, size: 100000000, max: 10000});
-        db.createCollection('ai_predictions', {capped: true, size: 50000000, max: 5000});
-        db.createCollection('system_metrics', {capped: true, size: 50000000, max: 5000});
-        print('Mining database optimized for performance');
-        " 2>/dev/null || print_warning "Database optimization failed - continuing anyway"
-        
-    else
-        print_error "❌ MongoDB failed to start"
-        exit 1
+        if curl -s -f http://localhost:8001/api/health >/dev/null 2>&1; then
+            BACKEND_READY=true
+            print_success "✅ Backend API is responding"
+        else
+            print_status "Waiting for backend API (attempt $BACKEND_RETRY_COUNT/$MAX_BACKEND_RETRIES)..."
+            sleep 3
+        fi
+    done
+    
+    if [ "$BACKEND_READY" = false ]; then
+        print_error "❌ Backend failed to respond after $MAX_BACKEND_RETRIES attempts"
+        print_tip "Checking backend logs..."
+        tail -20 /var/log/supervisor/backend.err.log
+        handle_error "Backend API validation failed"
     fi
+    
+    # Start frontend service
+    print_step "Starting frontend service..."
+    sudo supervisorctl start mining_system:frontend || {
+        print_warning "Frontend start failed, checking for issues..."
+        tail -10 /var/log/supervisor/frontend.err.log
+        handle_error "Frontend service start failed"
+    }
+    
+    # Final service status check
+    print_step "Performing final service validation..."
+    sleep 15
+    
+    # Check final service status
+    BACKEND_STATUS=$(sudo supervisorctl status mining_system:backend | grep -o "RUNNING" || echo "FAILED")
+    FRONTEND_STATUS=$(sudo supervisorctl status mining_system:frontend | grep -o "RUNNING" || echo "FAILED")
+    
+    if [[ $BACKEND_STATUS == "RUNNING" ]]; then
+        print_success "✅ Backend service is running stably"
+    else
+        print_error "❌ Backend service failed to stabilize"
+        sudo supervisorctl status mining_system:backend
+        handle_error "Backend service stabilization failed"
+    fi
+    
+    if [[ $FRONTEND_STATUS == "RUNNING" ]]; then
+        print_success "✅ Frontend service is running stably"
+    else
+        print_error "❌ Frontend service failed to stabilize"
+        sudo supervisorctl status mining_system:frontend
+        handle_error "Frontend service stabilization failed"
+    fi
+    
+    print_success "✅ All services started successfully with enhanced validation"
 }
 
 # Install enhanced application dependencies
