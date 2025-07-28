@@ -411,11 +411,12 @@ class SystemMonitor {
       
       return {
         cores: {
-          physical: cpuCount,
-          logical: cpuCount,
+          physical: actualCores,
+          logical: actualCores,
           hyperthreading: false,
           allocated: cpuCount,
-          available: cpuCount
+          available: actualCores,
+          override_active: !!forceOverride
         },
         environment: {
           container: isContainer,
@@ -434,18 +435,19 @@ class SystemMonitor {
         },
         cache: { l1d: 0, l1i: 0, l2: 0, l3: 0 },
         recommended_threads: {
-          conservative: Math.max(1, cpuCount - 2),
-          balanced: Math.max(1, cpuCount - 1),
-          aggressive: cpuCount
+          conservative: Math.max(1, actualCores - 2),
+          balanced: Math.max(1, actualCores - 1),
+          aggressive: actualCores
         },
         mining_profiles: {
-          light: { threads: Math.max(1, Math.floor(cpuCount / 3)), description: 'Light mining' },
-          standard: { threads: Math.max(1, cpuCount - 2), description: 'Standard mining' },
-          maximum: { threads: Math.max(1, cpuCount - 1), description: 'Maximum mining' },
-          absolute_max: { threads: cpuCount, description: 'Absolute maximum' }
+          light: { threads: Math.max(1, Math.floor(actualCores * 0.25)), description: `Light mining - ${Math.max(1, Math.floor(actualCores * 0.25))} threads` },
+          standard: { threads: Math.max(1, Math.floor(actualCores * 0.75)), description: `Standard mining - ${Math.max(1, Math.floor(actualCores * 0.75))} threads` },
+          maximum: { threads: Math.max(1, actualCores - 1), description: `Maximum mining - ${Math.max(1, actualCores - 1)} threads` },
+          absolute_max: { threads: actualCores, description: `Absolute maximum - ${actualCores} threads` }
         },
         recommendations: [
-          `🖥️ Detected ${cpuCount} CPU cores`,
+          `🖥️ Detected ${actualCores} CPU cores`,
+          forceOverride ? `🔧 Using CPU override: ${actualCores} cores (container shows ${cpuCount})` : '',
           `⚡ CPU Frequency: ${fallbackSpeed.toFixed(1)} GHz (estimated)`,
           isContainer ? '🐳 Running in container environment' : '💻 Running on native system',
           'Unable to get detailed CPU information',
