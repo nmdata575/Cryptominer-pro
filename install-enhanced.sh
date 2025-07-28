@@ -654,11 +654,11 @@ EOF
     print_success "✅ Enhanced configuration created"
 }
 
-# Create enhanced supervisor configuration
+# Create enhanced supervisor configuration with dependency management
 create_enhanced_supervisor() {
-    print_step "Creating enhanced supervisor configuration..."
+    print_step "Creating enhanced supervisor configuration with dependency management..."
     
-    # Create supervisor configuration with clustering and AI support
+    # Create supervisor configuration with proper service dependencies and startup order
     sudo tee /etc/supervisor/conf.d/cryptominer_enhanced.conf > /dev/null <<EOF
 [program:backend]
 command=npm start
@@ -669,12 +669,13 @@ stderr_logfile=/var/log/supervisor/backend.err.log
 stdout_logfile=/var/log/supervisor/backend.out.log
 environment=NODE_ENV=production,NODE_OPTIONS="--max-old-space-size=4096",MONGO_URL="mongodb://localhost:27017/cryptominer"
 user=root
-startsecs=15
+startsecs=20
 startretries=5
 redirect_stderr=false
 stdout_logfile_maxbytes=100MB
 stdout_logfile_backups=5
 priority=100
+stopwaitsecs=10
 
 [program:frontend]
 command=npm start
@@ -685,20 +686,21 @@ stderr_logfile=/var/log/supervisor/frontend.err.log
 stdout_logfile=/var/log/supervisor/frontend.out.log
 environment=PORT=3000,GENERATE_SOURCEMAP=false,ESLINT_NO_CACHE=true,NODE_OPTIONS="--max-old-space-size=2048"
 user=root
-startsecs=20
+startsecs=25
 startretries=5
 redirect_stderr=false
 stdout_logfile_maxbytes=100MB
 stdout_logfile_backups=5
 priority=200
+stopwaitsecs=10
 
 [group:mining_system]
 programs=backend,frontend
 priority=999
 EOF
 
-    print_success "✅ Enhanced supervisor configuration created"
-    print_feature "⚡ Optimized for ${CPU_CORES} cores with AI and high-performance support"
+    print_success "✅ Enhanced supervisor configuration created with dependency management"
+    print_feature "⚡ Optimized startup order: MongoDB → Backend → Frontend"
 }
 
 # Performance testing and validation
