@@ -127,11 +127,11 @@ const CoinSelector = ({ coinPresets, selectedCoin, onCoinChange }) => {
         <div className="mb-6">
           <h4 className="text-md font-medium text-gray-300 mb-3">Custom Coins ({customCoins.length})</h4>
           <div className="space-y-3">
-            {customCoins.map((coin) => (
+            {customCoins.map((coin, index) => (
               <div
-                key={coin.id}
-                className={`coin-option ${selectedCoin === coin.id ? 'selected' : ''}`}
-                onClick={() => handleCoinChange(coin.id)}
+                key={coin.symbol || index}
+                className={`coin-option ${selectedCoin && selectedCoin.symbol === coin.symbol ? 'selected' : ''}`}
+                onClick={() => handleCoinChange(coin)}
               >
                 <div className="coin-icon bg-gradient-to-br from-purple-500 to-pink-500">
                   {coin.symbol}
@@ -159,10 +159,10 @@ const CoinSelector = ({ coinPresets, selectedCoin, onCoinChange }) => {
       )}
 
       {/* Coin Details */}
-      {selectedCoin && coinPresets[selectedCoin] && (
+      {selectedCoin && (
         <div className="mt-6 p-4 bg-crypto-accent/20 rounded-lg">
           <h4 className="font-semibold text-white mb-3">
-            {coinPresets[selectedCoin].name} Details
+            {selectedCoin.name} Details
           </h4>
           
           <div className="space-y-2 text-sm">
