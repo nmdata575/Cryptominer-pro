@@ -8,26 +8,28 @@ const CoinSelector = ({ coinPresets, selectedCoin, onCoinChange }) => {
   // Load selected coin from localStorage on component mount
   useEffect(() => {
     const savedCoin = localStorage.getItem('cryptominer_selected_coin');
-    if (savedCoin && coinPresets && coinPresets[savedCoin]) {
-      console.log('Loading saved coin:', savedCoin);
-      onCoinChange(savedCoin);
+    if (savedCoin && coinPresets && Array.isArray(coinPresets)) {
+      // Find the saved coin in the array
+      const foundCoin = coinPresets.find(coin => coin.symbol === savedCoin || coin.name === savedCoin);
+      if (foundCoin) {
+        console.log('Loading saved coin:', foundCoin);
+        onCoinChange(foundCoin);
+      }
     }
   }, [coinPresets, onCoinChange]);
 
   // Save selected coin to localStorage whenever it changes
   useEffect(() => {
     if (selectedCoin) {
-      console.log('Saving selected coin:', selectedCoin);
-      localStorage.setItem('cryptominer_selected_coin', selectedCoin);
+      console.log('Saving selected coin:', selectedCoin.symbol || selectedCoin.name);
+      localStorage.setItem('cryptominer_selected_coin', selectedCoin.symbol || selectedCoin.name);
     }
   }, [selectedCoin]);
 
-  // Extract custom coins from coinPresets
+  // Extract custom coins from coinPresets array
   useEffect(() => {
-    if (coinPresets) {
-      const customs = Object.entries(coinPresets)
-        .filter(([_, coin]) => coin.is_custom)
-        .map(([id, coin]) => ({ id, ...coin }));
+    if (coinPresets && Array.isArray(coinPresets)) {
+      const customs = coinPresets.filter(coin => coin.is_custom);
       setCustomCoins(customs);
     }
   }, [coinPresets]);
