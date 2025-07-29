@@ -243,17 +243,24 @@ class BackendTester:
         try:
             # Test storing new AI prediction
             test_prediction = {
-                "type": "hashrate",
-                "algorithm": "linear_regression",
+                "predictionType": "hashrate",
+                "modelInfo": {
+                    "algorithm": "linear_regression",
+                    "version": "1.0",
+                    "trainingDataSize": 100
+                },
                 "prediction": {
                     "value": 1500.0,
                     "confidence": 0.85,
-                    "timeframe": "1h"
+                    "timeframe": "1hour"
                 },
                 "inputData": {
-                    "historical_hashrate": [1200, 1300, 1400],
-                    "cpu_usage": 80,
-                    "memory_usage": 60
+                    "currentHashrate": 1400.0,
+                    "threads": 4,
+                    "intensity": 0.8,
+                    "cpuUsage": 80,
+                    "memoryUsage": 60,
+                    "coin": "litecoin"
                 },
                 "expiresAt": "2024-12-31T23:59:59.000Z"
             }
