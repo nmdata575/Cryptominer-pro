@@ -46,6 +46,12 @@ class MiningEngine extends EventEmitter {
     this.difficulty = 1;
     this.subscriptionId = null;
     
+    // Enhanced session tracking for MongoDB integration
+    this.sessionId = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    this.miningSession = null;
+    this.lastStatsUpdate = Date.now();
+    this.statsUpdateInterval = null;
+    
     this.stats = {
       hashrate: 0.0,
       accepted_shares: 0,
