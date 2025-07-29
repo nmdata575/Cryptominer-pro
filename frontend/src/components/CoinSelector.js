@@ -63,7 +63,7 @@ const CoinSelector = ({ coinPresets, selectedCoin, onCoinChange }) => {
     return colors[symbol] || 'from-crypto-gold to-yellow-600';
   };
 
-  if (!coinPresets || Object.keys(coinPresets).length === 0) {
+  if (!coinPresets || !Array.isArray(coinPresets) || coinPresets.length === 0) {
     return (
       <div className="mining-card">
         <h3 className="text-xl font-bold text-white mb-4">Select Cryptocurrency</h3>
@@ -91,13 +91,13 @@ const CoinSelector = ({ coinPresets, selectedCoin, onCoinChange }) => {
       <div className="mb-6">
         <h4 className="text-md font-medium text-gray-300 mb-3">Built-in Coins</h4>
         <div className="space-y-3">
-          {Object.entries(coinPresets)
-            .filter(([_, coin]) => !coin.is_custom)
-            .map(([key, coin]) => (
+          {coinPresets
+            .filter(coin => !coin.is_custom)
+            .map((coin, index) => (
               <div
-                key={key}
-                className={`coin-option ${selectedCoin === key ? 'selected' : ''}`}
-                onClick={() => handleCoinChange(key)}
+                key={coin.symbol || index}
+                className={`coin-option ${selectedCoin && selectedCoin.symbol === coin.symbol ? 'selected' : ''}`}
+                onClick={() => handleCoinChange(coin)}
               >
                 <div className={`coin-icon bg-gradient-to-br ${getCoinColor(coin.symbol)}`}>
                   {getCoinIcon(coin.symbol)}
