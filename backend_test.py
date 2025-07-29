@@ -50,7 +50,869 @@ class BackendTester:
         print()
 
     # ============================================================================
-    # CORE API ENDPOINTS TESTING
+    # ENHANCED MONGOOSE MODEL INTEGRATION TESTING
+    # ============================================================================
+
+    def test_mining_stats_get_api(self):
+        """Test 1: Enhanced Mining Statistics API - GET /api/mining/stats"""
+        try:
+            # Test basic stats retrieval
+            response = self.session.get(f"{API_BASE}/mining/stats", timeout=10)
+            
+            if response.status_code == 200:
+                data = response.json()
+                if 'success' in data and 'data' in data:
+                    stats_count = data.get('count', 0)
+                    stats_data = data.get('data', [])
+                    
+                    self.log_test(
+                        "Enhanced Mining Statistics API - GET",
+                        True,
+                        f"Mining stats retrieved successfully. Count: {stats_count}, Data entries: {len(stats_data)}",
+                        {"count": stats_count, "data_length": len(stats_data)}
+                    )
+                    return True
+                else:
+                    self.log_test(
+                        "Enhanced Mining Statistics API - GET",
+                        False,
+                        "Invalid response format - missing success or data fields",
+                        data
+                    )
+                    return False
+            else:
+                self.log_test(
+                    "Enhanced Mining Statistics API - GET",
+                    False,
+                    f"Mining stats endpoint returned status {response.status_code}",
+                    response.text
+                )
+                return False
+        except Exception as e:
+            self.log_test(
+                "Enhanced Mining Statistics API - GET",
+                False,
+                f"Mining stats GET request failed: {str(e)}"
+            )
+            return False
+
+    def test_mining_stats_post_api(self):
+        """Test 2: Enhanced Mining Statistics API - POST /api/mining/stats"""
+        try:
+            # Test saving new mining statistics
+            test_stats = {
+                "sessionId": f"test_session_{int(time.time())}",
+                "coin": "litecoin",
+                "hashrate": 1250.5,
+                "acceptedShares": 15,
+                "rejectedShares": 2,
+                "blocksFound": 0,
+                "cpuUsage": 75.2,
+                "memoryUsage": 45.8,
+                "threads": 4,
+                "intensity": 0.8,
+                "startTime": "2024-01-01T10:00:00.000Z"
+            }
+            
+            response = self.session.post(f"{API_BASE}/mining/stats", json=test_stats, timeout=10)
+            
+            if response.status_code == 200:
+                data = response.json()
+                if data.get('success') and 'data' in data:
+                    saved_data = data.get('data', {})
+                    efficiency = data.get('efficiency', 0)
+                    
+                    self.log_test(
+                        "Enhanced Mining Statistics API - POST",
+                        True,
+                        f"Mining stats saved successfully. Session ID: {saved_data.get('sessionId')}, Efficiency: {efficiency}%",
+                        {"session_id": saved_data.get('sessionId'), "efficiency": efficiency}
+                    )
+                    return True
+                else:
+                    self.log_test(
+                        "Enhanced Mining Statistics API - POST",
+                        False,
+                        "Failed to save mining stats - invalid response format",
+                        data
+                    )
+                    return False
+            else:
+                self.log_test(
+                    "Enhanced Mining Statistics API - POST",
+                    False,
+                    f"Mining stats POST endpoint returned status {response.status_code}",
+                    response.text
+                )
+                return False
+        except Exception as e:
+            self.log_test(
+                "Enhanced Mining Statistics API - POST",
+                False,
+                f"Mining stats POST request failed: {str(e)}"
+            )
+            return False
+
+    def test_mining_stats_top_api(self):
+        """Test 3: Enhanced Mining Statistics API - GET /api/mining/stats/top"""
+        try:
+            # Test getting top performing sessions
+            response = self.session.get(f"{API_BASE}/mining/stats/top?limit=5", timeout=10)
+            
+            if response.status_code == 200:
+                data = response.json()
+                if data.get('success') and 'data' in data:
+                    top_sessions = data.get('data', [])
+                    
+                    self.log_test(
+                        "Enhanced Mining Statistics API - Top Sessions",
+                        True,
+                        f"Top performing sessions retrieved. Found {len(top_sessions)} sessions",
+                        {"sessions_count": len(top_sessions)}
+                    )
+                    return True
+                else:
+                    self.log_test(
+                        "Enhanced Mining Statistics API - Top Sessions",
+                        False,
+                        "Invalid response format for top sessions",
+                        data
+                    )
+                    return False
+            else:
+                self.log_test(
+                    "Enhanced Mining Statistics API - Top Sessions",
+                    False,
+                    f"Top sessions endpoint returned status {response.status_code}",
+                    response.text
+                )
+                return False
+        except Exception as e:
+            self.log_test(
+                "Enhanced Mining Statistics API - Top Sessions",
+                False,
+                f"Top sessions request failed: {str(e)}"
+            )
+            return False
+
+    def test_ai_predictions_get_api(self):
+        """Test 4: AI Predictions API - GET /api/ai/predictions"""
+        try:
+            # Test fetching AI predictions
+            response = self.session.get(f"{API_BASE}/ai/predictions?limit=10", timeout=10)
+            
+            if response.status_code == 200:
+                data = response.json()
+                if data.get('success') and 'data' in data:
+                    predictions = data.get('data', [])
+                    count = data.get('count', 0)
+                    
+                    self.log_test(
+                        "AI Predictions API - GET",
+                        True,
+                        f"AI predictions retrieved successfully. Count: {count}, Predictions: {len(predictions)}",
+                        {"count": count, "predictions_length": len(predictions)}
+                    )
+                    return True
+                else:
+                    self.log_test(
+                        "AI Predictions API - GET",
+                        False,
+                        "Invalid response format for AI predictions",
+                        data
+                    )
+                    return False
+            else:
+                self.log_test(
+                    "AI Predictions API - GET",
+                    False,
+                    f"AI predictions endpoint returned status {response.status_code}",
+                    response.text
+                )
+                return False
+        except Exception as e:
+            self.log_test(
+                "AI Predictions API - GET",
+                False,
+                f"AI predictions GET request failed: {str(e)}"
+            )
+            return False
+
+    def test_ai_predictions_post_api(self):
+        """Test 5: AI Predictions API - POST /api/ai/predictions"""
+        try:
+            # Test storing new AI prediction
+            test_prediction = {
+                "type": "hashrate",
+                "algorithm": "linear_regression",
+                "prediction": {
+                    "value": 1500.0,
+                    "confidence": 0.85,
+                    "timeframe": "1h"
+                },
+                "inputData": {
+                    "historical_hashrate": [1200, 1300, 1400],
+                    "cpu_usage": 80,
+                    "memory_usage": 60
+                },
+                "expiresAt": "2024-12-31T23:59:59.000Z"
+            }
+            
+            response = self.session.post(f"{API_BASE}/ai/predictions", json=test_prediction, timeout=10)
+            
+            if response.status_code == 200:
+                data = response.json()
+                if data.get('success') and 'data' in data:
+                    saved_prediction = data.get('data', {})
+                    confidence_percentage = data.get('confidencePercentage', 0)
+                    
+                    self.log_test(
+                        "AI Predictions API - POST",
+                        True,
+                        f"AI prediction saved successfully. ID: {saved_prediction.get('_id')}, Confidence: {confidence_percentage}%",
+                        {"prediction_id": saved_prediction.get('_id'), "confidence": confidence_percentage}
+                    )
+                    return saved_prediction.get('_id')  # Return ID for validation test
+                else:
+                    self.log_test(
+                        "AI Predictions API - POST",
+                        False,
+                        "Failed to save AI prediction - invalid response format",
+                        data
+                    )
+                    return False
+            else:
+                self.log_test(
+                    "AI Predictions API - POST",
+                    False,
+                    f"AI predictions POST endpoint returned status {response.status_code}",
+                    response.text
+                )
+                return False
+        except Exception as e:
+            self.log_test(
+                "AI Predictions API - POST",
+                False,
+                f"AI predictions POST request failed: {str(e)}"
+            )
+            return False
+
+    def test_ai_predictions_validate_api(self):
+        """Test 6: AI Predictions API - POST /api/ai/predictions/:id/validate"""
+        try:
+            # First create a prediction to validate
+            prediction_id = self.test_ai_predictions_post_api()
+            
+            if not prediction_id:
+                self.log_test(
+                    "AI Predictions API - Validate",
+                    False,
+                    "Cannot test validation - failed to create prediction"
+                )
+                return False
+            
+            # Test validating prediction accuracy
+            validation_data = {
+                "actualValue": 1450.0  # Close to predicted 1500.0
+            }
+            
+            response = self.session.post(f"{API_BASE}/ai/predictions/{prediction_id}/validate", 
+                                       json=validation_data, timeout=10)
+            
+            if response.status_code == 200:
+                data = response.json()
+                if data.get('success') and 'accuracy' in data:
+                    accuracy = data.get('accuracy', 0)
+                    
+                    self.log_test(
+                        "AI Predictions API - Validate",
+                        True,
+                        f"AI prediction validated successfully. Accuracy: {accuracy}%",
+                        {"accuracy": accuracy, "prediction_id": prediction_id}
+                    )
+                    return True
+                else:
+                    self.log_test(
+                        "AI Predictions API - Validate",
+                        False,
+                        "Invalid response format for prediction validation",
+                        data
+                    )
+                    return False
+            elif response.status_code == 404:
+                self.log_test(
+                    "AI Predictions API - Validate",
+                    False,
+                    "Prediction not found for validation",
+                    response.text
+                )
+                return False
+            else:
+                self.log_test(
+                    "AI Predictions API - Validate",
+                    False,
+                    f"Prediction validation endpoint returned status {response.status_code}",
+                    response.text
+                )
+                return False
+        except Exception as e:
+            self.log_test(
+                "AI Predictions API - Validate",
+                False,
+                f"AI prediction validation request failed: {str(e)}"
+            )
+            return False
+
+    def test_ai_model_accuracy_api(self):
+        """Test 7: AI Model Accuracy API - GET /api/ai/model-accuracy"""
+        try:
+            # Test getting model accuracy statistics
+            response = self.session.get(f"{API_BASE}/ai/model-accuracy?algorithm=linear_regression&type=hashrate", 
+                                      timeout=10)
+            
+            if response.status_code == 200:
+                data = response.json()
+                if data.get('success') and 'accuracy' in data:
+                    accuracy_data = data.get('accuracy', {})
+                    avg_accuracy = accuracy_data.get('avgAccuracy', 0)
+                    count = accuracy_data.get('count', 0)
+                    
+                    self.log_test(
+                        "AI Model Accuracy API",
+                        True,
+                        f"Model accuracy retrieved. Algorithm: {data.get('algorithm')}, Avg Accuracy: {avg_accuracy}%, Count: {count}",
+                        {"algorithm": data.get('algorithm'), "avg_accuracy": avg_accuracy, "count": count}
+                    )
+                    return True
+                else:
+                    self.log_test(
+                        "AI Model Accuracy API",
+                        False,
+                        "Invalid response format for model accuracy",
+                        data
+                    )
+                    return False
+            else:
+                self.log_test(
+                    "AI Model Accuracy API",
+                    False,
+                    f"Model accuracy endpoint returned status {response.status_code}",
+                    response.text
+                )
+                return False
+        except Exception as e:
+            self.log_test(
+                "AI Model Accuracy API",
+                False,
+                f"Model accuracy request failed: {str(e)}"
+            )
+            return False
+
+    def test_system_config_user_preferences_get(self):
+        """Test 8: System Configuration API - GET /api/config/user_preferences"""
+        try:
+            # Test getting user preferences
+            response = self.session.get(f"{API_BASE}/config/user/preferences", timeout=10)
+            
+            if response.status_code == 200:
+                data = response.json()
+                if data.get('success') and 'data' in data:
+                    preferences = data.get('data', {})
+                    config = preferences.get('config', {})
+                    
+                    self.log_test(
+                        "System Configuration API - User Preferences GET",
+                        True,
+                        f"User preferences retrieved. Theme: {config.get('theme')}, Refresh Interval: {config.get('refreshInterval')}ms",
+                        {"theme": config.get('theme'), "refresh_interval": config.get('refreshInterval')}
+                    )
+                    return True
+                else:
+                    self.log_test(
+                        "System Configuration API - User Preferences GET",
+                        False,
+                        "Invalid response format for user preferences",
+                        data
+                    )
+                    return False
+            else:
+                self.log_test(
+                    "System Configuration API - User Preferences GET",
+                    False,
+                    f"User preferences endpoint returned status {response.status_code}",
+                    response.text
+                )
+                return False
+        except Exception as e:
+            self.log_test(
+                "System Configuration API - User Preferences GET",
+                False,
+                f"User preferences GET request failed: {str(e)}"
+            )
+            return False
+
+    def test_system_config_user_preferences_post(self):
+        """Test 9: System Configuration API - POST /api/config/user_preferences"""
+        try:
+            # Test setting user preferences
+            test_preferences = {
+                "config": {
+                    "theme": "dark",
+                    "refreshInterval": 3000,
+                    "showAdvancedOptions": True,
+                    "notifications": {
+                        "enabled": True,
+                        "sound": False
+                    },
+                    "dataRetentionDays": 60
+                }
+            }
+            
+            response = self.session.post(f"{API_BASE}/config/user_preferences", 
+                                       json=test_preferences, timeout=10)
+            
+            if response.status_code == 200:
+                data = response.json()
+                if data.get('success') and 'data' in data:
+                    saved_config = data.get('data', {})
+                    
+                    self.log_test(
+                        "System Configuration API - User Preferences POST",
+                        True,
+                        f"User preferences saved successfully. Config Type: {saved_config.get('configType')}",
+                        {"config_type": saved_config.get('configType')}
+                    )
+                    return True
+                else:
+                    self.log_test(
+                        "System Configuration API - User Preferences POST",
+                        False,
+                        "Failed to save user preferences - invalid response format",
+                        data
+                    )
+                    return False
+            else:
+                self.log_test(
+                    "System Configuration API - User Preferences POST",
+                    False,
+                    f"User preferences POST endpoint returned status {response.status_code}",
+                    response.text
+                )
+                return False
+        except Exception as e:
+            self.log_test(
+                "System Configuration API - User Preferences POST",
+                False,
+                f"User preferences POST request failed: {str(e)}"
+            )
+            return False
+
+    def test_system_config_mining_defaults_get(self):
+        """Test 10: System Configuration API - GET /api/config/mining_defaults"""
+        try:
+            # Test getting mining defaults
+            response = self.session.get(f"{API_BASE}/config/mining/defaults", timeout=10)
+            
+            if response.status_code == 200:
+                data = response.json()
+                if data.get('success') and 'data' in data:
+                    defaults = data.get('data', {})
+                    config = defaults.get('config', {})
+                    
+                    self.log_test(
+                        "System Configuration API - Mining Defaults GET",
+                        True,
+                        f"Mining defaults retrieved. Default Coin: {config.get('defaultCoin')}, Threads: {config.get('defaultThreads')}",
+                        {"default_coin": config.get('defaultCoin'), "default_threads": config.get('defaultThreads')}
+                    )
+                    return True
+                else:
+                    self.log_test(
+                        "System Configuration API - Mining Defaults GET",
+                        False,
+                        "Invalid response format for mining defaults",
+                        data
+                    )
+                    return False
+            else:
+                self.log_test(
+                    "System Configuration API - Mining Defaults GET",
+                    False,
+                    f"Mining defaults endpoint returned status {response.status_code}",
+                    response.text
+                )
+                return False
+        except Exception as e:
+            self.log_test(
+                "System Configuration API - Mining Defaults GET",
+                False,
+                f"Mining defaults GET request failed: {str(e)}"
+            )
+            return False
+
+    def test_system_config_mining_defaults_post(self):
+        """Test 11: System Configuration API - POST /api/config/mining_defaults"""
+        try:
+            # Test setting mining defaults
+            test_defaults = {
+                "config": {
+                    "defaultCoin": "dogecoin",
+                    "defaultThreads": 6,
+                    "defaultIntensity": 0.9,
+                    "defaultMode": "solo",
+                    "maxCpuUsage": 95,
+                    "maxMemoryUsage": 80,
+                    "autoOptimize": True
+                }
+            }
+            
+            response = self.session.post(f"{API_BASE}/config/mining_defaults", 
+                                       json=test_defaults, timeout=10)
+            
+            if response.status_code == 200:
+                data = response.json()
+                if data.get('success') and 'data' in data:
+                    saved_config = data.get('data', {})
+                    
+                    self.log_test(
+                        "System Configuration API - Mining Defaults POST",
+                        True,
+                        f"Mining defaults saved successfully. Config Type: {saved_config.get('configType')}",
+                        {"config_type": saved_config.get('configType')}
+                    )
+                    return True
+                else:
+                    self.log_test(
+                        "System Configuration API - Mining Defaults POST",
+                        False,
+                        "Failed to save mining defaults - invalid response format",
+                        data
+                    )
+                    return False
+            else:
+                self.log_test(
+                    "System Configuration API - Mining Defaults POST",
+                    False,
+                    f"Mining defaults POST endpoint returned status {response.status_code}",
+                    response.text
+                )
+                return False
+        except Exception as e:
+            self.log_test(
+                "System Configuration API - Mining Defaults POST",
+                False,
+                f"Mining defaults POST request failed: {str(e)}"
+            )
+            return False
+
+    def test_mining_session_start_api(self):
+        """Test 12: Mining Session Management - POST /api/mining/session/start"""
+        try:
+            # Test starting a mining session with tracking
+            session_data = {
+                "coin": "litecoin",
+                "mode": "pool",
+                "threads": 4,
+                "intensity": 0.7,
+                "poolUsername": "testminer",
+                "poolPassword": "x",
+                "hashrate": 0,
+                "acceptedShares": 0,
+                "rejectedShares": 0,
+                "cpuUsage": 0,
+                "memoryUsage": 0
+            }
+            
+            response = self.session.post(f"{API_BASE}/mining/session/start", 
+                                       json=session_data, timeout=10)
+            
+            if response.status_code == 200:
+                data = response.json()
+                if data.get('success') and 'sessionId' in data:
+                    session_id = data.get('sessionId')
+                    session_data = data.get('data', {})
+                    
+                    self.log_test(
+                        "Mining Session Management - Start Session",
+                        True,
+                        f"Mining session started successfully. Session ID: {session_id}",
+                        {"session_id": session_id, "coin": session_data.get('coin')}
+                    )
+                    return session_id  # Return session ID for update/end tests
+                else:
+                    self.log_test(
+                        "Mining Session Management - Start Session",
+                        False,
+                        "Failed to start mining session - invalid response format",
+                        data
+                    )
+                    return False
+            else:
+                self.log_test(
+                    "Mining Session Management - Start Session",
+                    False,
+                    f"Mining session start endpoint returned status {response.status_code}",
+                    response.text
+                )
+                return False
+        except Exception as e:
+            self.log_test(
+                "Mining Session Management - Start Session",
+                False,
+                f"Mining session start request failed: {str(e)}"
+            )
+            return False
+
+    def test_mining_session_update_api(self):
+        """Test 13: Mining Session Management - PUT /api/mining/session/:sessionId/update"""
+        try:
+            # First start a session to update
+            session_id = self.test_mining_session_start_api()
+            
+            if not session_id:
+                self.log_test(
+                    "Mining Session Management - Update Session",
+                    False,
+                    "Cannot test session update - failed to start session"
+                )
+                return False
+            
+            # Test updating session stats
+            update_data = {
+                "hashrate": 1800.5,
+                "acceptedShares": 25,
+                "rejectedShares": 3,
+                "cpuUsage": 82.5,
+                "memoryUsage": 55.2,
+                "blocksFound": 1
+            }
+            
+            response = self.session.put(f"{API_BASE}/mining/session/{session_id}/update", 
+                                      json=update_data, timeout=10)
+            
+            if response.status_code == 200:
+                data = response.json()
+                if data.get('success') and 'data' in data:
+                    updated_session = data.get('data', {})
+                    efficiency = data.get('efficiency', 0)
+                    
+                    self.log_test(
+                        "Mining Session Management - Update Session",
+                        True,
+                        f"Mining session updated successfully. Hashrate: {updated_session.get('hashrate')} H/s, Efficiency: {efficiency}%",
+                        {"hashrate": updated_session.get('hashrate'), "efficiency": efficiency}
+                    )
+                    return session_id  # Return for end test
+                else:
+                    self.log_test(
+                        "Mining Session Management - Update Session",
+                        False,
+                        "Failed to update mining session - invalid response format",
+                        data
+                    )
+                    return False
+            elif response.status_code == 404:
+                self.log_test(
+                    "Mining Session Management - Update Session",
+                    False,
+                    "Mining session not found for update",
+                    response.text
+                )
+                return False
+            else:
+                self.log_test(
+                    "Mining Session Management - Update Session",
+                    False,
+                    f"Mining session update endpoint returned status {response.status_code}",
+                    response.text
+                )
+                return False
+        except Exception as e:
+            self.log_test(
+                "Mining Session Management - Update Session",
+                False,
+                f"Mining session update request failed: {str(e)}"
+            )
+            return False
+
+    def test_mining_session_end_api(self):
+        """Test 14: Mining Session Management - POST /api/mining/session/:sessionId/end"""
+        try:
+            # First start and update a session to end
+            session_id = self.test_mining_session_update_api()
+            
+            if not session_id:
+                self.log_test(
+                    "Mining Session Management - End Session",
+                    False,
+                    "Cannot test session end - failed to start/update session"
+                )
+                return False
+            
+            # Test ending mining session
+            final_stats = {
+                "hashrate": 1950.0,
+                "acceptedShares": 35,
+                "rejectedShares": 4,
+                "cpuUsage": 85.0,
+                "memoryUsage": 58.5,
+                "blocksFound": 2
+            }
+            
+            response = self.session.post(f"{API_BASE}/mining/session/{session_id}/end", 
+                                       json={"finalStats": final_stats}, timeout=10)
+            
+            if response.status_code == 200:
+                data = response.json()
+                if data.get('success') and 'duration' in data:
+                    duration = data.get('duration', 0)
+                    efficiency = data.get('efficiency', 0)
+                    
+                    self.log_test(
+                        "Mining Session Management - End Session",
+                        True,
+                        f"Mining session ended successfully. Duration: {duration}ms, Final Efficiency: {efficiency}%",
+                        {"duration": duration, "efficiency": efficiency}
+                    )
+                    return True
+                else:
+                    self.log_test(
+                        "Mining Session Management - End Session",
+                        False,
+                        "Failed to end mining session - invalid response format",
+                        data
+                    )
+                    return False
+            elif response.status_code == 404:
+                self.log_test(
+                    "Mining Session Management - End Session",
+                    False,
+                    "Mining session not found for ending",
+                    response.text
+                )
+                return False
+            else:
+                self.log_test(
+                    "Mining Session Management - End Session",
+                    False,
+                    f"Mining session end endpoint returned status {response.status_code}",
+                    response.text
+                )
+                return False
+        except Exception as e:
+            self.log_test(
+                "Mining Session Management - End Session",
+                False,
+                f"Mining session end request failed: {str(e)}"
+            )
+            return False
+
+    def test_database_maintenance_stats_api(self):
+        """Test 15: Database Maintenance API - GET /api/maintenance/stats"""
+        try:
+            # Test getting database statistics
+            response = self.session.get(f"{API_BASE}/maintenance/stats", timeout=10)
+            
+            if response.status_code == 200:
+                data = response.json()
+                if data.get('success') and 'collections' in data:
+                    collections = data.get('collections', {})
+                    total_docs = data.get('totalDocuments', 0)
+                    
+                    mining_stats_count = collections.get('miningStats', 0)
+                    ai_predictions_count = collections.get('aiPredictions', 0)
+                    custom_coins_count = collections.get('customCoins', 0)
+                    system_configs_count = collections.get('systemConfigs', 0)
+                    
+                    self.log_test(
+                        "Database Maintenance API - Statistics",
+                        True,
+                        f"Database stats retrieved. Total docs: {total_docs}, Mining stats: {mining_stats_count}, AI predictions: {ai_predictions_count}, Custom coins: {custom_coins_count}, System configs: {system_configs_count}",
+                        {
+                            "total_documents": total_docs,
+                            "mining_stats": mining_stats_count,
+                            "ai_predictions": ai_predictions_count,
+                            "custom_coins": custom_coins_count,
+                            "system_configs": system_configs_count
+                        }
+                    )
+                    return True
+                else:
+                    self.log_test(
+                        "Database Maintenance API - Statistics",
+                        False,
+                        "Invalid response format for database statistics",
+                        data
+                    )
+                    return False
+            else:
+                self.log_test(
+                    "Database Maintenance API - Statistics",
+                    False,
+                    f"Database stats endpoint returned status {response.status_code}",
+                    response.text
+                )
+                return False
+        except Exception as e:
+            self.log_test(
+                "Database Maintenance API - Statistics",
+                False,
+                f"Database stats request failed: {str(e)}"
+            )
+            return False
+
+    def test_database_maintenance_cleanup_api(self):
+        """Test 16: Database Maintenance API - POST /api/maintenance/cleanup"""
+        try:
+            # Test database cleanup operations
+            response = self.session.post(f"{API_BASE}/maintenance/cleanup", timeout=15)
+            
+            if response.status_code == 200:
+                data = response.json()
+                if data.get('success') and 'cleaned' in data:
+                    cleaned = data.get('cleaned', {})
+                    retention_policy = data.get('retentionPolicy', 'Unknown')
+                    
+                    expired_predictions = cleaned.get('expiredPredictions', 0)
+                    old_mining_stats = cleaned.get('oldMiningStats', 0)
+                    
+                    self.log_test(
+                        "Database Maintenance API - Cleanup",
+                        True,
+                        f"Database cleanup completed. Expired predictions: {expired_predictions}, Old mining stats: {old_mining_stats}, Retention policy: {retention_policy}",
+                        {
+                            "expired_predictions": expired_predictions,
+                            "old_mining_stats": old_mining_stats,
+                            "retention_policy": retention_policy
+                        }
+                    )
+                    return True
+                else:
+                    self.log_test(
+                        "Database Maintenance API - Cleanup",
+                        False,
+                        "Invalid response format for database cleanup",
+                        data
+                    )
+                    return False
+            else:
+                self.log_test(
+                    "Database Maintenance API - Cleanup",
+                    False,
+                    f"Database cleanup endpoint returned status {response.status_code}",
+                    response.text
+                )
+                return False
+        except Exception as e:
+            self.log_test(
+                "Database Maintenance API - Cleanup",
+                False,
+                f"Database cleanup request failed: {str(e)}"
+            )
+            return False
+
+    # ============================================================================
+    # CORE API ENDPOINTS TESTING (BASIC VERIFICATION)
     # ============================================================================
 
     def test_health_check_api(self):
