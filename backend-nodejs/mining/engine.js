@@ -971,7 +971,6 @@ class MiningEngine extends EventEmitter {
     }
   }
 }
-}
 
 /**
  * Real Mining Worker Class
