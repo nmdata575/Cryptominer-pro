@@ -103,6 +103,7 @@ class BackendTester:
             test_stats = {
                 "sessionId": f"test_session_{int(time.time())}",
                 "coin": "litecoin",
+                "mode": "pool",
                 "hashrate": 1250.5,
                 "acceptedShares": 15,
                 "rejectedShares": 2,
