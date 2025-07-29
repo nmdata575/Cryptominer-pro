@@ -39,27 +39,44 @@ ensure_mongodb() {
     
     print_warning "MongoDB not running, attempting to start..."
     
-    # Try systemd first
-    if command -v systemctl >/dev/null 2>&1; then
-        if sudo systemctl start mongod 2>/dev/null; then
-            print_status "✅ MongoDB started via systemd"
-            sleep 3
+    # Detect environment type
+    if [[ -f /.dockerenv ]] || [[ -n "${KUBERNETES_SERVICE_HOST}" ]]; then
+        # Container environment - use manual start
+        print_status "Starting MongoDB manually (container environment)..."
+        sudo mkdir -p /data/db /var/log/mongodb
+        sudo chown -R mongodb:mongodb /data/db /var/log/mongodb 2>/dev/null || sudo chown -R root:root /data/db /var/log/mongodb
+        
+        if sudo mongod --dbpath /data/db --logpath /var/log/mongodb/mongod.log --fork; then
+            print_status "✅ MongoDB started manually"
+            sleep 5
             return 0
+        else
+            print_error "❌ Failed to start MongoDB manually"
+            return 1
         fi
-    fi
-    
-    # Fallback to manual start
-    print_status "Starting MongoDB manually..."
-    sudo mkdir -p /data/db /var/log/mongodb
-    sudo chown -R mongodb:mongodb /data/db /var/log/mongodb 2>/dev/null || sudo chown -R root:root /data/db /var/log/mongodb
-    
-    if sudo mongod --dbpath /data/db --logpath /var/log/mongodb/mongod.log --fork; then
-        print_status "✅ MongoDB started manually"
-        sleep 5
-        return 0
     else
-        print_error "❌ Failed to start MongoDB"
-        return 1
+        # Native environment - try systemd first
+        if command -v systemctl >/dev/null 2>&1; then
+            if sudo systemctl start mongod 2>/dev/null; then
+                print_status "✅ MongoDB started via systemd"
+                sleep 3
+                return 0
+            fi
+        fi
+        
+        # Fallback to manual start
+        print_status "Starting MongoDB manually..."
+        sudo mkdir -p /data/db /var/log/mongodb
+        sudo chown -R mongodb:mongodb /data/db /var/log/mongodb 2>/dev/null || sudo chown -R root:root /data/db /var/log/mongodb
+        
+        if sudo mongod --dbpath /data/db --logpath /var/log/mongodb/mongod.log --fork; then
+            print_status "✅ MongoDB started manually"
+            sleep 5
+            return 0
+        else
+            print_error "❌ Failed to start MongoDB"
+            return 1
+        fi
     fi
 }
 
