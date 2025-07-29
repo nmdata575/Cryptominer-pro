@@ -20,6 +20,7 @@ const cryptoUtils = require('./utils/crypto');
 const miningEngine = require('./mining/engine');
 const systemMonitor = require('./utils/systemMonitor');
 const walletValidator = require('./utils/walletValidator');
+const aiPredictor = require('./ai/predictor');
 
 // Enhanced Mongoose Models
 const CustomCoin = require('./models/CustomCoin');
