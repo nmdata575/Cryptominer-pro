@@ -160,11 +160,11 @@ start_mongodb() {
                 
                 # Test connectivity
                 sleep 2
-                if mongosh --eval "db.runCommand('ping')" --quiet >/dev/null 2>&1; then
+                if timeout 5 mongosh --eval "db.runCommand('ping')" --quiet --host 127.0.0.1:27017 >/dev/null 2>&1; then
                     print_status "✅ MongoDB is accepting connections"
                     return 0
                 else
-                    print_warning "MongoDB started but not yet accepting connections"
+                    print_warning "MongoDB started but connection test failed (may still be initializing)"
                 fi
             fi
             
