@@ -84,6 +84,9 @@ class MiningEngine extends EventEmitter {
         return { success: false, message: validation.error };
       }
 
+      // Create mining session in database
+      await this.createMiningSession();
+
       // Initialize mining parameters
       this.startTime = Date.now();
       this.mining = true;
@@ -116,10 +119,13 @@ class MiningEngine extends EventEmitter {
       // Start monitoring
       this.startMonitoring();
 
+      // Start database stats updates
+      this.startDatabaseUpdates();
+
       console.log('✅ Real mining engine started successfully');
       this.emit('mining_started', this.config);
 
-      return { success: true, message: 'Real mining started successfully' };
+      return { success: true, message: 'Real mining started successfully', sessionId: this.sessionId };
     } catch (error) {
       console.error('❌ Mining start error:', error);
       this.mining = false;
