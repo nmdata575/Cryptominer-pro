@@ -250,10 +250,12 @@ status_mongodb() {
         fi
         
         # Test connectivity
-        if mongosh --eval "db.runCommand('ping')" --quiet >/dev/null 2>&1; then
+        if timeout 10 mongosh --eval "db.runCommand('ping')" --quiet --host 127.0.0.1:27017 >/dev/null 2>&1; then
             print_status "✅ MongoDB is accepting connections"
+        elif timeout 10 mongo --eval "db.runCommand('ping')" --quiet --host 127.0.0.1:27017 >/dev/null 2>&1; then
+            print_status "✅ MongoDB is accepting connections (legacy client)"
         else
-            print_warning "⚠️ MongoDB is running but not accepting connections"
+            print_warning "⚠️ MongoDB is running but connection tests failed (may still be working)"
         fi
         
         # Show configuration
