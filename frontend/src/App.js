@@ -401,9 +401,9 @@ function App() {
 
             {/* Coin Selection */}
             <CoinSelector
-              coins={coinPresets}
+              coinPresets={coinPresets}
               selectedCoin={selectedCoin}
-              onCoinSelect={handleCoinSelect}
+              onCoinChange={handleCoinSelect}
             />
 
             {/* Mining Performance */}
