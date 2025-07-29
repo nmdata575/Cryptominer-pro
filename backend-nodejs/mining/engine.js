@@ -146,6 +146,12 @@ class MiningEngine extends EventEmitter {
       
       this.mining = false;
 
+      // Stop database updates first
+      this.stopDatabaseUpdates();
+
+      // Finalize mining session in database
+      await this.finalizeMiningSession();
+
       // Stop all workers
       await this.stopWorkers();
 
