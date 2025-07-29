@@ -270,10 +270,17 @@ status_mongodb() {
             fi
         fi
         
-        # Test 3: Try basic telnet-style connection test
+        # Test 3: Basic port connectivity test
         if [ "$CONNECTION_SUCCESS" = false ]; then
-            if echo "quit" | nc -w 3 127.0.0.1 27017 >/dev/null 2>&1; then
-                print_status "✅ MongoDB port is responding (basic connection test)"
+            # Check if port is actually listening using multiple methods
+            if command -v lsof >/dev/null && sudo lsof -i :27017 >/dev/null 2>&1; then
+                print_status "✅ MongoDB port 27017 is listening (basic port test)"
+                CONNECTION_SUCCESS=true
+            elif netstat -tlnp 2>/dev/null | grep -q ":27017.*mongod"; then
+                print_status "✅ MongoDB port 27017 is listening (netstat)"
+                CONNECTION_SUCCESS=true
+            elif echo "quit" | nc -w 3 127.0.0.1 27017 >/dev/null 2>&1; then
+                print_status "✅ MongoDB port is responding (network test)"
                 CONNECTION_SUCCESS=true
             fi
         fi
