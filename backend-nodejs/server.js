@@ -376,6 +376,406 @@ app.get('/api/mining/ai-insights', async (req, res) => {
   }
 });
 
+// ==============================
+// Enhanced Mining Statistics API
+// ==============================
+
+// Get mining statistics
+app.get('/api/mining/stats', async (req, res) => {
+  try {
+    const { limit = 50, hours = 24, coin } = req.query;
+    const since = new Date(Date.now() - hours * 60 * 60 * 1000);
+    
+    const query = { createdAt: { $gte: since } };
+    if (coin) query.coin = coin;
+    
+    const stats = await MiningStats.find(query)
+      .sort({ createdAt: -1 })
+      .limit(parseInt(limit));
+    
+    res.json({
+      success: true,
+      count: stats.length,
+      data: stats
+    });
+  } catch (error) {
+    console.error('Mining stats error:', error);
+    res.status(500).json({ error: 'Failed to get mining statistics' });
+  }
+});
+
+// Save mining statistics
+app.post('/api/mining/stats', async (req, res) => {
+  try {
+    const statsData = new MiningStats(req.body);
+    const savedStats = await statsData.save();
+    
+    res.json({
+      success: true,
+      data: savedStats,
+      efficiency: savedStats.getEfficiency()
+    });
+  } catch (error) {
+    console.error('Save mining stats error:', error);
+    res.status(500).json({ error: 'Failed to save mining statistics' });
+  }
+});
+
+// Get top performing mining sessions
+app.get('/api/mining/stats/top', async (req, res) => {
+  try {
+    const { limit = 10 } = req.query;
+    const topSessions = await MiningStats.getTopPerformingSessions(parseInt(limit));
+    
+    res.json({
+      success: true,
+      data: topSessions
+    });
+  } catch (error) {
+    console.error('Top stats error:', error);
+    res.status(500).json({ error: 'Failed to get top performing sessions' });
+  }
+});
+
+// ==============================
+// Enhanced AI Predictions API
+// ==============================
+
+// Get AI predictions
+app.get('/api/ai/predictions', async (req, res) => {
+  try {
+    const { type, limit = 20 } = req.query;
+    const predictions = await AIPrediction.getActivePredictions(type)
+      .limit(parseInt(limit));
+    
+    res.json({
+      success: true,
+      count: predictions.length,
+      data: predictions.map(p => ({
+        ...p.toObject(),
+        confidencePercentage: Math.round(p.prediction.confidence * 100),
+        isExpired: p.isExpired()
+      }))
+    });
+  } catch (error) {
+    console.error('AI predictions error:', error);
+    res.status(500).json({ error: 'Failed to get AI predictions' });
+  }
+});
+
+// Store AI prediction
+app.post('/api/ai/predictions', async (req, res) => {
+  try {
+    const predictionData = new AIPrediction(req.body);
+    const savedPrediction = await predictionData.save();
+    
+    res.json({
+      success: true,
+      data: savedPrediction,
+      confidencePercentage: Math.round(savedPrediction.prediction.confidence * 100)
+    });
+  } catch (error) {
+    console.error('Save AI prediction error:', error);
+    res.status(500).json({ error: 'Failed to save AI prediction' });
+  }
+});
+
+// Validate AI prediction accuracy
+app.post('/api/ai/predictions/:id/validate', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { actualValue } = req.body;
+    
+    const prediction = await AIPrediction.findById(id);
+    if (!prediction) {
+      return res.status(404).json({ error: 'Prediction not found' });
+    }
+    
+    await prediction.validate(actualValue);
+    
+    res.json({
+      success: true,
+      accuracy: prediction.getAccuracyPercentage(),
+      data: prediction
+    });
+  } catch (error) {
+    console.error('Validate prediction error:', error);
+    res.status(500).json({ error: 'Failed to validate prediction' });
+  }
+});
+
+// Get model accuracy stats
+app.get('/api/ai/model-accuracy', async (req, res) => {
+  try {
+    const { algorithm = 'linear_regression', type = 'hashrate' } = req.query;
+    const accuracy = await AIPrediction.getModelAccuracy(algorithm, type);
+    
+    res.json({
+      success: true,
+      algorithm,
+      type,
+      accuracy: accuracy[0] || { avgAccuracy: 0, count: 0, maxAccuracy: 0, minAccuracy: 0 }
+    });
+  } catch (error) {
+    console.error('Model accuracy error:', error);
+    res.status(500).json({ error: 'Failed to get model accuracy' });
+  }
+});
+
+// ==============================
+// Enhanced System Configuration API
+// ==============================
+
+// Get system configuration
+app.get('/api/config/:type', async (req, res) => {
+  try {
+    const { type } = req.params;
+    const { userId = 'default_user' } = req.query;
+    
+    const config = await SystemConfig.getConfig(type, userId);
+    
+    if (!config) {
+      // Return default configuration if none exists
+      const defaultConfig = new SystemConfig({ configType: type, userId });
+      res.json({
+        success: true,
+        data: defaultConfig
+      });
+    } else {
+      res.json({
+        success: true,
+        data: config
+      });
+    }
+  } catch (error) {
+    console.error('Get config error:', error);
+    res.status(500).json({ error: 'Failed to get configuration' });
+  }
+});
+
+// Set system configuration
+app.post('/api/config/:type', async (req, res) => {
+  try {
+    const { type } = req.params;
+    const { userId = 'default_user' } = req.query;
+    const { config } = req.body;
+    
+    const savedConfig = await SystemConfig.setConfig(type, config, userId);
+    
+    // Validate the configuration
+    const errors = savedConfig.validateConfig();
+    if (errors.length > 0) {
+      return res.status(400).json({ 
+        error: 'Configuration validation failed',
+        details: errors
+      });
+    }
+    
+    res.json({
+      success: true,
+      data: savedConfig
+    });
+  } catch (error) {
+    console.error('Set config error:', error);
+    res.status(500).json({ error: 'Failed to set configuration' });
+  }
+});
+
+// Get user preferences
+app.get('/api/config/user/preferences', async (req, res) => {
+  try {
+    const { userId = 'default_user' } = req.query;
+    const preferences = await SystemConfig.getUserPreferences(userId);
+    
+    res.json({
+      success: true,
+      data: preferences || { 
+        config: {
+          theme: 'dark',
+          refreshInterval: 2000,
+          showAdvancedOptions: false,
+          notifications: { enabled: true }
+        }
+      }
+    });
+  } catch (error) {
+    console.error('Get user preferences error:', error);
+    res.status(500).json({ error: 'Failed to get user preferences' });
+  }
+});
+
+// Get mining defaults
+app.get('/api/config/mining/defaults', async (req, res) => {
+  try {
+    const { userId = 'default_user' } = req.query;
+    const defaults = await SystemConfig.getMiningDefaults(userId);
+    
+    res.json({
+      success: true,
+      data: defaults || { 
+        config: {
+          defaultCoin: 'litecoin',
+          defaultThreads: 4,
+          defaultIntensity: 0.8,
+          defaultMode: 'pool',
+          maxCpuUsage: 90,
+          maxMemoryUsage: 85
+        }
+      }
+    });
+  } catch (error) {
+    console.error('Get mining defaults error:', error);
+    res.status(500).json({ error: 'Failed to get mining defaults' });
+  }
+});
+
+// ==============================
+// Enhanced Mining Session Management
+// ==============================
+
+// Start mining session with enhanced tracking
+app.post('/api/mining/session/start', async (req, res) => {
+  try {
+    const sessionData = {
+      sessionId: `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      ...req.body,
+      startTime: new Date()
+    };
+    
+    const miningSession = new MiningStats(sessionData);
+    const savedSession = await miningSession.save();
+    
+    res.json({
+      success: true,
+      sessionId: savedSession.sessionId,
+      data: savedSession
+    });
+  } catch (error) {
+    console.error('Start mining session error:', error);
+    res.status(500).json({ error: 'Failed to start mining session' });
+  }
+});
+
+// End mining session with final stats
+app.post('/api/mining/session/:sessionId/end', async (req, res) => {
+  try {
+    const { sessionId } = req.params;
+    const { finalStats } = req.body;
+    
+    const session = await MiningStats.findOne({ sessionId });
+    if (!session) {
+      return res.status(404).json({ error: 'Mining session not found' });
+    }
+    
+    // Update session with final statistics
+    session.endTime = new Date();
+    if (finalStats) {
+      session.hashrate = finalStats.hashrate || session.hashrate;
+      session.acceptedShares = finalStats.acceptedShares || session.acceptedShares;
+      session.rejectedShares = finalStats.rejectedShares || session.rejectedShares;
+      session.cpuUsage = finalStats.cpuUsage || session.cpuUsage;
+      session.memoryUsage = finalStats.memoryUsage || session.memoryUsage;
+      session.blocksFound = finalStats.blocksFound || session.blocksFound;
+    }
+    
+    const savedSession = await session.save();
+    
+    res.json({
+      success: true,
+      duration: savedSession.duration,
+      efficiency: savedSession.getEfficiency(),
+      data: savedSession
+    });
+  } catch (error) {
+    console.error('End mining session error:', error);
+    res.status(500).json({ error: 'Failed to end mining session' });
+  }
+});
+
+// Update mining session stats (for real-time updates)
+app.put('/api/mining/session/:sessionId/update', async (req, res) => {
+  try {
+    const { sessionId } = req.params;
+    const updateData = req.body;
+    
+    const session = await MiningStats.findOneAndUpdate(
+      { sessionId },
+      { $set: updateData },
+      { new: true, runValidators: true }
+    );
+    
+    if (!session) {
+      return res.status(404).json({ error: 'Mining session not found' });
+    }
+    
+    res.json({
+      success: true,
+      data: session,
+      efficiency: session.getEfficiency()
+    });
+  } catch (error) {
+    console.error('Update mining session error:', error);
+    res.status(500).json({ error: 'Failed to update mining session' });
+  }
+});
+
+// ==============================
+// Database Maintenance API
+// ==============================
+
+// Database cleanup and maintenance
+app.post('/api/maintenance/cleanup', async (req, res) => {
+  try {
+    // Clean up expired AI predictions
+    const expiredPredictions = await AIPrediction.cleanupExpired();
+    
+    // Clean up old mining stats based on retention policy
+    const config = await SystemConfig.getConfig('user_preferences');
+    const retentionDays = config?.config?.dataRetentionDays || 30;
+    const cutoffDate = new Date(Date.now() - retentionDays * 24 * 60 * 60 * 1000);
+    
+    const oldStats = await MiningStats.deleteMany({ createdAt: { $lt: cutoffDate } });
+    
+    res.json({
+      success: true,
+      cleaned: {
+        expiredPredictions: expiredPredictions.deletedCount || 0,
+        oldMiningStats: oldStats.deletedCount || 0
+      },
+      retentionPolicy: `${retentionDays} days`
+    });
+  } catch (error) {
+    console.error('Database cleanup error:', error);
+    res.status(500).json({ error: 'Failed to perform database cleanup' });
+  }
+});
+
+// Get database statistics
+app.get('/api/maintenance/stats', async (req, res) => {
+  try {
+    const [miningStatsCount, aiPredictionsCount, customCoinsCount, configCount] = await Promise.all([
+      MiningStats.countDocuments(),
+      AIPrediction.countDocuments(),
+      CustomCoin.countDocuments(),
+      SystemConfig.countDocuments()
+    ]);
+    
+    res.json({
+      success: true,
+      collections: {
+        miningStats: miningStatsCount,
+        aiPredictions: aiPredictionsCount,
+        customCoins: customCoinsCount,
+        systemConfigs: configCount
+      },
+      totalDocuments: miningStatsCount + aiPredictionsCount + customCoinsCount + configCount
+    });
+  } catch (error) {
+    console.error('Database stats error:', error);
+    res.status(500).json({ error: 'Failed to get database statistics' });
+  }
+});
+
 // Custom coins CRUD endpoints
 app.get('/api/coins/custom', async (req, res) => {
   try {
