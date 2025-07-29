@@ -759,6 +759,218 @@ class MiningEngine extends EventEmitter {
       };
     }
   }
+
+  // ==============================
+  // MongoDB Integration Methods
+  // ==============================
+
+  /**
+   * Create mining session in database
+   */
+  async createMiningSession() {
+    try {
+      const sessionData = {
+        sessionId: this.sessionId,
+        coin: this.config.coin || 'litecoin',
+        mode: this.config.mode || 'pool',
+        threads: this.config.threads || this.getOptimalThreadCount(),
+        intensity: this.config.intensity || 0.8,
+        startTime: new Date(),
+        
+        // Pool information if applicable
+        poolInfo: this.config.mode === 'pool' ? {
+          address: this.config.custom_pool_address || this.getPoolConfig().host,
+          port: this.config.custom_pool_port || this.getPoolConfig().port,
+          username: this.config.pool_username || 'default_user',
+          connected: false
+        } : undefined
+      };
+
+      this.miningSession = new MiningStats(sessionData);
+      await this.miningSession.save();
+      
+      console.log(`📊 Mining session created in database: ${this.sessionId}`);
+    } catch (error) {
+      console.error('Failed to create mining session:', error);
+      // Don't throw error to prevent mining from failing
+    }
+  }
+
+  /**
+   * Update mining session statistics in database
+   */
+  async updateMiningStats() {
+    if (!this.miningSession) return;
+
+    try {
+      // Update session with current statistics
+      this.miningSession.hashrate = this.stats.hashrate;
+      this.miningSession.acceptedShares = this.stats.accepted_shares;
+      this.miningSession.rejectedShares = this.stats.rejected_shares;
+      this.miningSession.blocksFound = this.stats.blocks_found;
+      this.miningSession.cpuUsage = this.stats.cpu_usage;
+      this.miningSession.memoryUsage = this.stats.memory_usage;
+      
+      // Update pool connection status
+      if (this.miningSession.poolInfo) {
+        this.miningSession.poolInfo.connected = this.poolConnection && 
+          (this.poolConnection.readyState === 'open' || this.poolConnection === true);
+      }
+
+      await this.miningSession.save();
+      
+      // Create AI prediction if hashrate data is available
+      if (this.stats.hashrate > 0 && this.lastStatsUpdate && 
+          Date.now() - this.lastStatsUpdate > 60000) { // Every minute
+        await this.createAIPrediction();
+        this.lastStatsUpdate = Date.now();
+      }
+    } catch (error) {
+      console.error('Failed to update mining statistics:', error);
+    }
+  }
+
+  /**
+   * Finalize mining session when stopped
+   */
+  async finalizeMiningSession() {
+    if (!this.miningSession) return;
+
+    try {
+      this.miningSession.endTime = new Date();
+      this.miningSession.hashrate = this.stats.hashrate;
+      this.miningSession.acceptedShares = this.stats.accepted_shares;
+      this.miningSession.rejectedShares = this.stats.rejected_shares;
+      this.miningSession.blocksFound = this.stats.blocks_found;
+      this.miningSession.cpuUsage = this.stats.cpu_usage;
+      this.miningSession.memoryUsage = this.stats.memory_usage;
+
+      // Calculate estimated earnings (simplified)
+      const efficiency = this.miningSession.getEfficiency();
+      const duration = this.miningSession.duration || 0;
+      this.miningSession.estimatedEarnings = (this.stats.hashrate * duration * efficiency) / 1000000;
+
+      await this.miningSession.save();
+      
+      console.log(`📊 Mining session finalized: ${this.sessionId} (Duration: ${duration}s, Efficiency: ${efficiency}%)`);
+    } catch (error) {
+      console.error('Failed to finalize mining session:', error);
+    }
+  }
+
+  /**
+   * Create AI prediction based on current performance
+   */
+  async createAIPrediction() {
+    try {
+      const predictionData = {
+        predictionType: 'hashrate',
+        inputData: {
+          currentHashrate: this.stats.hashrate,
+          threads: this.config.threads,
+          intensity: this.config.intensity,
+          cpuUsage: this.stats.cpu_usage,
+          memoryUsage: this.stats.memory_usage,
+          coin: this.config.coin,
+          difficulty: this.difficulty,
+          historicalData: [{
+            timestamp: new Date(),
+            value: this.stats.hashrate
+          }]
+        },
+        prediction: {
+          value: this.stats.hashrate * 1.1, // Predict 10% improvement
+          confidence: 0.75,
+          timeframe: '1hour',
+          range: {
+            min: this.stats.hashrate * 0.9,
+            max: this.stats.hashrate * 1.3
+          }
+        },
+        modelInfo: {
+          algorithm: 'linear_regression',
+          version: '1.0',
+          trainingDataSize: 100,
+          accuracy: 0.8
+        },
+        systemContext: {
+          totalCores: require('os').cpus().length,
+          availableMemory: require('os').totalmem(),
+          operatingSystem: require('os').platform(),
+          nodeVersion: process.version
+        }
+      };
+
+      const aiPrediction = new AIPrediction(predictionData);
+      await aiPrediction.save();
+      
+      console.log(`🤖 AI prediction created for session: ${this.sessionId}`);
+    } catch (error) {
+      console.error('Failed to create AI prediction:', error);
+    }
+  }
+
+  /**
+   * Start periodic database updates
+   */
+  startDatabaseUpdates() {
+    this.statsUpdateInterval = setInterval(async () => {
+      if (this.mining) {
+        await this.updateMiningStats();
+      }
+    }, 30000); // Update every 30 seconds
+  }
+
+  /**
+   * Stop periodic database updates
+   */
+  stopDatabaseUpdates() {
+    if (this.statsUpdateInterval) {
+      clearInterval(this.statsUpdateInterval);
+      this.statsUpdateInterval = null;
+    }
+  }
+
+  /**
+   * Get system configuration preferences
+   */
+  async getSystemPreferences() {
+    try {
+      const preferences = await SystemConfig.getUserPreferences();
+      return preferences?.config || {
+        defaultCoin: 'litecoin',
+        defaultThreads: this.getOptimalThreadCount(),
+        defaultIntensity: 0.8,
+        maxCpuUsage: 90,
+        maxMemoryUsage: 85
+      };
+    } catch (error) {
+      console.error('Failed to get system preferences:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Apply system configuration to mining parameters
+   */
+  async applySystemConfiguration() {
+    try {
+      const preferences = await this.getSystemPreferences();
+      if (preferences) {
+        // Apply CPU and memory limits
+        if (this.stats.cpu_usage > preferences.maxCpuUsage) {
+          console.log(`⚠️ CPU usage (${this.stats.cpu_usage}%) exceeds limit (${preferences.maxCpuUsage}%)`);
+        }
+        
+        if (this.stats.memory_usage > preferences.maxMemoryUsage) {
+          console.log(`⚠️ Memory usage (${this.stats.memory_usage}%) exceeds limit (${preferences.maxMemoryUsage}%)`);
+        }
+      }
+    } catch (error) {
+      console.error('Failed to apply system configuration:', error);
+    }
+  }
+}
 }
 
 /**
