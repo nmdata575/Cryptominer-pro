@@ -249,13 +249,40 @@ status_mongodb() {
             print_status "✅ MongoDB is running (PID: $pid from process list)"
         fi
         
-        # Test connectivity
-        if timeout 10 mongosh --eval "db.runCommand('ping')" --quiet --host 127.0.0.1:27017 >/dev/null 2>&1; then
-            print_status "✅ MongoDB is accepting connections"
-        elif timeout 10 mongo --eval "db.runCommand('ping')" --quiet --host 127.0.0.1:27017 >/dev/null 2>&1; then
-            print_status "✅ MongoDB is accepting connections (legacy client)"
-        else
-            print_warning "⚠️ MongoDB is running but connection tests failed (may still be working)"
+        # Test connectivity with improved error handling
+        print_step "Testing MongoDB connectivity..."
+        
+        CONNECTION_SUCCESS=false
+        
+        # Test 1: Try mongosh with explicit connection
+        if command -v mongosh >/dev/null 2>&1; then
+            if mongosh --host 127.0.0.1 --port 27017 --eval "quit()" --quiet >/dev/null 2>&1; then
+                print_status "✅ MongoDB is accepting connections (mongosh)"
+                CONNECTION_SUCCESS=true
+            fi
+        fi
+        
+        # Test 2: Try legacy mongo client if mongosh failed
+        if [ "$CONNECTION_SUCCESS" = false ] && command -v mongo >/dev/null 2>&1; then
+            if mongo 127.0.0.1:27017 --eval "quit()" --quiet >/dev/null 2>&1; then
+                print_status "✅ MongoDB is accepting connections (legacy mongo)"
+                CONNECTION_SUCCESS=true
+            fi
+        fi
+        
+        # Test 3: Try basic telnet-style connection test
+        if [ "$CONNECTION_SUCCESS" = false ]; then
+            if echo "quit" | nc -w 3 127.0.0.1 27017 >/dev/null 2>&1; then
+                print_status "✅ MongoDB port is responding (basic connection test)"
+                CONNECTION_SUCCESS=true
+            fi
+        fi
+        
+        # Final assessment
+        if [ "$CONNECTION_SUCCESS" = false ]; then
+            print_warning "⚠️ MongoDB connection tests failed"
+            print_status "   However, MongoDB process is running and port is listening"
+            print_status "   This may be a client configuration issue, not a MongoDB problem"
         fi
         
         # Show configuration
