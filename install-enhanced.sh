@@ -941,6 +941,8 @@ display_enhanced_completion() {
     echo "  $APP_DIR/startup-manager.sh fix-mongodb  - Fix MongoDB connectivity issues"
     echo "  $APP_DIR/startup-manager.sh fix-ports    - Clean up port conflicts"
     echo "  $APP_DIR/startup-manager.sh full-reset   - Complete system reset"
+    echo "  $APP_DIR/mongodb-complete.sh start       - Start MongoDB with environment support"
+    echo "  $APP_DIR/mongodb-complete.sh status      - Check MongoDB status and configuration"
     echo "  cryptominer-ai                          - View AI insights"
     echo "  cryptominer-hp-start                    - Start HP mining"
     echo "  cryptominer-monitor                     - Real-time monitoring"
