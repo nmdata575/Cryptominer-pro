@@ -1,12 +1,18 @@
 /**
  * Real Mining Engine - Node.js Implementation
  * Handles actual Scrypt mining operations with pool communication
+ * Enhanced with Mongoose model integration for data persistence
  */
 
 const crypto = require('crypto');
 const scrypt = require('scrypt-js');
 const EventEmitter = require('events');
 const net = require('net');
+
+// Import Mongoose models for data persistence
+const MiningStats = require('../models/MiningStats');
+const AIPrediction = require('../models/AIPrediction');
+const SystemConfig = require('../models/SystemConfig');
 
 // Default mining pools for each cryptocurrency
 const DEFAULT_POOLS = {
