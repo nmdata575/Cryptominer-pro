@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """
 CryptoMiner Pro Backend Testing Suite
-Comprehensive testing for AI integration fix and overall system stability
+Comprehensive testing for Enhanced Mongoose Model Integration
+Focus: Mining Statistics, AI Predictions, System Configuration, Mining Sessions, Database Maintenance
 """
 
 import requests
