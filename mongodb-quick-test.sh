@@ -15,11 +15,29 @@ else
     exit 1
 fi
 
-# Test 2: Port check
-if netstat -tln | grep -q ":27017"; then
-    echo "✅ MongoDB is listening on port 27017"
-else
+# Test 2: Port check (using multiple methods)
+PORT_LISTENING=false
+
+# Method 1: lsof (most reliable)
+if command -v lsof >/dev/null && sudo lsof -i :27017 >/dev/null 2>&1; then
+    PORT_LISTENING=true
+    echo "✅ MongoDB is listening on port 27017 (lsof)"
+# Method 2: netstat fallback
+elif netstat -tln 2>/dev/null | grep -q ":27017"; then
+    PORT_LISTENING=true
+    echo "✅ MongoDB is listening on port 27017 (netstat)"
+# Method 3: ss fallback
+elif command -v ss >/dev/null && ss -tln 2>/dev/null | grep -q ":27017"; then
+    PORT_LISTENING=true
+    echo "✅ MongoDB is listening on port 27017 (ss)"
+fi
+
+if [ "$PORT_LISTENING" = false ]; then
     echo "❌ MongoDB is not listening on port 27017"
+    echo "   Checking what ports MongoDB is using..."
+    if command -v lsof >/dev/null; then
+        echo "   MongoDB ports: $(sudo lsof -i -P | grep mongod | grep LISTEN | awk '{print $9}' | cut -d: -f2 | sort -u | xargs)"
+    fi
     exit 1
 fi
 
