@@ -269,10 +269,26 @@ operationProfiling:
   mode: slowOp
 EOF
     
-    # Set up data directories with proper permissions
-    sudo mkdir -p /var/lib/mongodb /var/log/mongodb /var/run/mongodb /data/db
-    sudo chown -R mongodb:mongodb /var/lib/mongodb /var/log/mongodb /var/run/mongodb 2>/dev/null || true
-    sudo chown -R mongodb:mongodb /data/db 2>/dev/null || sudo chown -R root:root /data/db
+    # Create MongoDB environment file (critical for startup)
+    print_step "Creating MongoDB environment configuration..."
+    sudo tee /etc/default/mongod > /dev/null <<'EOF'
+# MongoDB environment configuration
+DAEMON_USER="mongodb"
+DAEMON_GROUP="mongodb"
+MONGODB_DBPATH="/var/lib/mongodb"
+MONGODB_LOGPATH="/var/log/mongodb"
+MONGODB_CONFIG="/etc/mongod.conf"
+MONGODB_PIDFILE="/var/run/mongodb/mongod.pid"
+ENABLE_MONGOD="yes"
+STARTUP_TIMEOUT=300
+SHUTDOWN_TIMEOUT=300
+MONGODB_LOG_LEVEL="info"
+MONGODB_LOG_ROTATION="reopen"
+MONGODB_BIND_IP="127.0.0.1"
+MONGODB_PORT="27017"
+MONGODB_STORAGE_ENGINE="wiredTiger"
+MONGODB_JOURNAL="enabled"
+EOF
     
     # Kill any existing MongoDB processes to avoid conflicts
     print_step "Cleaning up any existing MongoDB processes..."
