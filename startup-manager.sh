@@ -125,10 +125,10 @@ verify_mongodb() {
     RETRY_COUNT=0
     
     while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
-        if mongosh --eval "db.runCommand('ping')" --quiet >/dev/null 2>&1; then
+        if timeout 5 mongosh --eval "db.runCommand('ping')" --quiet --host 127.0.0.1:27017 >/dev/null 2>&1; then
             print_status "✅ MongoDB is accessible via mongosh"
             return 0
-        elif mongo --eval "db.runCommand('ping')" --quiet >/dev/null 2>&1; then
+        elif timeout 5 mongo --eval "db.runCommand('ping')" --quiet --host 127.0.0.1:27017 >/dev/null 2>&1; then
             print_status "✅ MongoDB is accessible via legacy mongo client"
             return 0
         fi
@@ -138,7 +138,8 @@ verify_mongodb() {
         sleep 2
     done
     
-    print_error "❌ MongoDB connectivity verification failed"
+    print_error "❌ MongoDB connectivity verification failed after $MAX_RETRIES attempts"
+    print_warning "MongoDB may still be working - this could be a connection timeout issue"
     return 1
 }
 
