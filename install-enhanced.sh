@@ -289,6 +289,11 @@ MONGODB_PORT="27017"
 MONGODB_STORAGE_ENGINE="wiredTiger"
 MONGODB_JOURNAL="enabled"
 EOF
+
+    # Set up data directories with proper permissions
+    sudo mkdir -p /var/lib/mongodb /var/log/mongodb /var/run/mongodb /data/db
+    sudo chown -R mongodb:mongodb /var/lib/mongodb /var/log/mongodb /var/run/mongodb 2>/dev/null || true
+    sudo chown -R mongodb:mongodb /data/db 2>/dev/null || sudo chown -R root:root /data/db
     
     # Kill any existing MongoDB processes to avoid conflicts
     print_step "Cleaning up any existing MongoDB processes..."
