@@ -66,8 +66,15 @@ if [[ -f "$FRONTEND_ENV_FILE" ]]; then
         # Backup original
         cp "$FRONTEND_ENV_FILE" "${FRONTEND_ENV_FILE}.backup.$(date +%s)"
         
-        # Update backend URL
+        # Update backend URL and fix file format
         sed -i "s|^REACT_APP_BACKEND_URL=.*|REACT_APP_BACKEND_URL=$BACKEND_URL|" "$FRONTEND_ENV_FILE"
+        
+        # Ensure proper file format
+        chmod 644 "$FRONTEND_ENV_FILE"
+        # Add final newline if missing
+        if [[ -n "$(tail -c1 "$FRONTEND_ENV_FILE")" ]]; then
+            echo "" >> "$FRONTEND_ENV_FILE"
+        fi
         
         print_status "✅ Frontend configuration updated"
         FRONTEND_RESTART_NEEDED=true
