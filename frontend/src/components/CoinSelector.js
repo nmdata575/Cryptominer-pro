@@ -169,28 +169,28 @@ const CoinSelector = ({ coinPresets, selectedCoin, onCoinChange }) => {
             <div className="flex justify-between">
               <span className="text-gray-300">Algorithm:</span>
               <span className="text-white font-medium">
-                {coinPresets[selectedCoin].algorithm.toUpperCase()}
+                {selectedCoin.algorithm.toUpperCase()}
               </span>
             </div>
             
             <div className="flex justify-between">
               <span className="text-gray-300">Block Time:</span>
               <span className="text-white font-medium">
-                {coinPresets[selectedCoin].block_time_target}s
+                {selectedCoin.block_time_target}s
               </span>
             </div>
             
             <div className="flex justify-between">
               <span className="text-gray-300">Network Difficulty:</span>
               <span className="text-white font-medium">
-                {coinPresets[selectedCoin].network_difficulty.toLocaleString()}
+                {selectedCoin.network_difficulty.toLocaleString()}
               </span>
             </div>
             
             <div className="flex justify-between">
               <span className="text-gray-300">Scrypt N:</span>
               <span className="text-white font-medium">
-                {coinPresets[selectedCoin].scrypt_params?.N || 1024}
+                {selectedCoin.scrypt_params?.N || 1024}
               </span>
             </div>
           </div>
