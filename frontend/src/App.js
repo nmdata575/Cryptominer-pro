@@ -293,12 +293,11 @@ function App() {
 
   // Initial data fetch
   useEffect(() => {
-    fetchCoinPresets();
     fetchMiningStatus();
     fetchSystemStats();
     fetchCpuInfo();
     fetchAiInsights();
-  }, [fetchCoinPresets, fetchMiningStatus, fetchSystemStats, fetchCpuInfo, fetchAiInsights]);
+  }, [fetchMiningStatus, fetchSystemStats, fetchCpuInfo, fetchAiInsights]);
 
   // Periodic data updates with HTTP polling fallback
   useEffect(() => {
