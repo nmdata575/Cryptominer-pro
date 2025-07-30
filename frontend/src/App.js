@@ -13,8 +13,6 @@ import MiningPerformance from './components/MiningPerformance';
 
 function App() {
   // State management
-  const [selectedCoin, setSelectedCoin] = useState(null);
-  const [coinPresets, setCoinPresets] = useState([]);
   const [miningStatus, setMiningStatus] = useState({
     is_mining: false,
     stats: {
@@ -32,7 +30,7 @@ function App() {
     expected_hashrate: 0
   });
   const [miningConfig, setMiningConfig] = useState({
-    coin: null,
+    coin: 'litecoin', // Default to Litecoin
     mode: 'pool',
     threads: 4,
     intensity: 0.8,
