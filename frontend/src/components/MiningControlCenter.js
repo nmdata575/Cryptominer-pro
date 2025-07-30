@@ -36,7 +36,7 @@ const MiningControlCenter = ({
             <div>
               <div className="text-sm text-gray-400">Selected Coin</div>
               <div className="font-bold text-crypto-gold">
-                {currentCoin ? `${currentCoin.name} (${currentCoin.symbol})` : 'None'}
+                Litecoin (LTC)
               </div>
             </div>
           </div>
