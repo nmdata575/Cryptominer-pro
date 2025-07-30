@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 
-const WalletConfig = ({ config, onConfigChange, selectedCoin, coinPresets, isMining }) => {
+const WalletConfig = ({ config, onConfigChange, isMining }) => {
   const [validationStatus, setValidationStatus] = useState({ valid: null, message: '' });
   const [isValidating, setIsValidating] = useState(false);
   const [poolTestStatus, setPoolTestStatus] = useState({ testing: false, result: null });
