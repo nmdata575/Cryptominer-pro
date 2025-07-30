@@ -4,7 +4,6 @@ import './App.css';
 
 // Import components
 import MiningDashboard from './components/MiningDashboard';
-import CoinSelector from './components/CoinSelector';
 import WalletConfig from './components/WalletConfig';
 import MiningControls from './components/MiningControls';
 import SystemMonitoring from './components/SystemMonitoring';
