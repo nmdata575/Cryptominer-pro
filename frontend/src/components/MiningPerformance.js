@@ -55,12 +55,10 @@ const MiningPerformance = ({ miningStatus }) => {
                 <div className="w-3 h-3 bg-crypto-green rounded-full animate-pulse"></div>
                 <span className="font-bold text-crypto-green">MINING ACTIVE</span>
               </div>
-              {currentCoin && (
-                <div className="flex items-center space-x-2">
-                  <span className="text-gray-400">Mining:</span>
-                  <span className="font-medium text-crypto-gold">{currentCoin.name}</span>
-                </div>
-              )}
+              <div className="flex items-center space-x-2">
+                <span className="text-gray-400">Mining:</span>
+                <span className="font-medium text-crypto-gold">Litecoin</span>
+              </div>
             </div>
             <div className="text-right">
               <div className="text-sm text-gray-400">Performance Grade</div>
