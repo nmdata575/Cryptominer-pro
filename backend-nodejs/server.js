@@ -491,7 +491,7 @@ app.post('/api/ai/predictions/:id/validate', async (req, res) => {
       return res.status(404).json({ error: 'Prediction not found' });
     }
     
-    await prediction.validate(actualValue);
+    await prediction.validatePrediction(actualValue);
     
     res.json({
       success: true,
