@@ -139,16 +139,7 @@ const WalletConfig = ({ config, onConfigChange, isMining }) => {
   };
 
   const getAddressExample = () => {
-    if (!selectedCoin || !coinPresets[selectedCoin]) return '';
-    
-    const coin = coinPresets[selectedCoin];
-    const examples = {
-      'LTC': 'LTC1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4 (or legacy: LhK1Nk..)',
-      'DOGE': 'DQVpNjNVHjTgHaE4Y1oqRxCLe6...',
-      'FTC': '6nsHHMiUexBgE8GZzw5EBVL...'
-    };
-    
-    return examples[coin.symbol] || 'Enter valid wallet address';
+    return 'LTC1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4 (or legacy: LhK1Nk..)';
   };
 
   const getAddressFormat = () => {
