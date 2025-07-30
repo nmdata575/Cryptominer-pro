@@ -369,21 +369,12 @@ function App() {
             {/* Mining Dashboard */}
             <MiningDashboard 
               miningStatus={miningStatus} 
-              selectedCoin={selectedCoin}
               highPerformanceMode={highPerformanceMode}
-            />
-
-            {/* Coin Selection */}
-            <CoinSelector
-              coinPresets={coinPresets}
-              selectedCoin={selectedCoin}
-              onCoinChange={handleCoinSelect}
             />
 
             {/* Mining Performance */}
             <MiningPerformance
               miningStatus={miningStatus}
-              selectedCoin={selectedCoin}
             />
 
             {/* Real-time Metrics */}
