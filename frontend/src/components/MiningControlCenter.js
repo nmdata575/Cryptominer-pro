@@ -85,7 +85,6 @@ const MiningControlCenter = ({
         {!miningStatus.is_mining ? (
           <button
             onClick={onStart}
-            disabled={!selectedCoin || !currentCoin}
             className="flex-1 bg-gradient-to-r from-crypto-green to-green-600 hover:from-green-600 hover:to-green-700 text-white font-bold py-4 px-6 rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
