@@ -439,7 +439,7 @@ function App() {
               <span>Mining: {miningStatus.is_mining ? 
                 (miningStatus.high_performance ? 'HIGH PERFORMANCE' : 'ACTIVE') : 'STOPPED'}</span>
               <span>•</span>
-              <span>Selected: {selectedCoin?.name || 'None'}</span>
+              <span>Coin: Litecoin (LTC)</span>
             </div>
           </div>
         </div>
