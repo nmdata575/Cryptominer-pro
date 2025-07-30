@@ -154,7 +154,7 @@ AIPredictionSchema.methods.isExpired = function() {
   return new Date() > this.expiresAt;
 };
 
-AIPredictionSchema.methods.validate = function(actualValue) {
+AIPredictionSchema.methods.validatePrediction = function(actualValue) {
   this.validation.actualValue = actualValue;
   this.validation.validated = true;
   this.validation.validatedAt = new Date();
