@@ -73,23 +73,18 @@ const WalletConfig = ({ config, onConfigChange, isMining }) => {
       return;
     }
 
-    if (!selectedCoin || !coinPresets[selectedCoin]) {
-      setValidationStatus({ valid: false, message: 'Please select a coin first' });
-      return;
-    }
-
     setIsValidating(true);
     
     try {
       const response = await axios.post(`${BACKEND_URL}/api/wallet/validate`, {
         address: config.wallet_address.trim(),
-        coin_symbol: coinPresets[selectedCoin].symbol
+        coin_symbol: 'LTC'
       });
 
       if (response.data.valid) {
         setValidationStatus({ 
           valid: true, 
-          message: `Valid ${response.data.format || 'address'} (${response.data.type || 'standard'})` 
+          message: response.data.format || 'Valid Litecoin address'
         });
       } else {
         setValidationStatus({ 
