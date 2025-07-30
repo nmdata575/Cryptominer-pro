@@ -2,8 +2,6 @@ import React from 'react';
 
 const MiningControlCenter = ({ 
   miningStatus, 
-  selectedCoin, 
-  coinPresets, 
   miningConfig,
   onStart, 
   onStop, 
@@ -11,7 +9,6 @@ const MiningControlCenter = ({
   systemMetrics 
 }) => {
   const isHealthy = systemMetrics && systemMetrics.cpu?.usage_percent < 90;
-  const currentCoin = coinPresets && selectedCoin ? coinPresets[selectedCoin] : null;
 
   return (
     <div className="space-y-4">
