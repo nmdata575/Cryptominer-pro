@@ -73,22 +73,6 @@ function App() {
     }
   }, [backendUrl]);
 
-  const fetchCoinPresets = useCallback(async () => {
-    try {
-      const response = await fetch(`${backendUrl}/api/coins/presets`);
-      if (!response.ok) throw new Error(`HTTP ${response.status}`);
-      const data = await response.json();
-      setCoinPresets(data);
-      // Set default coin if none selected
-      if (!selectedCoin && data.length > 0) {
-        setSelectedCoin(data[0]);
-        setMiningConfig(prev => ({ ...prev, coin: data[0] }));
-      }
-    } catch (error) {
-      console.error('Failed to fetch coin presets:', error);
-    }
-  }, [backendUrl, selectedCoin]);
-
   const fetchSystemStats = useCallback(async () => {
     try {
       const response = await fetch(`${backendUrl}/api/system/stats`);
