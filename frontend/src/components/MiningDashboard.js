@@ -74,7 +74,7 @@ const MiningDashboard = ({ miningStatus, highPerformanceMode }) => {
           <div className="text-right">
             <div className="text-white text-sm">Current Coin</div>
             <div className="text-white font-bold">
-              {selectedCoin?.name || 'None Selected'} ({selectedCoin?.symbol || 'N/A'})
+              Litecoin (LTC)
             </div>
           </div>
         </div>
