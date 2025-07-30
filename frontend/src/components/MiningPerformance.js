@@ -1,7 +1,6 @@
 import React from 'react';
 
-const MiningPerformance = ({ miningStatus, selectedCoin, coinPresets }) => {
-  const currentCoin = coinPresets && selectedCoin ? coinPresets[selectedCoin] : null;
+const MiningPerformance = ({ miningStatus }) => {
   const stats = miningStatus?.stats || {};
 
   const formatHashRate = (hashRate) => {
