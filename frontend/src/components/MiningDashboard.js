@@ -1,6 +1,6 @@
 import React from 'react';
 
-const MiningDashboard = ({ miningStatus, selectedCoin, highPerformanceMode }) => {
+const MiningDashboard = ({ miningStatus, highPerformanceMode }) => {
   const formatHashrate = (hashrate) => {
     if (hashrate >= 1000000) {
       return `${(hashrate / 1000000).toFixed(2)} MH/s`;
