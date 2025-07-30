@@ -404,8 +404,6 @@ function App() {
             <WalletConfig
               config={miningConfig}
               onConfigChange={setMiningConfig}
-              selectedCoin={selectedCoin}
-              coinPresets={coinPresets}
               isMining={miningStatus.is_mining}
             />
 
@@ -420,7 +418,6 @@ function App() {
             <AIInsights
               insights={aiInsights}
               miningStatus={miningStatus}
-              selectedCoin={selectedCoin}
             />
           </div>
         </div>
