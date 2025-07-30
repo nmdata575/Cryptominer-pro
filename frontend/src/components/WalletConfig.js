@@ -143,16 +143,7 @@ const WalletConfig = ({ config, onConfigChange, isMining }) => {
   };
 
   const getAddressFormat = () => {
-    if (!selectedCoin || !coinPresets[selectedCoin]) return '';
-    
-    const coin = coinPresets[selectedCoin];
-    const formats = {
-      'LTC': 'Legacy (L...), Segwit (ltc1...), or Multisig (M.../3...)',
-      'DOGE': 'Standard (D...) or Multisig (A.../9...)',
-      'FTC': 'Legacy format (6...)'
-    };
-    
-    return formats[coin.symbol] || 'Standard wallet address format';
+    return 'Legacy (L...), Segwit (ltc1...), or Multisig (M.../3...)';
   };
 
   return (
