@@ -317,12 +317,6 @@ function App() {
     };
   }, [connectionStatus, fetchMiningStatus, fetchSystemStats, fetchAiInsights]);
 
-  // Coin selection handler
-  const handleCoinSelect = (coin) => {
-    setSelectedCoin(coin);
-    setMiningConfig(prev => ({ ...prev, coin }));
-  };
-
   return (
     <div className="min-h-screen bg-gray-900">
       {/* Header */}
