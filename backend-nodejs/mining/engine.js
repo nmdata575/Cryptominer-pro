@@ -17,18 +17,18 @@ const SystemConfig = require('../models/SystemConfig');
 // Default mining pools for each cryptocurrency
 const DEFAULT_POOLS = {
   litecoin: [
-    { host: 'stratum+tcp://ltc-us-east1.nanopool.org', port: 6969 },
-    { host: 'stratum+tcp://ltc.pool-pay.com', port: 1133 },
-    { host: 'stratum+tcp://ltc.minergate.com', port: 45700 }
+    { host: 'ltc.pool-pay.com', port: 1133 },
+    { host: 'ltc.minergate.com', port: 45700 },
+    { host: 'pool.litecoinpool.org', port: 9327 }
   ],
   dogecoin: [
-    { host: 'stratum+tcp://doge-us-east1.nanopool.org', port: 8088 },
-    { host: 'stratum+tcp://doge.pool-pay.com', port: 9998 },
-    { host: 'stratum+tcp://doge.minergate.com', port: 45701 }
+    { host: 'doge.pool-pay.com', port: 9998 },
+    { host: 'doge.minergate.com', port: 45701 },
+    { host: 'pool-eu.doge.hashvault.pro', port: 3032 }
   ],
   feathercoin: [
-    { host: 'stratum+tcp://ftc.pool-pay.com', port: 8338 },
-    { host: 'stratum+tcp://ftc.minergate.com', port: 45702 }
+    { host: 'ftc.pool-pay.com', port: 8338 },
+    { host: 'ftc.minergate.com', port: 45702 }
   ]
 };
 
