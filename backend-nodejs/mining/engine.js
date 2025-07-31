@@ -104,11 +104,22 @@ class MiningEngine extends EventEmitter {
 
       // Connect to mining pool or setup solo mining (non-blocking)
       if (this.config.mode === 'pool') {
-        // Start pool connection in background
-        this.connectToPool().catch(error => {
-          console.log('⚠️ External pool connection failed, starting test mode with simulated pool');
+        console.log(`🔍 Attempting real pool connection (TEST_MODE: ${TEST_MODE})`);
+        
+        // Force real pool mining unless explicitly in test mode
+        if (!TEST_MODE) {
+          try {
+            await this.connectToPool();
+            console.log('🎯 Real pool mining active');
+          } catch (error) {
+            console.log('⚠️ Real pool connection failed, but continuing with test mode');
+            console.log('Pool error:', error.message);
+            this.startTestModePool();
+          }
+        } else {
+          console.log('🧪 Forced test mode - using simulated pool');
           this.startTestModePool();
-        });
+        }
       } else {
         await this.setupSoloMining();
       }
