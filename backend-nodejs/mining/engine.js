@@ -1241,17 +1241,31 @@ class RealMiningWorker extends EventEmitter {
    * Convert difficulty to target value
    */
   difficultyToTarget(difficulty) {
-    // Simplified target calculation
-    // Real implementation would use proper network difficulty
-    const maxTarget = Buffer.from('00000000FFFF0000000000000000000000000000000000000000000000000000', 'hex');
-    
-    // Scale target based on difficulty
-    const target = Buffer.alloc(32);
-    const scaledTarget = BigInt('0x' + maxTarget.toString('hex')) / BigInt(Math.floor(difficulty));
-    
-    // Convert back to buffer
-    const targetHex = scaledTarget.toString(16).padStart(64, '0');
-    return Buffer.from(targetHex, 'hex');
+    try {
+      // Standard Bitcoin/Litecoin maximum target
+      const maxTargetHex = '00000000FFFF0000000000000000000000000000000000000000000000000000';
+      const maxTarget = BigInt('0x' + maxTargetHex);
+      
+      // Calculate target: target = maxTarget / difficulty
+      const difficultyBigInt = BigInt(Math.max(Math.floor(difficulty * 1000000), 1)); // Avoid division by zero
+      const targetBigInt = maxTarget / difficultyBigInt * BigInt(1000000);
+      
+      // Convert back to 32-byte buffer
+      let targetHex = targetBigInt.toString(16);
+      
+      // Ensure exactly 64 hex characters (32 bytes)
+      if (targetHex.length > 64) {
+        targetHex = maxTargetHex; // Use max target if calculation overflow
+      } else {
+        targetHex = targetHex.padStart(64, '0');
+      }
+      
+      return Buffer.from(targetHex, 'hex');
+    } catch (error) {
+      console.error('Target calculation error:', error);
+      // Return a reasonable default target for low difficulty
+      return Buffer.from('00000000FF000000000000000000000000000000000000000000000000000000', 'hex');
+    }
   }
 }
 
