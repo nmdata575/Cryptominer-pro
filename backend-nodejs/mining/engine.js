@@ -1169,28 +1169,23 @@ class RealMiningWorker extends EventEmitter {
    */
   simplifiedScryptHash(data) {
     try {
-      // Optimized scrypt parameters for higher hashrate
-      const N = 1024; // Keep reasonable for stability but optimize elsewhere
-      const r = 1;
-      const p = 1;
-      
-      // Use faster crypto hash for development/testing (can be toggled)
-      if (process.env.HIGH_PERFORMANCE_MODE === 'true') {
-        // Use double SHA256 for much higher hashrate (still valid mining)
-        const hash1 = crypto.createHash('sha256').update(data).digest();
-        const hash2 = crypto.createHash('sha256').update(hash1).digest();
-        return hash2.toString('hex');
-      }
-      
-      // Use scryptsy for real scrypt (when pool requires it)
+      // CRITICAL FIX: Always use real scrypt algorithm for legitimate mining
       const scryptsy = require('scryptsy');
+      
+      // Standard Litecoin scrypt parameters
+      const N = 1024;  // Standard for Litecoin
+      const r = 1;     // Standard
+      const p = 1;     // Standard
+      
+      // Use proper salt (4 bytes of zero for cryptocurrency mining)
       const salt = Buffer.alloc(4);
       
+      // Perform real scrypt calculation
       const result = scryptsy(data, salt, N, r, p, 32);
       return result.toString('hex');
     } catch (error) {
-      console.error('Scrypt error:', error);
-      // Fallback to crypto for stability
+      console.error('Scrypt error (falling back to crypto):', error);
+      // Emergency fallback only if scrypt fails
       const hash1 = crypto.createHash('sha256').update(data).digest();
       const hash2 = crypto.createHash('sha256').update(hash1).digest();
       return hash2.toString('hex');
