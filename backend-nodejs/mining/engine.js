@@ -201,7 +201,10 @@ class MiningEngine extends EventEmitter {
         reject(new Error('Connection timeout'));
       }, 10000);
       
-      this.poolConnection.connect(poolConfig.port, poolConfig.host.replace('stratum+tcp://', ''), () => {
+      // Clean the host address - remove protocol prefix
+      const cleanHost = poolConfig.host.replace(/^stratum\+tcp:\/\//, '');
+      
+      this.poolConnection.connect(poolConfig.port, cleanHost, () => {
         clearTimeout(connectionTimeout);
         console.log('✅ Connected to mining pool');
         this.subscribeToPool();
