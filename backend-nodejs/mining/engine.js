@@ -1008,6 +1008,11 @@ class RealMiningWorker extends EventEmitter {
     this.currentJob = null;
     this.nonceStart = id * 0x1000000; // Divide nonce space between workers
     this.nonce = this.nonceStart;
+    
+    // Add mining statistics
+    this.hashCount = 0;
+    this.shareCount = 0;
+    this.startTime = Date.now();
   }
 
   /**
