@@ -1230,9 +1230,20 @@ class RealMiningWorker extends EventEmitter {
   }
 
   /**
-   * Check if hash meets real difficulty target - COMPLETELY REWRITTEN
-   * Using proven cryptocurrency mining standards
+   * Test share detection with known hash values - FOR DEBUGGING
    */
+  testShareDetection() {
+    console.log('🧪 Testing share detection algorithm...');
+    
+    // Test with a hash that should definitely pass (low values)
+    const easyHash = '00000001' + '0'.repeat(56); // Very low hash value
+    const mediumHash = '0000ffff' + '0'.repeat(56); // Medium hash value  
+    const hardHash = 'ffffffff' + '0'.repeat(56); // High hash value (should fail)
+    
+    console.log(`Testing easy hash (should pass): ${this.checkRealDifficulty(easyHash)}`);
+    console.log(`Testing medium hash (might pass): ${this.checkRealDifficulty(mediumHash)}`);
+    console.log(`Testing hard hash (should fail): ${this.checkRealDifficulty(hardHash)}`);
+  }
   checkRealDifficulty(hashHex) {
     try {
       // CRITICAL FIX: Use proper cryptocurrency mining difficulty logic
