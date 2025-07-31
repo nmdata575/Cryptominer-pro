@@ -33,7 +33,7 @@ const DEFAULT_POOLS = {
 };
 
 // Test mode for environments without pool access
-const TEST_MODE = process.env.NODE_ENV !== 'production';
+const TEST_MODE = process.env.FORCE_TEST_MODE === 'true';
 
 class MiningEngine extends EventEmitter {
   constructor(config) {
