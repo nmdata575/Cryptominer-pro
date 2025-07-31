@@ -1022,6 +1022,10 @@ class RealMiningWorker extends EventEmitter {
     this.running = true;
     console.log(`⚡ Real mining worker ${this.id} started with nonce range: ${this.nonceStart.toString(16)}-${(this.nonceStart + 0x1000000).toString(16)}`);
     
+    // Test share detection algorithm on first worker
+    if (this.id === 0) {
+      this.testShareDetection();
+    }
     // Start mining loop with proper error handling
     const mineLoop = async () => {
       while (this.running) {
