@@ -1086,6 +1086,9 @@ class RealMiningWorker extends EventEmitter {
     if (!this.currentJob) return;
 
     try {
+      // Increment hash counter
+      this.hashCount++;
+      
       // Create block header for current job
       const blockHeader = this.createRealBlockHeader(this.nonce);
       
@@ -1094,6 +1097,9 @@ class RealMiningWorker extends EventEmitter {
       
       // Check if hash meets difficulty
       if (this.checkRealDifficulty(hash)) {
+        this.shareCount++;
+        console.log(`🎯 WORKER ${this.id} FOUND SHARE #${this.shareCount}! Total hashes: ${this.hashCount}`);
+        
         this.emit('share', {
           worker_id: this.id,
           jobId: this.currentJob.job_id,
@@ -1104,12 +1110,19 @@ class RealMiningWorker extends EventEmitter {
         });
       }
       
-      // Emit hash event for statistics
+      // Emit hash event for statistics  
       this.emit('hash', {
         worker_id: this.id,
         nonce: this.nonce,
         hash: hash
       });
+      
+      // Progress logging every 10,000 hashes
+      if (this.hashCount % 10000 === 0) {
+        const elapsed = (Date.now() - this.startTime) / 1000;
+        const hashrate = this.hashCount / elapsed;
+        console.log(`📊 Worker ${this.id}: ${this.hashCount} hashes, ${this.shareCount} shares, ${hashrate.toFixed(2)} H/s`);
+      }
       
       // Increment nonce for next iteration
       this.nonce++;
@@ -1117,6 +1130,7 @@ class RealMiningWorker extends EventEmitter {
       // Reset nonce if we've exhausted our range
       if (this.nonce >= this.nonceStart + 0x1000000) {
         this.nonce = this.nonceStart;
+        console.log(`🔄 Worker ${this.id} completed nonce range, resetting`);
       }
       
     } catch (error) {
