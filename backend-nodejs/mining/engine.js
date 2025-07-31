@@ -1011,29 +1011,38 @@ class RealMiningWorker extends EventEmitter {
   }
 
   /**
-   * Start worker
+   * Start worker mining operation
    */
   async start() {
-    if (this.running) return;
+    if (this.running) {
+      console.log(`⚠️ Worker ${this.id} already running`);
+      return;
+    }
 
     this.running = true;
-    this.nonce = this.nonceStart;
+    console.log(`⚡ Real mining worker ${this.id} started with nonce range: ${this.nonceStart.toString(16)}-${(this.nonceStart + 0x1000000).toString(16)}`);
     
-    console.log(`⚡ Real mining worker ${this.id} started`);
-    
-    // Start mining loop with high-performance timing
-    this.miningLoop = setInterval(() => {
-      if (this.running) {
-        // Process multiple hashes per cycle for higher hashrate
-        for (let i = 0; i < 100; i++) {
-          if (this.running) {
-            this.mine();
-          }
+    // Start mining loop with proper error handling
+    const mineLoop = async () => {
+      while (this.running) {
+        try {
+          await this.mine();
+          
+          // Small delay to prevent CPU overload but maintain good hash rate
+          // Removed delay for maximum performance
+          
+        } catch (error) {
+          console.error(`Mining error in worker ${this.id}:`, error);
+          // Continue mining even if individual hash fails
         }
       }
-    }, 1); // High-speed interval
-
-    return true;
+    };
+    
+    // Start the mining loop
+    mineLoop().catch(error => {
+      console.error(`Critical mining loop error in worker ${this.id}:`, error);
+      this.running = false;
+    });
   }
 
   /**
