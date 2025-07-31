@@ -69,11 +69,29 @@ const limiter = rateLimit({
 });
 app.use(limiter);
 
-// CORS configuration
+// CORS configuration  
 const corsOptions = {
-  origin: ['http://localhost:3000', 'http://localhost:8001', '*'],
+  origin: function (origin, callback) {
+    // Allow requests from any origin in development and preview environments
+    const allowedOrigins = [
+      'http://localhost:3000',
+      'http://localhost:8001', 
+      'https://6b3c28ed-76e9-40b0-8270-3f6dee4a4eb6.preview.emergentagent.com'
+    ];
+    
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    
+    // Allow all origins that match the preview domain pattern
+    if (origin.includes('preview.emergentagent.com') || allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+    
+    // Allow all origins in container environments
+    return callback(null, true);
+  },
   methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin'],
   credentials: true,
   optionsSuccessStatus: 200 // Some legacy browsers choke on 204
 };
