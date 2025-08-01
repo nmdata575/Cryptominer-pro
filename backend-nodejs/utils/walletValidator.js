@@ -70,16 +70,38 @@ class WalletValidator {
   }
 
   /**
-   * Validate Litecoin address
+   * Validate Litecoin address using official network parameters
    */
   validateLitecoinAddress(address) {
-    // Legacy addresses start with 'L'
+    const network = LITECOIN_PARAMS.main;
+    
+    // Bech32 native segwit addresses (ltc1...)
+    if (address.startsWith(network.bech32 + '1')) {
+      if (address.length >= 39 && address.length <= 59) {
+        return {
+          valid: true,
+          format: 'bech32',
+          type: 'native_segwit',
+          network: 'mainnet',
+          prefix: network.bech32
+        };
+      }
+      return {
+        valid: false,
+        error: 'Invalid Litecoin bech32 address length'
+      };
+    }
+    
+    // Legacy P2PKH addresses (L... - version byte 0x30)
     if (address.startsWith('L')) {
       if (address.length >= 27 && address.length <= 34) {
+        // Additional validation could include base58 decoding here
         return {
           valid: true,
           format: 'base58',
-          type: 'legacy'
+          type: 'legacy_p2pkh',
+          network: 'mainnet',
+          version_byte: '0x30'
         };
       }
       return {
@@ -88,39 +110,44 @@ class WalletValidator {
       };
     }
     
-    // Segwit addresses start with 'ltc1'
-    if (address.startsWith('ltc1')) {
-      if (address.length >= 39 && address.length <= 59) {
-        return {
-          valid: true,
-          format: 'bech32',
-          type: 'segwit'
-        };
-      }
-      return {
-        valid: false,
-        error: 'Invalid Litecoin segwit address length'
-      };
-    }
-    
-    // Multisig addresses start with 'M' or '3'
-    if (address.startsWith('M') || address.startsWith('3')) {
-      if (address.length >= 27 && address.length <= 35) {
+    // Script hash addresses (M... - version byte 0x32)
+    if (address.startsWith('M')) {
+      if (address.length >= 27 && address.length <= 34) {
         return {
           valid: true,
           format: 'base58',
-          type: 'multisig'
+          type: 'script_hash_p2sh',
+          network: 'mainnet',
+          version_byte: '0x32'
         };
       }
       return {
         valid: false,
-        error: 'Invalid Litecoin multisig address length'
+        error: 'Invalid Litecoin script hash address length'
       };
     }
     
+    // Backward compatibility addresses (3... - version byte 0x05)
+    if (address.startsWith('3')) {
+      if (address.length >= 27 && address.length <= 34) {
+        return {
+          valid: true,
+          format: 'base58',
+          type: 'script_hash_compat',
+          network: 'mainnet',
+          version_byte: '0x05',
+          note: 'Legacy compatibility format'
+        };
+      }
+      return {
+        valid: false,
+        error: 'Invalid Litecoin compatibility address length'
+      };
+    }
+
     return {
       valid: false,
-      error: 'Invalid Litecoin address format'
+      error: 'Litecoin addresses must start with L, M, 3, or ltc1'
     };
   }
 
