@@ -1256,9 +1256,9 @@ class RealMiningWorker extends EventEmitter {
   }
 
   /**
-   * Calculate merkle root from coinbase and merkle branch
+   * Calculate merkle root from coinbase and merkle branch (legacy method with parameters)
    */
-  calculateMerkleRoot(coinbase, merkleBranch) {
+  calculateMerkleRootWithParams(coinbase, merkleBranch) {
     // Hash coinbase transaction
     let hash = crypto.createHash('sha256').update(Buffer.from(coinbase, 'hex')).digest();
     hash = crypto.createHash('sha256').update(hash).digest();
