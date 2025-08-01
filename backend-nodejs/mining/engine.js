@@ -1205,59 +1205,72 @@ class RealMiningWorker extends EventEmitter {
   }
 
   /**
-   * Create proper 80-byte cryptocurrency block header (Litecoin/Bitcoin standard)
+   * Create proper 80-byte cryptocurrency block header (Official Litecoin Standard)
    */
   createCryptocurrencyBlockHeader(nonce) {
     if (!this.currentJob) {
-      // Generate a test block header if no job available
+      // Generate a test block header using official Litecoin parameters
       const header = Buffer.alloc(80);
       
-      // Fill with test data that maintains the 80-byte structure
-      header.writeUInt32LE(0x00000001, 0);  // Version (4 bytes)
-      header.fill(0, 4, 36);                // Previous block hash (32 bytes)
-      header.fill(0, 36, 68);               // Merkle root (32 bytes)  
-      header.writeUInt32LE(Math.floor(Date.now() / 1000), 68); // Timestamp (4 bytes)
-      header.writeUInt32LE(0x1d00ffff, 72); // Bits/difficulty (4 bytes)
-      header.writeUInt32LE(nonce, 76);      // Nonce (4 bytes)
+      // Version (4 bytes) - Litecoin standard version
+      header.writeUInt32LE(0x00000001, 0);
+      
+      // Previous block hash (32 bytes) - Use zeros for test
+      header.fill(0, 4, 36);
+      
+      // Merkle root (32 bytes) - Use zeros for test
+      header.fill(0, 36, 68);
+      
+      // Timestamp (4 bytes) - Current time
+      header.writeUInt32LE(Math.floor(Date.now() / 1000), 68);
+      
+      // Difficulty bits (4 bytes) - Default Litecoin difficulty
+      header.writeUInt32LE(0x1d00ffff, 72);
+      
+      // Nonce (4 bytes) - Mining nonce
+      header.writeUInt32LE(nonce, 76);
       
       return header;
     }
 
-    // Create proper block header from pool job
+    // Create official Litecoin block header from pool job
     const header = Buffer.alloc(80);
     
     try {
-      // Version (4 bytes) - little endian
+      // Version (4 bytes) - little endian, Litecoin protocol
       const version = parseInt(this.currentJob.version || '00000001', 16);
       header.writeUInt32LE(version, 0);
       
-      // Previous block hash (32 bytes) - reverse byte order for little endian
+      // Previous block hash (32 bytes) - reverse for little endian (Litecoin standard)
       const prevHash = Buffer.from(this.currentJob.prevhash || '00'.repeat(32), 'hex');
       prevHash.reverse().copy(header, 4);
       
-      // Merkle root (32 bytes) - constructed from coinbase and merkle branch
-      const merkleRoot = this.calculateMerkleRoot();
+      // Merkle root (32 bytes) - calculated using official Litecoin method
+      const merkleRoot = this.calculateLitecoinMerkleRoot();
       merkleRoot.copy(header, 36);
       
-      // Timestamp (4 bytes) - little endian
+      // Timestamp (4 bytes) - little endian, Unix timestamp
       const timestamp = parseInt(this.currentJob.ntime || Math.floor(Date.now() / 1000).toString(16), 16);
       header.writeUInt32LE(timestamp, 68);
       
-      // Difficulty bits (4 bytes) - little endian  
+      // Difficulty bits (4 bytes) - little endian, Litecoin network difficulty
       const bits = parseInt(this.currentJob.nbits || '1d00ffff', 16);
       header.writeUInt32LE(bits, 72);
       
-      // Nonce (4 bytes) - little endian
+      // Nonce (4 bytes) - little endian, mining nonce
       header.writeUInt32LE(nonce, 76);
       
       return header;
       
     } catch (error) {
-      console.error('Block header creation error:', error);
+      console.error('Litecoin block header creation error:', error);
       
-      // Fallback to simple header
+      // Fallback to minimal valid header
       const fallbackHeader = Buffer.alloc(80);
-      fallbackHeader.writeUInt32LE(nonce, 76);
+      fallbackHeader.writeUInt32LE(0x00000001, 0);      // Version
+      fallbackHeader.writeUInt32LE(Math.floor(Date.now() / 1000), 68); // Timestamp
+      fallbackHeader.writeUInt32LE(0x1d00ffff, 72);     // Bits
+      fallbackHeader.writeUInt32LE(nonce, 76);          // Nonce
       return fallbackHeader;
     }
   }
