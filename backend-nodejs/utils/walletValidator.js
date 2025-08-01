@@ -1,9 +1,31 @@
 /**
  * Wallet Address Validator - Node.js Implementation
- * Validates cryptocurrency wallet addresses
+ * Validates cryptocurrency wallet addresses using official network parameters
  */
 
 const crypto = require('crypto');
+
+// Official Litecoin Network Parameters
+const LITECOIN_PARAMS = {
+  main: {
+    versions: {
+      public: 0x30,      // 'L' prefix for legacy addresses
+      scripthash: 0x32,  // 'M' prefix for script addresses  
+      scripthash2: 0x05, // '3' prefix for backward compatibility
+      private: 0xb0,     // Private key version
+    },
+    bech32: 'ltc'        // Bech32 prefix for native segwit
+  },
+  test: {
+    versions: {
+      public: 0x6f,      // Testnet public addresses
+      scripthash: 0x3a,  // Testnet script addresses
+      scripthash2: 0xc4, // Testnet compatibility
+      private: 0xef,     // Testnet private keys
+    },
+    bech32: 'tltc'       // Testnet bech32 prefix
+  }
+};
 
 class WalletValidator {
   /**
