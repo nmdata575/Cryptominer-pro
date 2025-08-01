@@ -1330,8 +1330,8 @@ class RealMiningWorker extends EventEmitter {
   }
 
   /**
-   * Professional Cryptocurrency Scrypt Implementation
-   * Matches the reference C implementation exactly
+   * ricmoo/scrypt-js Implementation - Professional Cryptocurrency Scrypt
+   * Uses the proven ricmoo implementation for maximum compatibility
    */
   cryptoScryptHash(blockHeader) {
     try {
@@ -1351,13 +1351,13 @@ class RealMiningWorker extends EventEmitter {
         input = temp;
       }
       
-      // Use the exact scrypt parameters from the reference implementation
-      // scrypt(1024, 1, 1, 256) - N=1024, r=1, p=1, output=32 bytes
-      const scryptsy = require('scryptsy');
+      // Use ricmoo/scrypt-js implementation
+      const ricmooScrypt = require('../utils/ricmoo-scrypt');
       
-      // Critical: Use input as both password AND salt (matches reference C code)
+      // CRITICAL: Use input as both password AND salt (matches reference C code)
+      // This follows the exact pattern from the C implementation:
       // PBKDF2_SHA256((const uint8_t *)input, 80, (const uint8_t *)input, 80, 1, B, 128);
-      const result = scryptsy(
+      const result = ricmooScrypt.syncScrypt(
         input,           // password (80 bytes)
         input,           // salt (80 bytes) - SAME AS PASSWORD
         1024,            // N (exactly 1024)
@@ -1366,12 +1366,13 @@ class RealMiningWorker extends EventEmitter {
         32               // output length (32 bytes = 256 bits)
       );
       
-      return result.toString('hex');
+      return Buffer.from(result).toString('hex');
       
     } catch (error) {
-      console.error('Crypto scrypt error:', error);
+      console.error('ricmoo scrypt error:', error);
       
-      // Fallback only if scrypt completely fails
+      // Fallback only if ricmoo scrypt completely fails
+      const crypto = require('crypto');
       const hash1 = crypto.createHash('sha256').update(blockHeader).digest();
       const hash2 = crypto.createHash('sha256').update(hash1).digest();
       return hash2.toString('hex');
