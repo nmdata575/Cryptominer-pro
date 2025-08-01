@@ -398,6 +398,33 @@ app.get('/api/mining/ai-insights', async (req, res) => {
   }
 });
 
+// Enhanced AI insights with advanced ML - NEW ENDPOINT
+app.get('/api/mining/ai-insights-advanced', async (req, res) => {
+  try {
+    // Get historical data from AI predictor
+    const historicalData = aiPredictor.historicalData || [];
+    
+    // Get advanced optimization from enhanced AI
+    const advancedAnalysis = await enhancedAI.getAdvancedOptimization(
+      currentMiningEngine, 
+      historicalData
+    );
+    
+    res.json({
+      ...advancedAnalysis,
+      data_points: historicalData.length,
+      mining_engine_status: currentMiningEngine ? 'connected' : 'disconnected',
+      ai_version: '2.0_enhanced'
+    });
+  } catch (error) {
+    console.error('Enhanced AI insights error:', error);
+    res.status(500).json({ 
+      error: 'Failed to get enhanced AI insights',
+      fallback: await enhancedAI.getFailsafeRecommendations()
+    });
+  }
+});
+
 // ==============================
 // Enhanced Mining Statistics API
 // ==============================
