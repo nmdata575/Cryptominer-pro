@@ -219,6 +219,10 @@ class MiningEngine extends EventEmitter {
         clearTimeout(connectionTimeout);
         console.log('✅ Connected to mining pool');
         this.subscribeToPool();
+        // Add slight delay then authorize
+        setTimeout(() => {
+          this.authorizeWithPool();
+        }, 1000);
         resolve();
       });
 
