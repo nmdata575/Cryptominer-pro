@@ -1,0 +1,106 @@
+MIT License
+
+Copyright (c) 2025 CryptoMiner Pro Team
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+---
+
+## Third-Party Licenses
+
+This project includes third-party libraries with their own licenses:
+
+### ricmoo-scrypt
+Copyright (c) 2013-2020 Richard Moore
+Licensed under the MIT License
+https://github.com/ricmoo/scrypt-js
+
+### Node.js
+Copyright Node.js contributors. All rights reserved.
+Licensed under the MIT License
+https://nodejs.org/
+
+### React
+Copyright (c) Facebook, Inc. and its affiliates.
+Licensed under the MIT License
+https://reactjs.org/
+
+### MongoDB
+Copyright (c) 2008-2023 MongoDB Inc.
+Licensed under the Server Side Public License (SSPL)
+https://www.mongodb.com/
+
+### Express.js
+Copyright (c) 2009-2014 TJ Holowaychuk <tj@vision-media.ca>
+Copyright (c) 2013-2014 Roman Shtylman <shtylman+expressjs@gmail.com>
+Copyright (c) 2014-2015 Douglas Christopher Wilson <doug@somethingdoug.com>
+Licensed under the MIT License
+https://expressjs.com/
+
+### Socket.io
+Copyright (c) 2014-2018 Automattic <dev@cloudup.com>
+Licensed under the MIT License
+https://socket.io/
+
+### Mongoose
+Copyright (c) 2010 LearnBoost <dev@learnboost.com>
+Licensed under the MIT License
+https://mongoosejs.com/
+
+### Nginx
+Copyright (C) 2002-2023 Igor Sysoev
+Copyright (C) 2011-2023 Nginx, Inc.
+Licensed under the 2-clause BSD License
+https://nginx.org/
+
+---
+
+## Disclaimer
+
+### Mining Disclaimer
+This software is designed for educational and experimental purposes. Cryptocurrency mining involves financial risks and significant computational resources. Users are responsible for:
+
+- Understanding local laws and regulations regarding cryptocurrency mining
+- Ensuring adequate cooling and power supply for mining operations  
+- Monitoring system resources and preventing hardware damage
+- Complying with pool terms of service and mining regulations
+- Calculating profitability and electricity costs
+
+### Performance Disclaimer
+Mining performance depends on various factors including:
+- Hardware specifications (CPU, RAM, cooling)
+- Network connectivity and pool latency
+- Cryptocurrency difficulty and market conditions
+- System configuration and optimization
+
+### Security Disclaimer  
+Users are responsible for:
+- Securing their cryptocurrency wallets and private keys
+- Implementing appropriate network security measures
+- Keeping the software updated with security patches
+- Monitoring for unauthorized access or suspicious activity
+
+### No Warranty
+This software is provided "as is" without any warranties. The developers are not liable for:
+- Loss of cryptocurrency or mining rewards
+- Hardware damage or system instability
+- Network security breaches or data loss
+- Any direct or indirect damages from software use
+
+By using this software, you acknowledge that you understand these risks and agree to use the software at your own discretion and responsibility.
