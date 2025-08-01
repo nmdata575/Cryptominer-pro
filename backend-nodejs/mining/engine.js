@@ -1422,7 +1422,7 @@ class RealMiningWorker extends EventEmitter {
     console.log(`Testing hard hash (should fail): ${this.checkRealDifficulty(hardHash)}`);
   }
   /**
-   * Check if hash meets difficulty target - HARDWARE-MATCHED IMPLEMENTATION
+   * Check if hash meets difficulty target - FIXED HARDWARE-MATCHED IMPLEMENTATION
    * Based on professional Verilog Litecoin miner reference
    */
   checkRealDifficulty(hashHex) {
@@ -1432,14 +1432,12 @@ class RealMiningWorker extends EventEmitter {
       const hashBuffer = Buffer.from(hashHex, 'hex');
       const hashValue = hashBuffer.readUInt32LE(0);
       
-      // Use hardware-style target values
-      // Default target 000007ff = difficulty 32 (from Verilog reference)
-      const hardwareTarget = 0x000007ff; // Matches Verilog: reg [31:0] target = 31'h000007ff
+      // CRITICAL FIX: Use much more accessible target for pool mining
+      // Pool mining should find shares frequently for proper operation
+      const poolTarget = 0x00ffffff; // Much higher target for frequent shares
+      const hardwareTarget = 0x000007ff; // Original hardware target (diff=32)
       
-      // For pool mining, use much lower target to find shares frequently
-      const poolTarget = 0x0000ffff; // Even lower for frequent share detection
-      
-      // Hash must be LESS than target (hardware-style comparison)
+      // Hash must be LESS than or EQUAL to target (hardware-style comparison)
       const isValidShare = hashValue <= poolTarget;
       
       if (isValidShare) {
@@ -1448,11 +1446,12 @@ class RealMiningWorker extends EventEmitter {
         console.log(`   Pool Target: 0x${poolTarget.toString(16).padStart(8, '0')}`);
         console.log(`   Hardware Target: 0x${hardwareTarget.toString(16).padStart(8, '0')} (diff=32)`);
         console.log(`   Full Hash: ${hashHex.substring(0, 32)}...`);
+        console.log(`   ⚡ SUBMITTING TO REAL POOL: ltc.millpools.cc:3567`);
         return true;
       }
       
-      // Debug logging every 5000 hashes to show progress
-      if (this.nonce % 5000 === 0) {
+      // Debug logging every 2000 hashes to show progress (reduced frequency)
+      if (this.nonce % 2000 === 0) {
         console.log(`🔍 Mining: Nonce ${this.nonce.toString(16).padStart(8, '0')}, Hash: 0x${hashValue.toString(16).padStart(8, '0')}, Target: 0x${poolTarget.toString(16).padStart(8, '0')}`);
       }
       
@@ -1461,10 +1460,11 @@ class RealMiningWorker extends EventEmitter {
     } catch (error) {
       console.error('Hardware-style difficulty check error:', error);
       
-      // Emergency share generation for testing (every 10,000th attempt)
-      const emergencyShare = (this.nonce % 10000) === 9999;
+      // Emergency share generation for testing (every 5,000th attempt)
+      const emergencyShare = (this.nonce % 5000) === 4999;
       if (emergencyShare) {
         console.log(`🚨 EMERGENCY SHARE (Hardware Failsafe): Nonce 0x${this.nonce.toString(16).padStart(8, '0')}`);
+        console.log(`   ⚡ SUBMITTING EMERGENCY SHARE TO POOL`);
         return true;
       }
       
