@@ -60,7 +60,7 @@ class AIPredictor {
   }
 
   /**
-   * Collect current mining data
+   * Collect current mining data - Enhanced for real mining integration
    */
   collectCurrentData(miningEngine) {
     const timestamp = Date.now();
@@ -71,16 +71,65 @@ class AIPredictor {
       uptime: miningEngine ? miningEngine.getUptime() : 0,
       cpu_usage: process.cpuUsage(),
       memory_usage: process.memoryUsage(),
-      system_load: require('os').loadavg()
+      system_load: require('os').loadavg(),
+      real_data_source: !!miningEngine
     };
 
-    if (miningEngine) {
-      const status = miningEngine.getStatus();
-      data.stats = status.stats;
-      data.config = status.config;
+    if (miningEngine && typeof miningEngine.getStatus === 'function') {
+      try {
+        const status = miningEngine.getStatus();
+        data.stats = status.stats || {};
+        data.config = status.config || {};
+        data.pool_connected = status.pool_connected || false;
+        data.test_mode = status.test_mode !== undefined ? status.test_mode : true;
+        data.difficulty = status.difficulty || 1;
+        data.current_job = status.current_job;
+        
+        // Enhanced mining metrics
+        data.efficiency = data.stats.efficiency || 0;
+        data.shares_accepted = data.stats.accepted_shares || 0;
+        data.shares_rejected = data.stats.rejected_shares || 0;
+        data.blocks_found = data.stats.blocks_found || 0;
+        
+        // Calculate performance metrics
+        data.shares_ratio = data.shares_accepted > 0 ? 
+          (data.shares_accepted / (data.shares_accepted + data.shares_rejected)) : 0;
+        data.performance_score = this.calculatePerformanceScore(data);
+        
+      } catch (error) {
+        console.error('Error collecting mining data:', error);
+        data.collection_error = error.message;
+      }
     }
 
     return data;
+  }
+
+  /**
+   * Calculate performance score based on mining metrics
+   */
+  calculatePerformanceScore(data) {
+    let score = 0;
+    
+    // Hash rate contribution (40%)
+    if (data.hashrate > 0) {
+      score += Math.min(data.hashrate / 1000, 1) * 40;
+    }
+    
+    // Shares ratio contribution (30%)
+    score += data.shares_ratio * 30;
+    
+    // Efficiency contribution (20%)
+    if (data.efficiency > 0) {
+      score += Math.min(data.efficiency / 100, 1) * 20;
+    }
+    
+    // Pool connection contribution (10%)
+    if (data.pool_connected && !data.test_mode) {
+      score += 10;
+    }
+    
+    return Math.round(score);
   }
 
   /**
