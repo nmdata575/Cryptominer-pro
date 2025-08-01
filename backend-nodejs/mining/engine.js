@@ -1219,28 +1219,49 @@ class RealMiningWorker extends EventEmitter {
   }
 
   /**
-   * Optimized Scrypt hash for higher performance
+   * Professional Cryptocurrency Scrypt Implementation
+   * Matches the reference C implementation exactly
    */
-  simplifiedScryptHash(data) {
+  cryptoScryptHash(blockHeader) {
     try {
-      // CRITICAL FIX: Always use real scrypt algorithm for legitimate mining
+      // Ensure input is exactly 80 bytes (standard cryptocurrency block header)
+      let input;
+      if (typeof blockHeader === 'string') {
+        // Convert hex string to buffer
+        input = Buffer.from(blockHeader, 'hex');
+      } else {
+        input = blockHeader;
+      }
+      
+      // Pad or truncate to exactly 80 bytes
+      if (input.length !== 80) {
+        const temp = Buffer.alloc(80);
+        input.copy(temp, 0, 0, Math.min(input.length, 80));
+        input = temp;
+      }
+      
+      // Use the exact scrypt parameters from the reference implementation
+      // scrypt(1024, 1, 1, 256) - N=1024, r=1, p=1, output=32 bytes
       const scryptsy = require('scryptsy');
       
-      // Standard Litecoin scrypt parameters
-      const N = 1024;  // Standard for Litecoin
-      const r = 1;     // Standard
-      const p = 1;     // Standard
+      // Critical: Use input as both password AND salt (matches reference C code)
+      // PBKDF2_SHA256((const uint8_t *)input, 80, (const uint8_t *)input, 80, 1, B, 128);
+      const result = scryptsy(
+        input,           // password (80 bytes)
+        input,           // salt (80 bytes) - SAME AS PASSWORD
+        1024,            // N (exactly 1024)
+        1,               // r (exactly 1)  
+        1,               // p (exactly 1)
+        32               // output length (32 bytes = 256 bits)
+      );
       
-      // Use proper salt (4 bytes of zero for cryptocurrency mining)
-      const salt = Buffer.alloc(4);
-      
-      // Perform real scrypt calculation
-      const result = scryptsy(data, salt, N, r, p, 32);
       return result.toString('hex');
+      
     } catch (error) {
-      console.error('Scrypt error (falling back to crypto):', error);
-      // Emergency fallback only if scrypt fails
-      const hash1 = crypto.createHash('sha256').update(data).digest();
+      console.error('Crypto scrypt error:', error);
+      
+      // Fallback only if scrypt completely fails
+      const hash1 = crypto.createHash('sha256').update(blockHeader).digest();
       const hash2 = crypto.createHash('sha256').update(hash1).digest();
       return hash2.toString('hex');
     }
