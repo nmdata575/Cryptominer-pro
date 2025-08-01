@@ -1102,7 +1102,7 @@ class RealMiningWorker extends EventEmitter {
   }
 
   /**
-   * Real mining function with actual scrypt algorithm
+   * Real mining function with cryptocurrency-standard scrypt algorithm
    */
   async mine() {
     if (!this.currentJob) return;
@@ -1111,16 +1111,18 @@ class RealMiningWorker extends EventEmitter {
       // Increment hash counter
       this.hashCount++;
       
-      // Create block header for current job
-      const blockHeader = this.createRealBlockHeader(this.nonce);
+      // Create PROPER 80-byte cryptocurrency block header
+      const blockHeader = this.createCryptocurrencyBlockHeader(this.nonce);
       
-      // Calculate actual scrypt hash (simplified for stability)
-      const hash = this.simplifiedScryptHash(blockHeader);
+      // Use professional cryptocurrency scrypt implementation
+      const hash = this.cryptoScryptHash(blockHeader);
       
       // Check if hash meets difficulty
       if (this.checkRealDifficulty(hash)) {
         this.shareCount++;
         console.log(`🎯 WORKER ${this.id} FOUND SHARE #${this.shareCount}! Total hashes: ${this.hashCount}`);
+        console.log(`   Block Header (80 bytes): ${blockHeader.toString('hex').substring(0, 32)}...`);
+        console.log(`   Scrypt Hash: ${hash.substring(0, 32)}...`);
         
         this.emit('share', {
           worker_id: this.id,
