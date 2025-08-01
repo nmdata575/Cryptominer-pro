@@ -379,14 +379,17 @@ app.post('/api/mining/stop', async (req, res) => {
   }
 });
 
-// AI insights endpoint
+// AI insights endpoint - Enhanced with real mining data
 app.get('/api/mining/ai-insights', async (req, res) => {
   try {
-    const insights = await aiPredictor.getInsights();
+    // Pass current mining engine to AI predictor for real data analysis
+    const insights = await aiPredictor.getInsights(currentMiningEngine);
     
     res.json({
       ...insights,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
+      mining_engine_connected: !!currentMiningEngine,
+      real_data_available: currentMiningEngine ? currentMiningEngine.isMining() : false
     });
   } catch (error) {
     console.error('AI insights error:', error);
