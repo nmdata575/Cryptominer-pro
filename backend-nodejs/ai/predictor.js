@@ -147,34 +147,297 @@ class AIPredictor {
   }
 
   /**
-   * Generate predictions based on historical data
+   * Generate predictions based on historical data - Enhanced with ML algorithms
    */
   generatePredictions() {
     if (this.historicalData.length < 10) {
       return {
         hashrate_trend: 'insufficient_data',
         efficiency_prediction: 'learning',
-        optimal_settings: 'analyzing'
+        optimal_settings: 'analyzing',
+        ml_confidence: 0.1
       };
     }
 
     const recentData = this.historicalData.slice(-50);
     
-    // Hashrate trend analysis
-    const hashrateTrend = this.analyzeHashrateTrend(recentData);
+    // Enhanced hashrate trend analysis with regression
+    const hashrateTrend = this.analyzeHashrateTrendML(recentData);
     
-    // Efficiency prediction
-    const efficiencyPrediction = this.predictEfficiency(recentData);
+    // Machine learning-based efficiency prediction
+    const efficiencyPrediction = this.predictEfficiencyML(recentData);
     
-    // Optimal settings recommendation
-    const optimalSettings = this.predictOptimalSettings(recentData);
+    // AI-optimized settings recommendation
+    const optimalSettings = this.predictOptimalSettingsML(recentData);
+    
+    // Performance forecasting
+    const performanceForecast = this.generatePerformanceForecast(recentData);
     
     return {
       hashrate_trend: hashrateTrend,
       efficiency_prediction: efficiencyPrediction,
       optimal_settings: optimalSettings,
-      confidence: this.calculateConfidence()
+      performance_forecast: performanceForecast,
+      confidence: this.calculateMLConfidence(),
+      ml_model_version: '2.0',
+      data_quality_score: this.calculateDataQuality(recentData)
     };
+  }
+
+  /**
+   * Machine Learning-enhanced hashrate trend analysis
+   */
+  analyzeHashrateTrendML(data) {
+    if (data.length < 5) return { trend: 'insufficient_data', confidence: 0 };
+    
+    const hashrates = data.map(d => d.hashrate).filter(h => h > 0);
+    if (hashrates.length < 3) return { trend: 'no_hashrate_data', confidence: 0 };
+    
+    // Linear regression for trend analysis
+    const regression = this.simpleLinearRegression(hashrates);
+    const trendStrength = Math.abs(regression.slope);
+    
+    let trend = 'stable';
+    if (regression.slope > 0.1 && trendStrength > 10) trend = 'increasing';
+    else if (regression.slope < -0.1 && trendStrength > 10) trend = 'decreasing';
+    
+    // Calculate prediction for next period
+    const nextHashrate = regression.intercept + (regression.slope * (hashrates.length + 1));
+    
+    return {
+      trend: trend,
+      slope: regression.slope,
+      confidence: Math.min(regression.correlation, 0.95),
+      predicted_next_hashrate: Math.max(0, nextHashrate),
+      trend_strength: trendStrength
+    };
+  }
+
+  /**
+   * Simple linear regression implementation
+   */
+  simpleLinearRegression(values) {
+    const n = values.length;
+    const indices = Array.from({length: n}, (_, i) => i);
+    
+    const sumX = indices.reduce((a, b) => a + b, 0);
+    const sumY = values.reduce((a, b) => a + b, 0);
+    const sumXY = indices.reduce((sum, x, i) => sum + x * values[i], 0);
+    const sumXX = indices.reduce((sum, x) => sum + x * x, 0);
+    
+    const slope = (n * sumXY - sumX * sumY) / (n * sumXX - sumX * sumX);
+    const intercept = (sumY - slope * sumX) / n;
+    
+    // Calculate correlation coefficient
+    const meanX = sumX / n;
+    const meanY = sumY / n;
+    const ssxy = indices.reduce((sum, x, i) => sum + (x - meanX) * (values[i] - meanY), 0);
+    const ssxx = indices.reduce((sum, x) => sum + (x - meanX) ** 2, 0);
+    const ssyy = values.reduce((sum, y) => sum + (y - meanY) ** 2, 0);
+    const correlation = ssxy / Math.sqrt(ssxx * ssyy);
+    
+    return { slope, intercept, correlation };
+  }
+
+  /**
+   * Machine Learning-based efficiency prediction
+   */
+  predictEfficiencyML(data) {
+    const efficiencyData = data
+      .filter(d => d.efficiency !== undefined && d.efficiency > 0)
+      .map(d => ({
+        efficiency: d.efficiency,
+        hashrate: d.hashrate || 0,
+        performance_score: d.performance_score || 0,
+        shares_ratio: d.shares_ratio || 0
+      }));
+    
+    if (efficiencyData.length < 3) {
+      return {
+        predicted_efficiency: 0,
+        trend: 'unknown',
+        recommendation: 'collect_more_data',
+        ml_confidence: 0.1
+      };
+    }
+    
+    // Multi-factor efficiency prediction
+    const weights = {
+      current_efficiency: 0.4,
+      hashrate_factor: 0.3,
+      shares_factor: 0.2,
+      performance_factor: 0.1
+    };
+    
+    const recent = efficiencyData.slice(-5);
+    const avgEfficiency = recent.reduce((sum, d) => sum + d.efficiency, 0) / recent.length;
+    const avgHashrate = recent.reduce((sum, d) => sum + d.hashrate, 0) / recent.length;
+    const avgShares = recent.reduce((sum, d) => sum + d.shares_ratio, 0) / recent.length;
+    const avgPerformance = recent.reduce((sum, d) => sum + d.performance_score, 0) / recent.length;
+    
+    // Weighted prediction
+    const predictedEfficiency = 
+      (avgEfficiency * weights.current_efficiency) +
+      (Math.min(avgHashrate / 500, 1) * 100 * weights.hashrate_factor) +
+      (avgShares * 100 * weights.shares_factor) +
+      (avgPerformance * weights.performance_factor);
+    
+    const trend = this.calculateTrend(efficiencyData.map(d => d.efficiency));
+    
+    return {
+      predicted_efficiency: Math.round(predictedEfficiency),
+      trend: trend,
+      recommendation: predictedEfficiency > 90 ? 'excellent' : 
+                     predictedEfficiency > 70 ? 'good' : 'needs_optimization',
+      contributing_factors: {
+        efficiency: avgEfficiency,
+        hashrate_impact: avgHashrate,
+        shares_impact: avgShares,
+        performance_impact: avgPerformance
+      },
+      ml_confidence: Math.min(efficiencyData.length / 20, 0.9)
+    };
+  }
+
+  /**
+   * AI-optimized settings recommendation
+   */
+  predictOptimalSettingsML(data) {
+    if (data.length < 5) {
+      return {
+        threads: 'auto',
+        intensity: 'auto',
+        optimization: 'learning',
+        ai_version: '2.0'
+      };
+    }
+    
+    // Find optimal performance configurations
+    const performanceData = data.filter(d => d.performance_score > 0);
+    
+    if (performanceData.length < 3) {
+      return {
+        threads: 'auto',
+        intensity: 'auto',
+        optimization: 'insufficient_performance_data'
+      };
+    }
+    
+    // ML-based optimization
+    const bestPerformers = performanceData
+      .sort((a, b) => b.performance_score - a.performance_score)
+      .slice(0, Math.min(5, performanceData.length));
+    
+    const avgOptimalThreads = bestPerformers.reduce((sum, d) => 
+      sum + (d.config?.threads || 4), 0) / bestPerformers.length;
+    const avgOptimalIntensity = bestPerformers.reduce((sum, d) => 
+      sum + (d.config?.intensity || 0.8), 0) / bestPerformers.length;
+    
+    return {
+      threads: Math.round(avgOptimalThreads),
+      intensity: parseFloat(avgOptimalIntensity.toFixed(2)),
+      optimization: 'ml_optimized',
+      confidence: Math.min(bestPerformers.length / 5, 0.9),
+      based_on_samples: bestPerformers.length,
+      expected_performance_score: Math.round(
+        bestPerformers.reduce((sum, d) => sum + d.performance_score, 0) / bestPerformers.length
+      )
+    };
+  }
+
+  /**
+   * Generate performance forecast
+   */
+  generatePerformanceForecast(data) {
+    if (data.length < 10) {
+      return { status: 'insufficient_data_for_forecast' };
+    }
+    
+    const performanceScores = data
+      .filter(d => d.performance_score > 0)
+      .map(d => d.performance_score);
+    
+    if (performanceScores.length < 5) {
+      return { status: 'insufficient_performance_data' };
+    }
+    
+    const regression = this.simpleLinearRegression(performanceScores);
+    const forecast = [];
+    
+    // Generate 24-hour forecast (hourly predictions)
+    for (let hour = 1; hour <= 24; hour++) {
+      const predictedScore = regression.intercept + (regression.slope * (performanceScores.length + hour));
+      forecast.push({
+        hour: hour,
+        predicted_performance: Math.max(0, Math.min(100, Math.round(predictedScore))),
+        confidence: Math.max(0.3, 0.9 - (hour * 0.02))
+      });
+    }
+    
+    return {
+      forecast: forecast,
+      trend: regression.slope > 0.1 ? 'improving' : regression.slope < -0.1 ? 'degrading' : 'stable',
+      overall_confidence: Math.abs(regression.correlation)
+    };
+  }
+
+  /**
+   * Calculate ML confidence score
+   */
+  calculateMLConfidence() {
+    const dataPoints = this.historicalData.length;
+    const realData = this.historicalData.filter(d => d.real_data_source).length;
+    
+    let confidence = 0.1;
+    
+    // Base confidence from data quantity
+    if (dataPoints >= 100) confidence += 0.4;
+    else if (dataPoints >= 50) confidence += 0.3;
+    else if (dataPoints >= 20) confidence += 0.2;
+    else if (dataPoints >= 10) confidence += 0.1;
+    
+    // Bonus for real mining data
+    if (realData > 0) {
+      const realDataRatio = realData / dataPoints;
+      confidence += realDataRatio * 0.3;
+    }
+    
+    // Time series consistency bonus
+    const recentData = this.historicalData.slice(-20);
+    if (recentData.length >= 10) {
+      const consistentData = recentData.filter(d => d.hashrate > 0 && d.is_mining).length;
+      confidence += (consistentData / recentData.length) * 0.2;
+    }
+    
+    return Math.min(confidence, 0.95);
+  }
+
+  /**
+   * Calculate data quality score
+   */
+  calculateDataQuality(data) {
+    if (data.length === 0) return 0;
+    
+    let qualityScore = 0;
+    const total = data.length;
+    
+    // Real data availability
+    const realDataPoints = data.filter(d => d.real_data_source).length;
+    qualityScore += (realDataPoints / total) * 40;
+    
+    // Active mining data
+    const activeMiningPoints = data.filter(d => d.is_mining && d.hashrate > 0).length;
+    qualityScore += (activeMiningPoints / total) * 30;
+    
+    // Complete data points
+    const completePoints = data.filter(d => 
+      d.hashrate !== undefined && 
+      d.efficiency !== undefined && 
+      d.performance_score !== undefined
+    ).length;
+    qualityScore += (completePoints / total) * 30;
+    
+    return Math.round(qualityScore);
   }
 
   /**
