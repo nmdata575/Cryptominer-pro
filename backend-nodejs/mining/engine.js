@@ -1276,20 +1276,20 @@ class RealMiningWorker extends EventEmitter {
   }
 
   /**
-   * Calculate merkle root from coinbase and merkle branch
+   * Calculate Litecoin-standard merkle root from coinbase and merkle branch
    */
-  calculateMerkleRoot() {
+  calculateLitecoinMerkleRoot() {
     try {
-      // Build coinbase transaction
+      // Build coinbase transaction using Litecoin standard
       const coinbase = (this.currentJob.coinb1 || '') + 
                       (this.engine.config.wallet_address || '00'.repeat(25)) + 
                       (this.currentJob.coinb2 || '');
       
-      // Calculate double SHA256 of coinbase
+      // Calculate double SHA256 of coinbase (Litecoin standard)
       let hash = crypto.createHash('sha256').update(Buffer.from(coinbase, 'hex')).digest();
       hash = crypto.createHash('sha256').update(hash).digest();
       
-      // Apply merkle branch (if available)
+      // Apply merkle branch using Litecoin protocol (if available)
       if (this.currentJob.merkle_branch && this.currentJob.merkle_branch.length > 0) {
         for (const branch of this.currentJob.merkle_branch) {
           const branchBuffer = Buffer.from(branch, 'hex');
@@ -1299,12 +1299,12 @@ class RealMiningWorker extends EventEmitter {
         }
       }
       
-      // Reverse for little-endian format
+      // Reverse for little-endian format (Litecoin standard)
       hash.reverse();
       return hash;
       
     } catch (error) {
-      console.error('Merkle root calculation error:', error);
+      console.error('Litecoin merkle root calculation error:', error);
       // Return zeros if calculation fails
       return Buffer.alloc(32);
     }
