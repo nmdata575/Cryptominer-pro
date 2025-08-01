@@ -17,8 +17,8 @@ const SystemConfig = require('../models/SystemConfig');
 // Default mining pools for each cryptocurrency
 const DEFAULT_POOLS = {
   litecoin: [
+    { host: 'ltc.millpools.cc', port: 3567 },
     { host: 'ltc.pool-pay.com', port: 1133 },
-    { host: 'ltc.minergate.com', port: 45700 },
     { host: 'pool.litecoinpool.org', port: 9327 }
   ],
   dogecoin: [
