@@ -447,7 +447,11 @@ class MiningEngine extends EventEmitter {
    */
   sendPoolMessage(message) {
     if (this.poolConnection && this.poolConnection.writable) {
-      this.poolConnection.write(JSON.stringify(message) + '\n');
+      const messageString = JSON.stringify(message) + '\n';
+      console.log(`📡 SENDING TO POOL: ${messageString.trim()}`);
+      this.poolConnection.write(messageString);
+    } else {
+      console.log(`❌ Cannot send to pool - connection not writable`);
     }
   }
 
