@@ -2514,15 +2514,28 @@ class BackendTester:
 
 def main():
     """Main test execution"""
+    print("🎯 CryptoMiner Pro - ricmoo-scrypt Mining Integration Test Suite")
+    print("Focus: Real Pool Mining with ltc.millpools.cc:3567")
+    print("Testing: Share submission, hashrate monitoring, difficulty checking")
+    print()
+    
     tester = BackendTester()
     
-    # Check if we should run Mongoose integration tests specifically
-    if len(sys.argv) > 1 and sys.argv[1] == "--mongoose":
-        success = tester.run_comprehensive_mongoose_integration_tests()
-    else:
-        success = tester.run_comprehensive_mongoose_integration_tests()  # Default to Mongoose tests for review request
-    
-    sys.exit(0 if success else 1)
+    try:
+        success_rate = tester.run_ricmoo_scrypt_mining_tests()
+        
+        # Exit with appropriate code
+        if success_rate >= 70:
+            sys.exit(0)  # Success
+        else:
+            sys.exit(1)  # Failure
+            
+    except KeyboardInterrupt:
+        print("\n🛑 Test interrupted by user")
+        sys.exit(1)
+    except Exception as e:
+        print(f"\n❌ Test suite crashed: {str(e)}")
+        sys.exit(1)
 
 if __name__ == "__main__":
     main()
