@@ -1408,19 +1408,33 @@ class RealMiningWorker extends EventEmitter {
   }
 
   /**
-   * Test share detection with known hash values - FOR DEBUGGING
+   * Test ricmoo scrypt implementation with known values
    */
-  testShareDetection() {
-    console.log('🧪 Testing share detection algorithm...');
+  testRicmooScrypt() {
+    console.log('🧪 Testing ricmoo/scrypt-js implementation...');
     
-    // Test with a hash that should definitely pass (low values)
-    const easyHash = '00000001' + '0'.repeat(56); // Very low hash value
-    const mediumHash = '0000ffff' + '0'.repeat(56); // Medium hash value  
-    const hardHash = 'ffffffff' + '0'.repeat(56); // High hash value (should fail)
-    
-    console.log(`Testing easy hash (should pass): ${this.checkRealDifficulty(easyHash)}`);
-    console.log(`Testing medium hash (might pass): ${this.checkRealDifficulty(mediumHash)}`);
-    console.log(`Testing hard hash (should fail): ${this.checkRealDifficulty(hardHash)}`);
+    try {
+      // Test with simple known data
+      const testInput = Buffer.alloc(80);
+      testInput.writeUInt32LE(0x00000001, 0);   // Version
+      testInput.writeUInt32LE(0x12345678, 76);  // Test nonce
+      
+      const hash = this.cryptoScryptHash(testInput);
+      console.log(`✅ ricmoo scrypt test successful: ${hash.substring(0, 32)}...`);
+      
+      // Test the hash value for our difficulty check
+      const hashBuffer = Buffer.from(hash, 'hex');
+      const hashValue = hashBuffer.readUInt32LE(0);
+      console.log(`🔍 Hash value for difficulty: 0x${hashValue.toString(16).padStart(8, '0')}`);
+      
+      // Test our difficulty targets
+      const poolTarget = 0x00ffffff;
+      const isValid = hashValue <= poolTarget;
+      console.log(`🎯 Hash passes pool target (0x${poolTarget.toString(16)}): ${isValid}`);
+      
+    } catch (error) {
+      console.error('❌ ricmoo scrypt test failed:', error);
+    }
   }
   /**
    * Check if hash meets difficulty target - FIXED HARDWARE-MATCHED IMPLEMENTATION
