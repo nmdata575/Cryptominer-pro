@@ -14,7 +14,7 @@ import threading
 from urllib.parse import urljoin
 
 # Backend URL from frontend environment
-BACKEND_URL = "https://6b3c28ed-76e9-40b0-8270-3f6dee4a4eb6.preview.emergentagent.com"
+BACKEND_URL = "https://a52801b9-87d7-48da-a768-768b184d6295.preview.emergentagent.com"
 API_BASE = f"{BACKEND_URL}/api"
 WS_URL = BACKEND_URL.replace('https://', 'wss://').replace('http://', 'ws://')
 

@@ -76,7 +76,7 @@ const corsOptions = {
     const allowedOrigins = [
       'http://localhost:3000',
       'http://localhost:8001', 
-      'https://6b3c28ed-76e9-40b0-8270-3f6dee4a4eb6.preview.emergentagent.com'
+      'https://a52801b9-87d7-48da-a768-768b184d6295.preview.emergentagent.com'
     ];
     
     // Allow requests with no origin (like mobile apps or curl requests)
