@@ -252,40 +252,79 @@ class AIPredictor {
   }
 
   /**
-   * Generate optimization suggestions
+   * Generate optimization suggestions - Enhanced with real mining analysis
    */
   generateOptimizationSuggestions(currentData) {
     const suggestions = [];
     
-    // CPU usage optimization
+    // Real mining data analysis
+    if (currentData.real_data_source && currentData.is_mining) {
+      
+      // Performance-based suggestions
+      if (currentData.performance_score < 30) {
+        suggestions.push('⚠️ LOW PERFORMANCE: Consider optimizing mining configuration');
+      } else if (currentData.performance_score > 80) {
+        suggestions.push('✅ EXCELLENT PERFORMANCE: Current settings are optimal');
+      }
+      
+      // Hash rate optimization
+      if (currentData.hashrate < 100) {
+        suggestions.push('🔧 HASHRATE: Low hashrate detected, try increasing intensity or thread count');
+      } else if (currentData.hashrate > 1000) {
+        suggestions.push('🚀 HASHRATE: Excellent hash rate performance');
+      }
+      
+      // Pool connection optimization
+      if (!currentData.pool_connected) {
+        suggestions.push('🔗 POOL: Pool connection issue detected, check network connectivity');
+      } else if (currentData.test_mode) {
+        suggestions.push('⚙️ MODE: Currently in test mode, enable production mining for real shares');
+      } else {
+        suggestions.push('✅ POOL: Connected to real mining pool successfully');
+      }
+      
+      // Shares analysis
+      if (currentData.shares_accepted > 0) {
+        suggestions.push(`📈 SHARES: ${currentData.shares_accepted} shares accepted - great progress!`);
+      }
+      
+      if (currentData.shares_rejected > 0) {
+        const rejectRatio = (currentData.shares_rejected / (currentData.shares_accepted + currentData.shares_rejected)) * 100;
+        if (rejectRatio > 10) {
+          suggestions.push(`⚠️ SHARES: High rejection rate (${rejectRatio.toFixed(1)}%) - check difficulty settings`);
+        }
+      }
+      
+      // Efficiency analysis
+      if (currentData.efficiency > 90) {
+        suggestions.push('🎯 EFFICIENCY: Excellent mining efficiency (>90%)');
+      } else if (currentData.efficiency < 50) {
+        suggestions.push('🔧 EFFICIENCY: Low efficiency detected, optimize pool settings');
+      }
+      
+    } else {
+      suggestions.push('📊 DATA: Start mining to collect performance data for AI optimization');
+    }
+    
+    // System resource optimization
     if (currentData.cpu_usage && currentData.cpu_usage.user > 80) {
-      suggestions.push('Consider reducing thread count to lower CPU usage');
+      suggestions.push('💻 CPU: Consider reducing thread count to lower CPU usage');
     }
     
     // Memory usage optimization
     if (currentData.memory_usage && currentData.memory_usage.heapUsed > 512 * 1024 * 1024) {
-      suggestions.push('High memory usage detected, consider optimizing mining parameters');
-    }
-    
-    // Hashrate optimization
-    if (currentData.hashrate < 100) {
-      suggestions.push('Low hashrate detected, try increasing intensity or thread count');
+      suggestions.push('🧠 MEMORY: High memory usage detected, consider optimizing mining parameters');
     }
     
     // System load optimization
     if (currentData.system_load && currentData.system_load[0] > 2.0) {
-      suggestions.push('High system load detected, consider reducing mining intensity');
-    }
-    
-    // Efficiency optimization
-    if (currentData.stats && currentData.stats.efficiency < 70) {
-      suggestions.push('Low efficiency detected, check pool connection and configuration');
+      suggestions.push('⚡ LOAD: High system load detected, consider reducing mining intensity');
     }
     
     // Default suggestions if no issues found
     if (suggestions.length === 0) {
-      suggestions.push('Mining parameters appear optimal');
-      suggestions.push('Continue monitoring for performance improvements');
+      suggestions.push('🎯 Mining parameters appear optimal');
+      suggestions.push('📊 Continue monitoring for performance improvements');
     }
     
     return suggestions;
