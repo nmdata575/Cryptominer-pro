@@ -373,17 +373,20 @@ class MiningEngine extends EventEmitter {
    * Handle messages from mining pool
    */
   handlePoolMessage(data) {
+    console.log(`📨 Pool message received: ${data.trim()}`);
+    
     const lines = data.trim().split('\n');
     
     lines.forEach(line => {
       try {
         const message = JSON.parse(line);
+        console.log(`📋 Parsed pool message:`, JSON.stringify(message, null, 2));
         
         if (message.method === 'mining.notify') {
           this.handleNewJob(message.params);
         } else if (message.method === 'mining.set_difficulty') {
           this.difficulty = message.params[0];
-          console.log(`📊 New difficulty: ${this.difficulty}`);
+          console.log(`⚖️ Pool set difficulty: ${this.difficulty}`);
         } else if (message.id === 1 && message.result) {
           // Subscription successful
           this.subscriptionId = message.result[1];
@@ -394,16 +397,19 @@ class MiningEngine extends EventEmitter {
           console.log('✅ Pool authorization successful');
         } else if (message.id > 2 && message.result !== undefined) {
           // Share submission result
-          if (message.result) {
+          console.log(`✅ Pool response to request ${message.id}: ${JSON.stringify(message.result)}`);
+          
+          if (message.result === true) {
+            console.log(`🎯 REAL POOL ACCEPTED SHARE! Request ID: ${message.id}`);
             this.stats.accepted_shares++;
-            console.log('✅ Share accepted by pool');
-          } else {
+          } else if (message.result === false || message.error) {
+            console.log(`❌ Pool rejected share: ${JSON.stringify(message.error || 'Unknown error')}`);
             this.stats.rejected_shares++;
-            console.log('❌ Share rejected by pool:', message.error);
           }
         }
       } catch (error) {
         console.error('Error parsing pool message:', error);
+        console.log('Raw message:', data);
       }
     });
   }
