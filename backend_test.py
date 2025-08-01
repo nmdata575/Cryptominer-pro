@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-CryptoMiner Pro Backend Testing Suite
-Comprehensive testing for Enhanced Mongoose Model Integration
-Focus: Mining Statistics, AI Predictions, System Configuration, Mining Sessions, Database Maintenance
+CryptoMiner Pro Backend Testing Suite - ricmoo-scrypt Mining Integration
+Focus: Real Pool Mining with ltc.millpools.cc:3567, Share Submission, Hash Rate Monitoring
+Testing ricmoo-scrypt implementation and real cryptocurrency mining functionality
 """
 
 import requests
