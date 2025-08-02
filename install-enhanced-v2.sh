@@ -258,15 +258,16 @@ install_mongodb() {
     fi
 }
 
-create_service_user() {
-    log_info "Creating service user: $SERVICE_USER..."
+configure_service_user() {
+    log_info "Using current user for services: $CURRENT_USER..."
     
-    if ! id "$SERVICE_USER" &>/dev/null; then
-        sudo useradd -r -d "$INSTALL_DIR" -s /bin/bash "$SERVICE_USER"
-        log_success "Service user created ✅"
-    else
-        log_info "Service user already exists"
+    # No need to create user since we're using current user
+    # Just verify current user exists and has proper permissions
+    if ! id "$CURRENT_USER" &>/dev/null; then
+        error_exit "Current user $CURRENT_USER does not exist"
     fi
+    
+    log_success "Service user configured: $CURRENT_USER ✅"
 }
 
 create_directories() {
