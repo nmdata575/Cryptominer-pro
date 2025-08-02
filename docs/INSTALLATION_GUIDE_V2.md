@@ -32,7 +32,7 @@ chmod +x install-enhanced-v2.sh
 ## 📁 Installation Structure
 
 ```
-/opt/cryptominer-pro/
+/home/$USER/Cryptominer-pro/
 ├── backend-nodejs/          # Node.js backend with ricmoo-scrypt
 │   ├── server.js            # Main server
 │   ├── ai/                  # Enhanced AI system
