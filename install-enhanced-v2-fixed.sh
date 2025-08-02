@@ -341,6 +341,15 @@ install_application() {
         fi
     done
     
+    # Ensure frontend configuration files are copied
+    log_info "Ensuring frontend configuration files are present..."
+    for config_file in craco.config.js tailwind.config.js postcss.config.js .env; do
+        if [[ -f "$APP_SOURCE/frontend/$config_file" ]]; then
+            cp "$APP_SOURCE/frontend/$config_file" "$INSTALL_DIR/frontend/" 2>/dev/null || true
+            log_info "Copied frontend/$config_file"
+        fi
+    done
+    
     # Set proper permissions (no chown needed for user directory)
     chmod -R 755 "$INSTALL_DIR"
     find "$INSTALL_DIR" -type f -name "*.js" -exec chmod 644 {} \;
