@@ -76,7 +76,7 @@ chown -R "$SERVICE_USER:$SERVICE_USER" "$INSTALL_DIR"
 chown -R "$SERVICE_USER:$SERVICE_USER" "$LOG_DIR"
 
 # Make server.js executable
-sudo chmod +x "$INSTALL_DIR/backend-nodejs/server.js"
+chmod +x "$INSTALL_DIR/backend-nodejs/server.js"
 
 # Verify files exist
 log_info "Verifying critical files..."
