@@ -280,19 +280,14 @@ remove_application_files() {
 }
 
 remove_service_user() {
-    log_info "Removing service user..."
+    log_info "Service user cleanup..."
     
-    if id "$SERVICE_USER" &>/dev/null; then
-        # Stop any processes running as the service user
-        sudo pkill -u "$SERVICE_USER" 2>/dev/null || true
-        sleep 2
-        
-        # Remove user and home directory
-        sudo userdel -r "$SERVICE_USER" 2>/dev/null || true
-        log_success "Service user removed: $SERVICE_USER ✅"
-    else
-        log_info "Service user not found: $SERVICE_USER"
-    fi
+    # Since we're using the current user, no need to remove the service user
+    # Just clean up any processes
+    pkill -u "$SERVICE_USER" -f "cryptominer" 2>/dev/null || true
+    sleep 2
+    
+    log_success "Service user cleanup completed ✅"
 }
 
 remove_supervisor_configs() {
