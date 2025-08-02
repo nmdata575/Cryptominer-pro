@@ -791,10 +791,12 @@ main() {
     fi
     
     # Installation steps
+    check_system_requirements  # Add this to check if running as root
     install_system_dependencies
     install_nodejs
     install_mongodb
-    create_service_user
+    configure_service_user
+    create_directories  # Add this step
     install_application
     install_dependencies
     create_environment_files
