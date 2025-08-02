@@ -79,7 +79,7 @@ show_header() {
     echo "  ✅ ricmoo-scrypt Integration - Real cryptocurrency mining"
     echo "  ✅ Enhanced AI System - Machine learning optimization" 
     echo "  ✅ Real Pool Mining - Connect to ltc.millpools.cc:3567"
-    echo "  ✅ MongoDB Integration - Persistent data storage"
+    echo "  ✅ MongoDB 8.0 Integration - Latest database technology"
     echo "  ✅ Node.js Backend - High-performance mining engine"
     echo "  ✅ React Frontend - Professional mining dashboard"
     echo ""
