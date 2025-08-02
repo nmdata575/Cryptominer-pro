@@ -45,7 +45,7 @@ REQUIRED_CORES=2
 
 # Node.js and package versions
 NODE_VERSION="20"
-MONGODB_VERSION="7.0"
+MONGODB_VERSION="8.0"
 
 # =============================================================================
 # UTILITY FUNCTIONS
