@@ -273,15 +273,24 @@ configure_service_user() {
 create_directories() {
     log_info "Creating application directories..."
     
-    sudo mkdir -p "$INSTALL_DIR"
-    sudo mkdir -p "$INSTALL_DIR/backend-nodejs"
-    sudo mkdir -p "$INSTALL_DIR/frontend"
-    sudo mkdir -p "$INSTALL_DIR/logs"
-    sudo mkdir -p "$INSTALL_DIR/data"
-    sudo mkdir -p /var/log/cryptominer
+    # Create main directories (no sudo needed for user directory)
+    mkdir -p "$INSTALL_DIR"
+    mkdir -p "$INSTALL_DIR/backend-nodejs"
+    mkdir -p "$INSTALL_DIR/frontend"
+    mkdir -p "$INSTALL_DIR/data"
+    mkdir -p "$LOG_DIR"
     
-    sudo chown -R "$SERVICE_USER:$SERVICE_USER" "$INSTALL_DIR"
-    sudo chown -R "$SERVICE_USER:$SERVICE_USER" /var/log/cryptominer
+    # Create log files with proper permissions (no chown needed in user directory)
+    touch "$LOG_DIR/backend.log"
+    touch "$LOG_DIR/frontend.log"
+    touch "$LOG_DIR/backend-error.log"  
+    touch "$LOG_DIR/frontend-error.log"
+    touch "$INSTALL_LOG"
+    
+    # Set proper permissions (user already owns these files)
+    chmod 755 "$INSTALL_DIR"
+    chmod 755 "$LOG_DIR" 
+    chmod 644 "$LOG_DIR"/*.log
     
     log_success "Directories created ✅"
 }
