@@ -18,7 +18,7 @@ Comprehensive test suite that validates the AI system's ability to analyze and l
 **Usage:**
 ```bash
 # Run from backend directory
-cd /opt/cryptominer-pro/backend-nodejs
+cd /home/$USER/Cryptominer-pro/backend-nodejs
 node test_ai_shares.js
 
 # Or run directly
