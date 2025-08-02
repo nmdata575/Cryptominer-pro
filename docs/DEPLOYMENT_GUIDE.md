@@ -294,7 +294,7 @@ cp -r /home/$USER/Cryptominer-pro/frontend/.env "$BACKUP_DIR/"
 mongodump --db cryptominer --out "$BACKUP_DIR/mongodb"
 
 # Backup AI data
-cp -r /opt/cryptominer-pro/data "$BACKUP_DIR/"
+cp -r /home/$USER/Cryptominer-pro/data "$BACKUP_DIR/"
 
 # Backup logs (last 7 days)
 find /var/log/cryptominer -name "*.log" -mtime -7 -exec cp {} "$BACKUP_DIR/logs/" \;
