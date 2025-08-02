@@ -287,8 +287,8 @@ BACKUP_DIR="/backup/cryptominer-$(date +%Y%m%d)"
 mkdir -p "$BACKUP_DIR"
 
 # Backup configuration
-cp -r /opt/cryptominer-pro/backend-nodejs/.env "$BACKUP_DIR/"
-cp -r /opt/cryptominer-pro/frontend/.env "$BACKUP_DIR/"
+cp -r /home/$USER/Cryptominer-pro/backend-nodejs/.env "$BACKUP_DIR/"
+cp -r /home/$USER/Cryptominer-pro/frontend/.env "$BACKUP_DIR/"
 
 # Backup database
 mongodump --db cryptominer --out "$BACKUP_DIR/mongodb"
