@@ -38,8 +38,8 @@ echo -e "${NC}"
 
 # Configuration
 INSTALL_DIR="/home/$(whoami)/Cryptominer-pro"
-SERVICE_USER="cryptominer"
-LOG_DIR="/var/log/cryptominer"
+SERVICE_USER="$(whoami)"
+LOG_DIR="$HOME/.local/log/cryptominer"
 
 log_info "Diagnosing and fixing service startup issues..."
 
