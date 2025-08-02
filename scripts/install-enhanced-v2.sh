@@ -264,14 +264,13 @@ install_mongodb() {
 }
 
 create_service_user() {
-    log_info "Creating service user: $SERVICE_USER..."
+    log_info "Using current user for services: $(whoami)..."
     
-    if ! id "$SERVICE_USER" &>/dev/null; then
-        sudo useradd -r -d "$INSTALL_DIR" -s /bin/bash "$SERVICE_USER"
-        log_success "Service user created ✅"
-    else
-        log_info "Service user already exists"
-    fi
+    # No need to create a separate service user since we're using user's home directory
+    # The current user will own and run the services
+    SERVICE_USER="$(whoami)"
+    
+    log_success "Service user configured: $SERVICE_USER ✅"
 }
 
 create_directories() {
