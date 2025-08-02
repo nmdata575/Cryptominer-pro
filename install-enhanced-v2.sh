@@ -28,12 +28,15 @@ CYAN='\033[0;36m'
 NC='\033[0m' # No Color
 
 # Configuration
-SCRIPT_VERSION="2.0.0"
+SCRIPT_VERSION="2.1.0"
 PROJECT_NAME="CryptoMiner Pro"
-INSTALL_DIR="/opt/cryptominer-pro"
-SERVICE_USER="cryptominer"
-LOG_FILE="/var/log/cryptominer-install.log"
-BACKUP_DIR="/opt/cryptominer-backup-$(date +%Y%m%d_%H%M%S)"
+CURRENT_USER=$(whoami)
+USER_HOME=$HOME
+INSTALL_DIR="$USER_HOME/Cryptominer-pro"
+LOG_DIR="$USER_HOME/.local/log/cryptominer"
+SERVICE_USER="$CURRENT_USER"
+INSTALL_LOG="$LOG_DIR/install.log"
+BACKUP_DIR="$USER_HOME/.local/cryptominer-backup-$(date +%Y%m%d_%H%M%S)"
 
 # System requirements
 MIN_RAM_GB=2
