@@ -72,8 +72,8 @@ sudo cp -r "$SOURCE_DIR/frontend" "$INSTALL_DIR/"
 
 # Set proper ownership
 log_info "Setting proper file ownership..."
-sudo chown -R "$SERVICE_USER:$SERVICE_USER" "$INSTALL_DIR"
-sudo chown -R "$SERVICE_USER:$SERVICE_USER" "$LOG_DIR"
+chown -R "$SERVICE_USER:$SERVICE_USER" "$INSTALL_DIR"
+chown -R "$SERVICE_USER:$SERVICE_USER" "$LOG_DIR"
 
 # Make server.js executable
 sudo chmod +x "$INSTALL_DIR/backend-nodejs/server.js"
