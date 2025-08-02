@@ -18,6 +18,7 @@ The new installer includes all the advanced features we've developed:
 - **CPU**: 2+ cores (more cores = better mining performance)
 - **Disk**: 5GB free space
 - **Network**: Internet connection for pool mining
+- **Database**: MongoDB 8.0 (automatically installed)
 
 ## 🛠️ Quick Installation
 
