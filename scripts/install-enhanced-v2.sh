@@ -694,7 +694,7 @@ show_completion_info() {
     echo "  ✅ ricmoo-scrypt Integration - Real cryptocurrency mining"
     echo "  ✅ Enhanced AI System - Machine learning optimization"
     echo "  ✅ Real Pool Mining - ltc.millpools.cc:3567 support"
-    echo "  ✅ MongoDB Integration - Persistent data storage"
+    echo "  ✅ MongoDB 8.0 Integration - Latest database technology"
     echo "  ✅ Professional Dashboard - Real-time monitoring"
     echo ""
     echo -e "${CYAN}🔧 Management Commands:${NC}"
