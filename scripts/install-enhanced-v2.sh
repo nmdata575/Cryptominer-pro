@@ -238,6 +238,14 @@ install_mongodb() {
     sudo apt-get update
     sudo apt-get install -y mongodb-org
     
+    # Pin MongoDB version to prevent unintended upgrades
+    echo "mongodb-org hold" | sudo dpkg --set-selections
+    echo "mongodb-org-database hold" | sudo dpkg --set-selections
+    echo "mongodb-org-server hold" | sudo dpkg --set-selections
+    echo "mongodb-mongosh hold" | sudo dpkg --set-selections
+    echo "mongodb-org-mongos hold" | sudo dpkg --set-selections
+    echo "mongodb-org-tools hold" | sudo dpkg --set-selections
+    
     # Configure MongoDB
     sudo systemctl start mongod
     sudo systemctl enable mongod
@@ -248,7 +256,7 @@ install_mongodb() {
     
     # Verify installation
     if sudo systemctl is-active --quiet mongod; then
-        log_success "MongoDB installed and running ✅"
+        log_success "MongoDB $MONGODB_VERSION installed and running ✅"
     else
         log_error "MongoDB installation failed"
         exit 1
