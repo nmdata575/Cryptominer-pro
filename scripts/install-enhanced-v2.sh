@@ -276,15 +276,16 @@ create_service_user() {
 create_directories() {
     log_info "Creating application directories..."
     
-    sudo mkdir -p "$INSTALL_DIR"
-    sudo mkdir -p "$INSTALL_DIR/backend-nodejs"
-    sudo mkdir -p "$INSTALL_DIR/frontend"
-    sudo mkdir -p "$INSTALL_DIR/logs"
-    sudo mkdir -p "$INSTALL_DIR/data"
-    sudo mkdir -p /var/log/cryptominer
+    mkdir -p "$INSTALL_DIR"
+    mkdir -p "$INSTALL_DIR/backend-nodejs"
+    mkdir -p "$INSTALL_DIR/frontend"
+    mkdir -p "$INSTALL_DIR/logs"
+    mkdir -p "$INSTALL_DIR/data"
+    mkdir -p "$HOME/.local/log/cryptominer"
     
-    sudo chown -R "$SERVICE_USER:$SERVICE_USER" "$INSTALL_DIR"
-    sudo chown -R "$SERVICE_USER:$SERVICE_USER" /var/log/cryptominer
+    # Set proper ownership (current user owns everything)
+    chown -R "$SERVICE_USER:$SERVICE_USER" "$INSTALL_DIR"
+    chown -R "$SERVICE_USER:$SERVICE_USER" "$HOME/.local/log/cryptominer"
     
     log_success "Directories created ✅"
 }
