@@ -51,6 +51,46 @@ MONGODB_VERSION="8.0"
 # UTILITY FUNCTIONS
 # =============================================================================
 
+check_system_requirements() {
+    log_info "Checking system requirements..."
+    
+    # Check if running as root
+    if [[ $EUID -eq 0 ]]; then
+        error_exit "This script should not be run as root. Please run as a regular user."
+    fi
+    
+    # Check operating system
+    if [[ ! -f /etc/os-release ]]; then
+        error_exit "Cannot determine operating system. /etc/os-release not found."
+    fi
+    
+    source /etc/os-release
+    log_info "Detected $PRETTY_NAME"
+    
+    # Check RAM
+    local ram_gb=$(free -g | awk 'NR==2{printf "%.0f", $2}')
+    if [[ $ram_gb -lt $MIN_RAM_GB ]]; then
+        error_exit "Insufficient RAM: ${ram_gb}GB available, ${MIN_RAM_GB}GB required"
+    fi
+    log_info "RAM check passed: ${ram_gb}GB available"
+    
+    # Check disk space
+    local disk_gb=$(df -BG "$USER_HOME" | awk 'NR==2 {print $4}' | sed 's/G//')
+    if [[ $disk_gb -lt $MIN_DISK_GB ]]; then
+        error_exit "Insufficient disk space: ${disk_gb}GB available, ${MIN_DISK_GB}GB required"
+    fi
+    log_info "Disk space check passed: ${disk_gb}GB available"
+    
+    # Check CPU cores
+    local cores=$(nproc)
+    if [[ $cores -lt $REQUIRED_CORES ]]; then
+        error_exit "Insufficient CPU cores: $cores available, $REQUIRED_CORES required"
+    fi
+    log_info "CPU check passed: $cores cores available"
+    
+    log_success "System requirements check passed ✅"
+}
+
 log() {
     echo -e "${GREEN}[$(date +'%Y-%m-%d %H:%M:%S')]${NC} $1" | tee -a "$LOG_FILE"
 }
