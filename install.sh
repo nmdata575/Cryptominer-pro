@@ -258,8 +258,8 @@ setup_application() {
         APP_DIR="/app"
         print_status "🏠 Using existing application directory: $APP_DIR"
     else
-        # For other locations, copy to /opt/cryptominer-pro
-        APP_DIR="/opt/cryptominer-pro"
+        # For other locations, copy to /home/$USER/Cryptominer-pro
+        APP_DIR="/home/$(whoami)/Cryptominer-pro"
         sudo mkdir -p "$APP_DIR" || handle_error "Application directory creation failed"
         sudo chown -R $USER:$USER "$APP_DIR" || handle_error "Application directory ownership failed"
         
