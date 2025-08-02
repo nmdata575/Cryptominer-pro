@@ -37,11 +37,11 @@ print_step "Detecting environment..."
 
 if [[ -f /.dockerenv ]]; then
     ENV_TYPE="docker"
-    BACKEND_URL="https://a52801b9-87d7-48da-a768-768b184d6295.preview.emergentagent.com"
+    BACKEND_URL="https://b8a64dbe-314e-43b8-9274-f05e86511466.preview.emergentagent.com"
     print_status "🐳 Docker container detected"
 elif [[ -n "${KUBERNETES_SERVICE_HOST}" ]]; then
     ENV_TYPE="kubernetes"
-    BACKEND_URL="https://a52801b9-87d7-48da-a768-768b184d6295.preview.emergentagent.com"
+    BACKEND_URL="https://b8a64dbe-314e-43b8-9274-f05e86511466.preview.emergentagent.com"
     print_status "☸️ Kubernetes environment detected"
 else
     ENV_TYPE="native"
