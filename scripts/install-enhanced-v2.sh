@@ -702,7 +702,7 @@ show_completion_info() {
     echo "  Stop Services:    sudo supervisorctl stop all"
     echo "  Restart Services: sudo supervisorctl restart all"
     echo "  Check Status:     sudo supervisorctl status"
-    echo "  View Logs:        sudo tail -f /var/log/cryptominer/backend.log"
+    echo "  View Logs:        tail -f $HOME/.local/log/cryptominer/backend.log"
     echo ""
     echo -e "${CYAN}💡 Getting Started:${NC}"
     echo "  1. Open the web dashboard in your browser"
