@@ -342,7 +342,7 @@ install_application() {
 EOF
 
     # Frontend setup
-    sudo -u "$SERVICE_USER" tee "$INSTALL_DIR/frontend/package.json" > /dev/null << 'EOF'
+    tee "$INSTALL_DIR/frontend/package.json" > /dev/null << 'EOF'
 {
   "name": "cryptominer-pro-frontend",
   "version": "2.0.0",
