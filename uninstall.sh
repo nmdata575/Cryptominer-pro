@@ -48,7 +48,7 @@ echo ""
 POSSIBLE_PATHS=(
     "/home/$(whoami)/cryptominer-pro"
     "/home/chris/cryptominer-pro"
-    "/opt/cryptominer-pro"
+    "/home/$(whoami)/Cryptominer-pro"
     "/root/cryptominer-pro"
     "$(pwd)"
 )
