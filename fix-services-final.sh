@@ -58,7 +58,7 @@ else
 fi
 
 # Create log directory
-sudo mkdir -p "$LOG_DIR"
+mkdir -p "$LOG_DIR"
 
 # Copy backend files
 log_info "Copying backend files from $SOURCE_DIR/backend-nodejs to $INSTALL_DIR/backend-nodejs..."
