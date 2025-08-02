@@ -95,9 +95,7 @@ class ThreadScalingTester {
       await this.delay(8000);
 
       // Get mining status
-      const statusResponse = await axios.get(`${API_BASE}/mining/status`, {
-        timeout: 10000
-      });
+      const statusResponse = await makeRequest('GET', `${API_BASE}/mining/status`);
 
       const miningData = statusResponse.data;
       
