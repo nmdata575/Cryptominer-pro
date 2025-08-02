@@ -413,7 +413,7 @@ create_environment_files() {
     log_info "Creating environment configuration files..."
     
     # Backend .env
-    sudo -u "$SERVICE_USER" tee "$INSTALL_DIR/backend-nodejs/.env" > /dev/null << EOF
+    tee "$INSTALL_DIR/backend-nodejs/.env" > /dev/null << EOF
 # CryptoMiner Pro Backend Configuration v2.0
 NODE_ENV=production
 PORT=8001
