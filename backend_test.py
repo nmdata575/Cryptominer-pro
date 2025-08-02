@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-CryptoMiner Pro Backend Testing Suite - ricmoo-scrypt Mining Integration
-Focus: Real Pool Mining with ltc.millpools.cc:3567, Share Submission, Hash Rate Monitoring
-Testing ricmoo-scrypt implementation and real cryptocurrency mining functionality
+CryptoMiner Pro Backend Testing Suite - Post-Migration Comprehensive Testing
+Focus: Testing all newly migrated Node.js backend API endpoints after directory migration
+Testing: Health checks, Mining operations, Mongoose integration, Session management, Database ops, Thread scaling
 """
 
 import requests
