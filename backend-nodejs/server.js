@@ -1240,6 +1240,246 @@ app.use((req, res) => {
   res.status(404).json({ error: 'Endpoint not found' });
 });
 
+// ==============================
+// Additional Advanced CRUD Endpoints
+// ==============================
+
+// Delete AI prediction
+app.delete('/api/ai/predictions/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    const deleted = await AIPrediction.findByIdAndDelete(id);
+    if (!deleted) {
+      return res.status(404).json({ error: 'AI prediction not found' });
+    }
+    
+    res.json({
+      success: true,
+      message: 'AI prediction deleted successfully',
+      deletedId: id
+    });
+  } catch (error) {
+    console.error('Delete AI prediction error:', error);
+    res.status(500).json({ error: 'Failed to delete AI prediction' });
+  }
+});
+
+// Update AI prediction
+app.put('/api/ai/predictions/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const updateData = req.body;
+    
+    const updated = await AIPrediction.findByIdAndUpdate(
+      id,
+      updateData,
+      { new: true, runValidators: true }
+    );
+    
+    if (!updated) {
+      return res.status(404).json({ error: 'AI prediction not found' });
+    }
+    
+    res.json({
+      success: true,
+      data: updated,
+      confidencePercentage: Math.round(updated.prediction.confidence * 100)
+    });
+  } catch (error) {
+    console.error('Update AI prediction error:', error);
+    res.status(500).json({ error: 'Failed to update AI prediction' });
+  }
+});
+
+// Delete mining stats
+app.delete('/api/mining/stats/:sessionId', async (req, res) => {
+  try {
+    const { sessionId } = req.params;
+    
+    const deleted = await MiningStats.findOneAndDelete({ sessionId });
+    if (!deleted) {
+      return res.status(404).json({ error: 'Mining session not found' });
+    }
+    
+    res.json({
+      success: true,
+      message: 'Mining stats deleted successfully',
+      deletedSessionId: sessionId
+    });
+  } catch (error) {
+    console.error('Delete mining stats error:', error);
+    res.status(500).json({ error: 'Failed to delete mining stats' });
+  }
+});
+
+// Update mining stats
+app.put('/api/mining/stats/:sessionId', async (req, res) => {
+  try {
+    const { sessionId } = req.params;
+    const updateData = req.body;
+    
+    const updated = await MiningStats.findOneAndUpdate(
+      { sessionId },
+      updateData,
+      { new: true, runValidators: true }
+    );
+    
+    if (!updated) {
+      return res.status(404).json({ error: 'Mining session not found' });
+    }
+    
+    res.json({
+      success: true,
+      data: updated,
+      efficiency: updated.getEfficiency()
+    });
+  } catch (error) {
+    console.error('Update mining stats error:', error);
+    res.status(500).json({ error: 'Failed to update mining stats' });
+  }
+});
+
+// Delete system config
+app.delete('/api/config/:type', async (req, res) => {
+  try {
+    const { type } = req.params;
+    const { userId = 'default_user' } = req.query;
+    
+    const deleted = await SystemConfig.findOneAndDelete({ configType: type, userId });
+    if (!deleted) {
+      return res.status(404).json({ error: 'Configuration not found' });
+    }
+    
+    res.json({
+      success: true,
+      message: 'Configuration deleted successfully',
+      deletedType: type
+    });
+  } catch (error) {
+    console.error('Delete config error:', error);
+    res.status(500).json({ error: 'Failed to delete configuration' });
+  }
+});
+
+// Update system config (PUT method)
+app.put('/api/config/:type', async (req, res) => {
+  try {
+    const { type } = req.params;
+    const { userId = 'default_user' } = req.query;
+    const { config } = req.body;
+    
+    const updated = await SystemConfig.findOneAndUpdate(
+      { configType: type, userId },
+      { 
+        config: config,
+        lastModified: new Date(),
+        active: true
+      },
+      { 
+        new: true,
+        runValidators: true
+      }
+    );
+    
+    if (!updated) {
+      return res.status(404).json({ error: 'Configuration not found' });
+    }
+    
+    res.json({
+      success: true,
+      data: updated
+    });
+  } catch (error) {
+    console.error('Update config error:', error);
+    res.status(500).json({ error: 'Failed to update configuration' });
+  }
+});
+
+// Bulk operations for mining stats
+app.post('/api/mining/stats/bulk-delete', async (req, res) => {
+  try {
+    const { sessionIds, olderThan } = req.body;
+    
+    let filter = {};
+    if (sessionIds && sessionIds.length > 0) {
+      filter.sessionId = { $in: sessionIds };
+    }
+    if (olderThan) {
+      filter.createdAt = { $lt: new Date(olderThan) };
+    }
+    
+    const result = await MiningStats.deleteMany(filter);
+    
+    res.json({
+      success: true,
+      deletedCount: result.deletedCount,
+      message: `Deleted ${result.deletedCount} mining stat records`
+    });
+  } catch (error) {
+    console.error('Bulk delete mining stats error:', error);
+    res.status(500).json({ error: 'Failed to bulk delete mining stats' });
+  }
+});
+
+// Advanced analytics endpoint
+app.get('/api/mining/analytics', async (req, res) => {
+  try {
+    const { days = 7, coin } = req.query;
+    const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+    
+    const matchConditions = { createdAt: { $gte: since } };
+    if (coin) matchConditions.coin = coin;
+    
+    const analytics = await MiningStats.aggregate([
+      { $match: matchConditions },
+      {
+        $group: {
+          _id: null,
+          totalSessions: { $sum: 1 },
+          avgHashrate: { $avg: '$hashrate' },
+          maxHashrate: { $max: '$hashrate' },
+          totalShares: { $sum: { $add: ['$acceptedShares', '$rejectedShares'] } },
+          acceptedShares: { $sum: '$acceptedShares' },
+          rejectedShares: { $sum: '$rejectedShares' },
+          totalBlocks: { $sum: '$blocksFound' },
+          avgCpuUsage: { $avg: '$cpuUsage' },
+          avgMemoryUsage: { $avg: '$memoryUsage' }
+        }
+      }
+    ]);
+    
+    const result = analytics[0] || {
+      totalSessions: 0,
+      avgHashrate: 0,
+      maxHashrate: 0,
+      totalShares: 0,
+      acceptedShares: 0,
+      rejectedShares: 0,
+      totalBlocks: 0,
+      avgCpuUsage: 0,
+      avgMemoryUsage: 0
+    };
+    
+    // Calculate efficiency
+    result.overallEfficiency = result.totalShares > 0 ? 
+      (result.acceptedShares / result.totalShares) * 100 : 0;
+    
+    res.json({
+      success: true,
+      period: `${days} days`,
+      analytics: result
+    });
+  } catch (error) {
+    console.error('Mining analytics error:', error);
+    res.status(500).json({ error: 'Failed to get mining analytics' });
+  }
+});
+
+// ==============================
+// End Additional CRUD Endpoints
+// ==============================
+
 // SERVER STARTUP
 // ============================================================================
 
