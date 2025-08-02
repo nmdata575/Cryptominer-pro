@@ -338,14 +338,61 @@ create_directories() {
 install_application() {
     log_info "Installing CryptoMiner Pro application..."
     
-    # Create application structure
-    create_directories
+    # Determine script location and find application files
+    SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" &> /dev/null && pwd)"
     
-    # Copy application files (this would typically clone from repository)
-    log_info "Setting up application structure..."
+    # Look for application files in multiple possible locations
+    APP_SOURCE=""
     
-    # Backend setup
-    sudo -u "$SERVICE_USER" tee "$INSTALL_DIR/backend-nodejs/package.json" > /dev/null << 'EOF'
+    if [[ -d "$SCRIPT_DIR/backend-nodejs" && -d "$SCRIPT_DIR/frontend" ]]; then
+        APP_SOURCE="$SCRIPT_DIR"
+        log_info "Found application files in script directory: $SCRIPT_DIR"
+    elif [[ -d "/app/backend-nodejs" && -d "/app/frontend" ]]; then
+        APP_SOURCE="/app"
+        log_info "Found application files in /app directory"
+    elif [[ -d "$(pwd)/backend-nodejs" && -d "$(pwd)/frontend" ]]; then
+        APP_SOURCE="$(pwd)"
+        log_info "Found application files in current directory: $(pwd)"
+    else
+        # Try to find the files in parent directories
+        for dir in "$SCRIPT_DIR/.." "$SCRIPT_DIR/../.." "/opt/cryptominer-pro" "/root/Cryptominer-pro"; do
+            if [[ -d "$dir/backend-nodejs" && -d "$dir/frontend" ]]; then
+                APP_SOURCE="$dir"
+                log_info "Found application files in: $dir"
+                break
+            fi
+        done
+    fi
+    
+    if [[ -z "$APP_SOURCE" ]]; then
+        log_error "Could not find application files. Searched in:"
+        log_error "  - $SCRIPT_DIR (script directory)"
+        log_error "  - /app (default development location)" 
+        log_error "  - $(pwd) (current directory)"
+        log_error "  - $SCRIPT_DIR/.. (parent directory)"
+        log_error "  - /opt/cryptominer-pro (old installation)"
+        log_error "  - /root/Cryptominer-pro (current installation)"
+        error_exit "Application files not found. Please ensure backend-nodejs/ and frontend/ directories exist in one of the above locations."
+    fi
+    
+    # Copy application files
+    log_info "Copying application files from: $APP_SOURCE"
+    cp -r "$APP_SOURCE/backend-nodejs" "$INSTALL_DIR/"
+    cp -r "$APP_SOURCE/frontend" "$INSTALL_DIR/"
+    
+    # Copy additional files if they exist
+    for file in package.json README.md *.md *.sh; do
+        if [[ -f "$APP_SOURCE/$file" ]]; then
+            cp "$APP_SOURCE/$file" "$INSTALL_DIR/" 2>/dev/null || true
+        fi
+    done
+    
+    # Set proper permissions
+    chmod -R 755 "$INSTALL_DIR"
+    find "$INSTALL_DIR" -type f -name "*.js" -exec chmod 644 {} \;
+    find "$INSTALL_DIR" -type f -name "*.json" -exec chmod 644 {} \;
+    
+    log_success "Application files installed from: $APP_SOURCE"
 {
   "name": "cryptominer-pro-backend",
   "version": "2.0.0",
