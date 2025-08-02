@@ -485,28 +485,33 @@ directory=$INSTALL_DIR/backend-nodejs
 user=$SERVICE_USER
 autostart=true
 autorestart=true
-stdout_logfile=/var/log/cryptominer/backend.log
-stderr_logfile=/var/log/cryptominer/backend-error.log
-environment=NODE_ENV=production
+stdout_logfile=$LOG_DIR/backend.log
+stderr_logfile=$LOG_DIR/backend-error.log
+environment=NODE_ENV=production,PORT=8001
 priority=999
 killasgroup=true
 stopasgroup=true
+startsecs=10
+startretries=3
 EOF
 
     # Frontend supervisor config
     sudo tee "/etc/supervisor/conf.d/cryptominer-frontend.conf" > /dev/null << EOF
 [program:cryptominer-frontend]
-command=/usr/bin/yarn start
+command=/usr/bin/npm start
 directory=$INSTALL_DIR/frontend
 user=$SERVICE_USER
 autostart=true
 autorestart=true
-stdout_logfile=/var/log/cryptominer/frontend.log
-stderr_logfile=/var/log/cryptominer/frontend-error.log
+stdout_logfile=$LOG_DIR/frontend.log
+stderr_logfile=$LOG_DIR/frontend-error.log
 environment=NODE_ENV=production,PORT=3000
 priority=998
 killasgroup=true
 stopasgroup=true
+startsecs=15
+startretries=3
+stopwaitsecs=10
 EOF
 
     # Reload supervisor
