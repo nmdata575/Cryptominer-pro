@@ -1229,17 +1229,6 @@ if (highPerformanceEngine) {
   });
 }
 
-// Error handling
-app.use((err, req, res, next) => {
-  console.error('Unhandled error:', err);
-  res.status(500).json({ error: 'Internal server error' });
-});
-
-// 404 handler
-app.use((req, res) => {
-  res.status(404).json({ error: 'Endpoint not found' });
-});
-
 // ==============================
 // Additional Advanced CRUD Endpoints
 // ==============================
