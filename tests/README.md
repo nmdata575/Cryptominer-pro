@@ -22,7 +22,7 @@ cd /opt/cryptominer-pro/backend-nodejs
 node test_ai_shares.js
 
 # Or run directly
-node /opt/cryptominer-pro/tests/test_ai_shares.js
+node /home/$USER/Cryptominer-pro/tests/test_ai_shares.js
 ```
 
 **Sample Output:**
