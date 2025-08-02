@@ -43,7 +43,7 @@ sudo lsof -i :3000 | grep -v COMMAND | sed 's/^/      /' || echo "      Not in u
 echo ""
 echo "📁 INSTALLATION DIRECTORIES:"
 echo "----------------------------"
-for path in "/home/$(whoami)/cryptominer-pro" "/home/chris/cryptominer-pro" "/opt/cryptominer-pro" "/root/cryptominer-pro"; do
+for path in "/home/$(whoami)/Cryptominer-pro" "/home/chris/Cryptominer-pro" "/home/$USER/Cryptominer-pro" "/root/Cryptominer-pro"; do
     if [[ -d "$path" ]]; then
         echo "   ✅ Found: $path"
     fi
