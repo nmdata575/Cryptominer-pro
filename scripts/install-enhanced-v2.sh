@@ -480,8 +480,8 @@ directory=$INSTALL_DIR/backend-nodejs
 user=$SERVICE_USER
 autostart=true
 autorestart=true
-stdout_logfile=/var/log/cryptominer/backend.log
-stderr_logfile=/var/log/cryptominer/backend-error.log
+stdout_logfile=$HOME/.local/log/cryptominer/backend.log
+stderr_logfile=$HOME/.local/log/cryptominer/backend-error.log
 environment=NODE_ENV=production
 priority=999
 killasgroup=true
@@ -496,8 +496,8 @@ directory=$INSTALL_DIR/frontend
 user=$SERVICE_USER
 autostart=true
 autorestart=true
-stdout_logfile=/var/log/cryptominer/frontend.log
-stderr_logfile=/var/log/cryptominer/frontend-error.log
+stdout_logfile=$HOME/.local/log/cryptominer/frontend.log
+stderr_logfile=$HOME/.local/log/cryptominer/frontend-error.log
 environment=NODE_ENV=production,PORT=3000
 priority=998
 killasgroup=true
