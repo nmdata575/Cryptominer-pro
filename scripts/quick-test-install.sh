@@ -76,7 +76,7 @@ sudo apt-get update -qq
 sudo apt-get install -y mongodb-org
 sudo systemctl start mongod
 sudo systemctl enable mongod
-mongosh --eval "db.adminCommand('ping')" --quiet && log "✅ MongoDB installed and running"
+mongosh --eval "db.adminCommand('ping')" --quiet && log "✅ MongoDB 8.0 installed and running"
 
 # Test the enhanced installer
 log_info "Testing the enhanced installer script..."
