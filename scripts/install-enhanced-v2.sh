@@ -447,7 +447,7 @@ LOG_FILE=$HOME/.local/log/cryptominer/backend.log
 EOF
 
     # Frontend .env
-    sudo -u "$SERVICE_USER" tee "$INSTALL_DIR/frontend/.env" > /dev/null << EOF
+    tee "$INSTALL_DIR/frontend/.env" > /dev/null << EOF
 # CryptoMiner Pro Frontend Configuration v2.0
 REACT_APP_BACKEND_URL=http://localhost:8001
 REACT_APP_VERSION=2.0.0
