@@ -197,12 +197,12 @@ sudo apt install nginx supervisor mongodb-org nodejs
 sudo systemctl status cryptominer-pro.service
 sudo supervisorctl status
 
-# Check user removal
-id cryptominer
+# Check user removal  
+id $(whoami)  # Should still exist (we're using current user)
 
 # Verify file cleanup
-ls -la /opt/cryptominer-pro
-ls -la /var/log/cryptominer
+ls -la /home/$USER/Cryptominer-pro  # Should not exist after uninstall
+ls -la $HOME/.local/log/cryptominer  # Should not exist after uninstall
 ```
 
 ### System Health Check
