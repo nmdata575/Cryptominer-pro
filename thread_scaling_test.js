@@ -83,9 +83,7 @@ class ThreadScalingTester {
       };
 
       // Start mining
-      const startResponse = await axios.post(`${API_BASE}/mining/start`, config, {
-        timeout: 15000
-      });
+      const startResponse = await makeRequest('POST', `${API_BASE}/mining/start`, config);
 
       if (!startResponse.data.success) {
         throw new Error(`Failed to start mining: ${startResponse.data.message || 'Unknown error'}`);
