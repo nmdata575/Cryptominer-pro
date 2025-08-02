@@ -32,7 +32,7 @@ NC='\033[0m' # No Color
 SCRIPT_VERSION="2.0.0"
 PROJECT_NAME="CryptoMiner Pro"
 INSTALL_DIR="/home/$(whoami)/Cryptominer-pro"
-SERVICE_USER="cryptominer"
+SERVICE_USER="$(whoami)"
 LOG_FILE="/var/log/cryptominer-uninstall.log"
 
 # Uninstallation options
