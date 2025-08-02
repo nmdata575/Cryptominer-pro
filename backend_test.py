@@ -2537,5 +2537,119 @@ def main():
         print(f"\n❌ Test suite crashed: {str(e)}")
         sys.exit(1)
 
+def run_comprehensive_backend_tests():
+    """Run comprehensive backend tests for CryptoMiner Pro Node.js backend"""
+    print("🎯 CryptoMiner Pro - Comprehensive Backend Testing")
+    print("Focus: Enhanced CRUD API endpoints, MongoDB integration, Mining operations")
+    print("=" * 80)
+    
+    tester = BackendTester()
+    
+    # Test categories based on review request
+    test_categories = [
+        # Health & System Status
+        ("Health & System Status", [
+            tester.test_health_check_api,
+            tester.test_system_stats_api,
+            tester.test_coin_presets_api,
+            tester.test_mining_status_api
+        ]),
+        
+        # Enhanced CRUD Operations - Mining Stats
+        ("Enhanced CRUD - Mining Stats", [
+            tester.test_mining_stats_get_api,
+            tester.test_mining_stats_post_api,
+            tester.test_mining_stats_top_api,
+            tester.test_mining_session_start_api,
+            tester.test_mining_session_update_api,
+            tester.test_mining_session_end_api
+        ]),
+        
+        # Enhanced CRUD Operations - AI Predictions
+        ("Enhanced CRUD - AI Predictions", [
+            tester.test_ai_predictions_get_api,
+            tester.test_ai_predictions_post_api,
+            tester.test_ai_predictions_validate_api,
+            tester.test_ai_model_accuracy_api
+        ]),
+        
+        # Enhanced CRUD Operations - System Config
+        ("Enhanced CRUD - System Config", [
+            tester.test_system_config_user_preferences_get,
+            tester.test_system_config_user_preferences_post,
+            tester.test_system_config_mining_defaults_get,
+            tester.test_system_config_mining_defaults_post
+        ]),
+        
+        # Advanced Features
+        ("Advanced Features", [
+            tester.test_database_maintenance_stats_api,
+            tester.test_database_maintenance_cleanup_api,
+            tester.test_ai_insights_api
+        ]),
+        
+        # Mining Operations
+        ("Mining Operations", [
+            tester.test_wallet_validation,
+            tester.test_mining_start_stop_workflow,
+            tester.test_pool_mining_capability
+        ])
+    ]
+    
+    total_tests = 0
+    passed_tests = 0
+    
+    for category_name, tests in test_categories:
+        print(f"\n🔍 Testing Category: {category_name}")
+        print("-" * 60)
+        
+        category_passed = 0
+        category_total = len(tests)
+        
+        for test_func in tests:
+            total_tests += 1
+            try:
+                result = test_func()
+                if result:
+                    passed_tests += 1
+                    category_passed += 1
+            except Exception as e:
+                print(f"❌ FAILED - {test_func.__name__}: {str(e)}")
+        
+        success_rate = (category_passed / category_total) * 100 if category_total > 0 else 0
+        print(f"📊 Category Results: {category_passed}/{category_total} passed ({success_rate:.1f}%)")
+    
+    # Overall results
+    overall_success_rate = (passed_tests / total_tests) * 100 if total_tests > 0 else 0
+    
+    print("\n" + "=" * 80)
+    print("🎉 COMPREHENSIVE BACKEND TESTING COMPLETED!")
+    print(f"📊 Overall Results: {passed_tests}/{total_tests} tests passed ({overall_success_rate:.1f}%)")
+    
+    # Print summary of results
+    print("\n📋 Test Results Summary:")
+    for result in tester.test_results:
+        print(f"   {result['status']} - {result['test']}")
+    
+    return overall_success_rate
+
+def main():
+    """Main function to run comprehensive backend tests"""
+    try:
+        success_rate = run_comprehensive_backend_tests()
+        
+        # Exit with appropriate code
+        if success_rate >= 70:
+            sys.exit(0)  # Success
+        else:
+            sys.exit(1)  # Failure
+            
+    except KeyboardInterrupt:
+        print("\n🛑 Test interrupted by user")
+        sys.exit(1)
+    except Exception as e:
+        print(f"\n❌ Test suite crashed: {str(e)}")
+        sys.exit(1)
+
 if __name__ == "__main__":
     main()
