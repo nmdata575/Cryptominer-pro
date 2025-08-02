@@ -124,7 +124,7 @@ LOG_FILE=/var/log/cryptominer/backend.log
 
 **Frontend Configuration:**
 ```bash
-# Frontend Configuration (/opt/cryptominer-pro/frontend/.env)
+# Frontend Configuration (/home/$USER/Cryptominer-pro/frontend/.env)
 REACT_APP_BACKEND_URL=https://your-domain.com
 REACT_APP_VERSION=2.0.0
 REACT_APP_AI_ENABLED=true
