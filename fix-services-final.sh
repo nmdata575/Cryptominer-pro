@@ -98,14 +98,14 @@ fi
 if [[ ! -d "$INSTALL_DIR/backend-nodejs/node_modules" ]]; then
     log_info "Installing backend dependencies..."
     cd "$INSTALL_DIR/backend-nodejs"
-    sudo -u "$SERVICE_USER" npm install
+    npm install
 fi
 
 # Install frontend dependencies if needed
 if [[ ! -d "$INSTALL_DIR/frontend/node_modules" ]]; then
     log_info "Installing frontend dependencies..."
     cd "$INSTALL_DIR/frontend"
-    sudo -u "$SERVICE_USER" npm install
+    npm install
 fi
 
 # Create or update backend supervisor config
