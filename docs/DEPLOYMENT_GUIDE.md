@@ -102,7 +102,7 @@ sudo apt update && sudo apt upgrade -y
 
 **Production Environment Variables:**
 ```bash
-# Backend Configuration (/opt/cryptominer-pro/backend-nodejs/.env)
+# Backend Configuration (/home/$USER/Cryptominer-pro/backend-nodejs/.env)
 NODE_ENV=production
 PORT=8001
 MONGO_URL=mongodb://localhost:27017/cryptominer
