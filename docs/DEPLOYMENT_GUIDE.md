@@ -315,7 +315,7 @@ sudo supervisorctl stop all
 
 # Restore application
 tar -xzf cryptominer-backup-YYYYMMDD.tar.gz
-sudo cp -r cryptominer-YYYYMMDD/data /opt/cryptominer-pro/
+cp -r cryptominer-YYYYMMDD/data /home/$USER/Cryptominer-pro/
 
 # Restore database
 mongorestore --db cryptominer cryptominer-YYYYMMDD/mongodb/cryptominer
