@@ -21,7 +21,7 @@ A professional-grade cryptocurrency mining application with real-time monitoring
 ![CryptoMiner Pro Dashboard](https://img.shields.io/badge/Status-Production%20Ready-brightgreen)
 ![Node.js](https://img.shields.io/badge/Node.js-v20.19.4-green)
 ![React](https://img.shields.io/badge/React-18.x-blue)
-![MongoDB](https://img.shields.io/badge/MongoDB-7.x-green)
+![MongoDB](https://img.shields.io/badge/MongoDB-8.0-green)
 ![GitHub](https://img.shields.io/badge/GitHub-nmdata575%2Fai--cm-blue)
 ![Release](https://img.shields.io/badge/Release-v2.1-orange)
 ![CPU Fix](https://img.shields.io/badge/CPU%20Frequency-Fixed-success)
