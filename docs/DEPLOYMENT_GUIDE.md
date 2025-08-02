@@ -261,7 +261,7 @@ fi
 0 0 * * * find /var/log/cryptominer -name "*.log" -size +100M -exec truncate -s 0 {} \;
 
 # Database cleanup (weekly)
-0 3 * * 0 /opt/cryptominer-pro/scripts/db-cleanup.sh
+0 3 * * 0 /home/$USER/Cryptominer-pro/scripts/db-cleanup.sh
 
 # Health check (every 5 minutes)
 */5 * * * * /opt/cryptominer-pro/scripts/health-check.sh
