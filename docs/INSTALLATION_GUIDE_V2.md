@@ -195,7 +195,7 @@ To update the system:
 sudo supervisorctl stop all
 
 # Backup current installation
-sudo cp -r /opt/cryptominer-pro /opt/cryptominer-backup-$(date +%Y%m%d)
+sudo cp -r /home/$USER/Cryptominer-pro /home/$USER/Cryptominer-pro-backup-$(date +%Y%m%d)
 
 # Run new installer
 ./install-enhanced-v2.sh
