@@ -216,7 +216,7 @@ sudo chown root:root /usr/local/bin/node_exporter
 **Health Check Script:**
 ```bash
 #!/bin/bash
-# /opt/cryptominer-pro/scripts/health-check.sh
+# /home/$USER/Cryptominer-pro/scripts/health-check.sh
 
 # Check API health
 API_STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:8001/api/health)
