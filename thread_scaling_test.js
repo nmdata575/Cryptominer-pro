@@ -5,9 +5,62 @@
  * Tests mining performance at different thread counts (up to 256)
  */
 
-const axios = require('axios');
+const http = require('http');
+const querystring = require('querystring');
 
 const API_BASE = 'http://localhost:8001/api';
+
+function makeRequest(method, url, data = null) {
+  return new Promise((resolve, reject) => {
+    const urlObj = new URL(url);
+    const options = {
+      hostname: urlObj.hostname,
+      port: urlObj.port || 80,
+      path: urlObj.pathname,
+      method: method,
+      headers: {
+        'Content-Type': 'application/json',
+      }
+    };
+
+    if (data && method !== 'GET') {
+      const postData = JSON.stringify(data);
+      options.headers['Content-Length'] = Buffer.byteLength(postData);
+    }
+
+    const req = http.request(options, (res) => {
+      let body = '';
+      res.on('data', (chunk) => body += chunk);
+      res.on('end', () => {
+        try {
+          const response = {
+            status: res.statusCode,
+            data: JSON.parse(body)
+          };
+          if (res.statusCode >= 200 && res.statusCode < 300) {
+            resolve(response);
+          } else {
+            reject(new Error(`HTTP ${res.statusCode}: ${body}`));
+          }
+        } catch (error) {
+          reject(error);
+        }
+      });
+    });
+
+    req.on('error', reject);
+    req.setTimeout(15000, () => {
+      req.destroy();
+      reject(new Error('Request timeout'));
+    });
+
+    if (data && method !== 'GET') {
+      req.write(JSON.stringify(data));
+    }
+
+    req.end();
+  });
+}
 
 class ThreadScalingTester {
   constructor() {
