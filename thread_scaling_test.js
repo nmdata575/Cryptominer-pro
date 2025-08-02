@@ -159,9 +159,7 @@ class ThreadScalingTester {
     console.log(`\n🔧 Testing system limits...`);
     
     try {
-      const systemResponse = await axios.get(`${API_BASE}/system/cpu-info`, {
-        timeout: 10000
-      });
+      const systemResponse = await makeRequest('GET', `${API_BASE}/system/cpu-info`);
 
       const systemData = systemResponse.data;
       console.log(`💻 System Info: ${systemData.cores} cores, ${systemData.mining_profiles?.length || 0} profiles`);
