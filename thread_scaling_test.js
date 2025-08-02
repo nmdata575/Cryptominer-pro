@@ -134,7 +134,7 @@ class ThreadScalingTester {
       
       // Ensure mining is stopped
       try {
-        await axios.post(`${API_BASE}/mining/stop`, {}, { timeout: 5000 });
+        await makeRequest('POST', `${API_BASE}/mining/stop`, {});
       } catch (stopError) {
         // Ignore stop errors
       }
