@@ -31,7 +31,7 @@ NC='\033[0m' # No Color
 # Configuration (must match install-enhanced-v2.sh)
 SCRIPT_VERSION="2.0.0"
 PROJECT_NAME="CryptoMiner Pro"
-INSTALL_DIR="/opt/cryptominer-pro"
+INSTALL_DIR="/home/$(whoami)/Cryptominer-pro"
 SERVICE_USER="cryptominer"
 LOG_FILE="/var/log/cryptominer-uninstall.log"
 
