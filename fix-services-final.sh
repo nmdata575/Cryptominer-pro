@@ -185,7 +185,7 @@ if sudo supervisorctl status cryptominer-frontend | grep -q "RUNNING"; then
 else
     log_error "❌ Frontend service failed to start"
     log_info "Frontend error logs:"
-    sudo tail -n 10 "$LOG_DIR/frontend-error.log" 2>/dev/null || echo "No error logs yet"
+    tail -n 10 "$LOG_DIR/frontend-error.log" 2>/dev/null || echo "No error logs yet"
 fi
 
 # Final status
