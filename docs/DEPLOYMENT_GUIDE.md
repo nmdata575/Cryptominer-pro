@@ -264,7 +264,7 @@ fi
 0 3 * * 0 /home/$USER/Cryptominer-pro/scripts/db-cleanup.sh
 
 # Health check (every 5 minutes)
-*/5 * * * * /opt/cryptominer-pro/scripts/health-check.sh
+*/5 * * * * /home/$USER/Cryptominer-pro/scripts/health-check.sh
 ```
 
 ## 🔄 Backup & Recovery
