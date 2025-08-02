@@ -19,12 +19,13 @@ All notable changes to CryptoMiner Pro are documented in this file.
 - **Performance Grading**: A+ to D scoring system with multi-factor performance evaluation
 - **Predictive Analytics**: Hash rate forecasting, efficiency prediction, and optimization recommendations
 
-#### 🗄️ **MongoDB Integration**
-- **Persistent Data Storage**: Complete MongoDB integration with Mongoose ODM
+#### 🗄️ **MongoDB 8.0 Integration**
+- **Persistent Data Storage**: Complete MongoDB 8.0 integration with Mongoose ODM
 - **Mining Statistics**: `MiningStats` model for session tracking and performance data
 - **AI Predictions**: `AIPrediction` model for storing ML analysis results
 - **System Configuration**: `SystemConfig` model for user preferences and settings
 - **Data Retention**: Configurable retention policies with automatic cleanup
+- **Enhanced Performance**: MongoDB 8.0's improved query performance and indexing
 
 #### 📦 **Production Deployment**
 - **Enhanced Installer** (`install-enhanced-v2.sh`): 600+ line production-ready installer
