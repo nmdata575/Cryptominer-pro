@@ -52,8 +52,9 @@ fi
 
 # Create service user if it doesn't exist
 if ! id "$SERVICE_USER" &>/dev/null; then
-    log_info "Creating service user: $SERVICE_USER..."
-    sudo useradd -r -d "$INSTALL_DIR" -s /bin/bash "$SERVICE_USER"
+    log_info "Current user will be used for services: $SERVICE_USER"
+else
+    log_info "Using current user for services: $SERVICE_USER"
 fi
 
 # Create log directory
