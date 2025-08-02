@@ -30,7 +30,7 @@ NC='\033[0m' # No Color
 # Configuration
 SCRIPT_VERSION="2.0.0"
 PROJECT_NAME="CryptoMiner Pro"
-INSTALL_DIR="/opt/cryptominer-pro"
+INSTALL_DIR="/home/$(whoami)/Cryptominer-pro"
 SERVICE_USER="cryptominer"
 LOG_FILE="/var/log/cryptominer-install.log"
 BACKUP_DIR="/opt/cryptominer-backup-$(date +%Y%m%d_%H%M%S)"
