@@ -300,7 +300,7 @@ install_application() {
     log_info "Setting up application structure..."
     
     # Backend setup
-    sudo -u "$SERVICE_USER" tee "$INSTALL_DIR/backend-nodejs/package.json" > /dev/null << 'EOF'
+    tee "$INSTALL_DIR/backend-nodejs/package.json" > /dev/null << 'EOF'
 {
   "name": "cryptominer-pro-backend",
   "version": "2.0.0",
