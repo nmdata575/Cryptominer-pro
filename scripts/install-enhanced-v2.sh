@@ -443,7 +443,7 @@ API_RATE_WINDOW=900000
 
 # Logging
 LOG_LEVEL=info
-LOG_FILE=/var/log/cryptominer/backend.log
+LOG_FILE=$HOME/.local/log/cryptominer/backend.log
 EOF
 
     # Frontend .env
