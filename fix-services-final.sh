@@ -172,7 +172,7 @@ if sudo supervisorctl status cryptominer-backend | grep -q "RUNNING"; then
 else
     log_error "❌ Backend service failed to start"
     log_info "Backend error logs:"
-    sudo tail -n 10 "$LOG_DIR/backend-error.log" 2>/dev/null || echo "No error logs yet"
+    tail -n 10 "$LOG_DIR/backend-error.log" 2>/dev/null || echo "No error logs yet"
 fi
 
 log_info "Starting frontend service..."
