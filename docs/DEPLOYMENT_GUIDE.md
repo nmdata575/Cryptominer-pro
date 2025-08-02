@@ -133,7 +133,7 @@ GENERATE_SOURCEMAP=false
 
 ### Database Configuration
 
-**MongoDB Production Settings:**
+**MongoDB 8.0 Production Settings:**
 ```yaml
 # /etc/mongod.conf
 storage:
