@@ -37,7 +37,7 @@ echo "==========================================================================
 echo -e "${NC}"
 
 # Configuration
-INSTALL_DIR="/opt/cryptominer-pro"
+INSTALL_DIR="/home/$(whoami)/Cryptominer-pro"
 SERVICE_USER="cryptominer"
 LOG_DIR="/var/log/cryptominer"
 
