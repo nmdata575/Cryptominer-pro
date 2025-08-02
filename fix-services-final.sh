@@ -155,7 +155,7 @@ sudo supervisorctl update
 # Test backend manually first
 log_info "Testing backend manually..."
 cd "$INSTALL_DIR/backend-nodejs"
-if sudo -u "$SERVICE_USER" timeout 5 node server.js &>/dev/null; then
+if timeout 5 node server.js &>/dev/null; then
     log "✅ Backend can start manually"
 else
     log_warning "Backend test had issues, but continuing..."
