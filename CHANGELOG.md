@@ -29,7 +29,7 @@ All notable changes to CryptoMiner Pro are documented in this file.
 
 #### 📦 **Production Deployment**
 - **Enhanced Installer** (`install-enhanced-v2.sh`): 600+ line production-ready installer
-- **System Setup**: Automated Node.js 20, MongoDB 7.0, Nginx, Supervisor installation
+- **System Setup**: Automated Node.js 20, MongoDB 8.0, Nginx, Supervisor installation
 - **Security Configuration**: Service user, UFW firewall, rate limiting, process isolation
 - **Enhanced Uninstaller** (`uninstall-enhanced-v2.sh`): Safe removal with data protection
 
