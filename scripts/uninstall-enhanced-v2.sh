@@ -265,14 +265,14 @@ remove_application_files() {
     fi
     
     # Remove log files
-    if [[ -d "/var/log/cryptominer" ]]; then
+    if [[ -d "$HOME/.local/log/cryptominer" ]]; then
         if [[ "$REMOVE_USER_DATA" == "true" ]]; then
-            sudo rm -rf /var/log/cryptominer
+            rm -rf "$HOME/.local/log/cryptominer"
             log_success "Log files removed ✅"
         else
             local log_backup="/tmp/cryptominer-logs-$(date +%Y%m%d_%H%M%S)"
-            sudo cp -r /var/log/cryptominer "$log_backup" 2>/dev/null || true
-            sudo rm -rf /var/log/cryptominer
+            cp -r "$HOME/.local/log/cryptominer" "$log_backup" 2>/dev/null || true
+            rm -rf "$HOME/.local/log/cryptominer"
             log_info "Logs backed up to: $log_backup"
             log_success "Log files removed (backed up) ✅"
         fi
