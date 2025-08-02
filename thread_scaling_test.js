@@ -110,7 +110,7 @@ class ThreadScalingTester {
       console.log(`📊 Results: ${hashrate.toFixed(2)} H/s, CPU: ${cpuUsage.toFixed(1)}%, Memory: ${memoryUsage.toFixed(1)}%`);
 
       // Stop mining
-      await axios.post(`${API_BASE}/mining/stop`, {}, { timeout: 10000 });
+      await makeRequest('POST', `${API_BASE}/mining/stop`, {});
       console.log(`🛑 Mining stopped`);
 
       // Wait for cleanup
