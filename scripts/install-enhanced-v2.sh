@@ -400,12 +400,12 @@ install_dependencies() {
     
     # Install backend dependencies
     cd "$INSTALL_DIR/backend-nodejs"
-    sudo -u "$SERVICE_USER" yarn install --production
+    yarn install --production
     log_success "Backend dependencies installed ✅"
     
     # Install frontend dependencies
     cd "$INSTALL_DIR/frontend"
-    sudo -u "$SERVICE_USER" yarn install
+    yarn install
     log_success "Frontend dependencies installed ✅"
 }
 
