@@ -103,8 +103,8 @@ sudo systemctl start cryptominer-pro    # Start at boot
 sudo systemctl enable cryptominer-pro   # Enable auto-start
 
 # Logs
-sudo tail -f /var/log/cryptominer/backend.log    # Backend logs
-sudo tail -f /var/log/cryptominer/frontend.log   # Frontend logs
+tail -f $HOME/.local/log/cryptominer/backend.log    # Backend logs
+tail -f $HOME/.local/log/cryptominer/frontend.log   # Frontend logs
 ```
 
 ## 🧪 Testing Installation
