@@ -425,11 +425,15 @@ fs.file-max = 100000
 fs.inotify.max_user_watches = 524288
 ```
 
-**MongoDB Optimization:**
+**MongoDB 8.0 Optimization:**
 ```bash
 # Increase MongoDB cache size
 echo "never" | sudo tee /sys/kernel/mm/transparent_hugepage/enabled
 echo "never" | sudo tee /sys/kernel/mm/transparent_hugepage/defrag
+
+# MongoDB 8.0 specific optimizations
+# Set appropriate cache size (50% of available RAM)
+mongosh --eval "db.adminCommand({setParameter: 1, wiredTigerCacheSizeGB: 2})"
 ```
 
 **Mining Optimization:**
