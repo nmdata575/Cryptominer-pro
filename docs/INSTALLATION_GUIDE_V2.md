@@ -74,6 +74,13 @@ REACT_APP_AI_ENABLED=true
 REACT_APP_REAL_MINING_ENABLED=true
 ```
 
+### MongoDB 8.0 Configuration
+The installer automatically configures MongoDB 8.0 with:
+- Optimized settings for mining data
+- Automatic startup and service management
+- Secure default configuration
+- Performance tuning for AI workloads
+
 ## 🌐 Access Points
 
 After installation, access the application:
