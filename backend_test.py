@@ -553,6 +553,49 @@ class BackendTester:
             )
             return False
 
+    def test_mining_stats_get_api(self):
+        """Test 1: Enhanced Mining Statistics API - GET /api/mining/stats"""
+        try:
+            # Test basic stats retrieval
+            response = self.session.get(f"{API_BASE}/mining/stats", timeout=10)
+            
+            if response.status_code == 200:
+                data = response.json()
+                if 'success' in data and 'data' in data:
+                    stats_count = data.get('count', 0)
+                    stats_data = data.get('data', [])
+                    
+                    self.log_test(
+                        "Enhanced Mining Statistics API - GET",
+                        True,
+                        f"Mining stats retrieved successfully. Count: {stats_count}, Data entries: {len(stats_data)}",
+                        {"count": stats_count, "data_length": len(stats_data)}
+                    )
+                    return True
+                else:
+                    self.log_test(
+                        "Enhanced Mining Statistics API - GET",
+                        False,
+                        "Invalid response format - missing success or data fields",
+                        data
+                    )
+                    return False
+            else:
+                self.log_test(
+                    "Enhanced Mining Statistics API - GET",
+                    False,
+                    f"Mining stats endpoint returned status {response.status_code}",
+                    response.text
+                )
+                return False
+        except Exception as e:
+            self.log_test(
+                "Enhanced Mining Statistics API - GET",
+                False,
+                f"Mining stats GET request failed: {str(e)}"
+            )
+            return False
+
     def test_mining_stats_post_api(self):
         """Test 2: Enhanced Mining Statistics API - POST /api/mining/stats"""
         try:
